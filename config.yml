@@ -1,0 +1,7 @@
+input_table_path: '/media/data/2019_Farid/assembly_finder_test/input_table.tsv'
+
+NCBI_key: 'd0422e8b9f99bc314b27e43aa791b9a6f908'
+
+NCBI_email: 'farid.chaabane@unil.ch'
+
+complete_assemblies: False

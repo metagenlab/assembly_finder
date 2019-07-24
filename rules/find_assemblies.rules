@@ -1,0 +1,39 @@
+
+rule generate_assembly_tables:
+    conda: '../envs/Assembly_finder.yml'
+
+    output: 'tables/not_filtered/{entry}.tsv'
+
+    params: NCBI_key = config['NCBI_key'], NCBI_email = config['NCBI_email'],
+          complete_assemblies=config['complete_assemblies']
+
+    script: 'assembly_table.py'
+
+
+rule filter_assembly_tables:
+    conda: '../envs/Assembly_finder.yml'
+
+    input: 'tables/not_filtered/{entry}.tsv'
+
+    output: 'tables/filtered/{entry}.tsv'
+
+    script: 'filter_table.py'
+
+import pandas as pd
+
+def parse_table(input):
+    table=pd.read_csv(input,delimiter='\t')
+    print(table)
+    names= list(table['UserInputNames'])
+    expd=expand('tables/filtered/{entry}.tsv',entry=names)
+    print(expd)
+    return expd
+
+rule combine_assembly_tables:
+    conda: '../envs/Assembly_finder.yml'
+
+    input: parse_table(config["input_table_path"])
+
+    output: 'table_combined.tsv'
+
+    script: 'combine_tables.py'
