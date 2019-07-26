@@ -33,7 +33,7 @@ def parse_table(input):
     print(expd)
     return expd
 
-rule combine_assembly_tables:
+checkpoint combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
     input: parse_table(config["input_table_path"])
@@ -41,3 +41,18 @@ rule combine_assembly_tables:
     output: 'table_combined.tsv'
 
     script: 'combine_tables.py'
+
+
+
+
+
+rule dl_assemblies:
+    conda: '../envs/Assembly_finder.yml'
+
+    input: 'table_combined.tsv'
+
+    output: 'assembly_gz/{sample}.fna.gz'
+
+    params: NCBI_email = config['NCBI_email']
+
+    script: 'dl.py'
