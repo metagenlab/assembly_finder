@@ -1,7 +1,29 @@
 input_table_path: '/media/data/2019_Farid/assembly_finder_test/input_table.tsv'
 
-NCBI_key: 'd0422e8b9f99bc314b27e43aa791b9a6f908'
+NCBI_key: 'd50e3b721745c1b0fa064bf00ff9a003fc08'
 
 NCBI_email: 'farid.chaabane@unil.ch'
 
+##Parameters for search_assemblies function
+#This set of parameters is to search all possible assemblies
 complete_assemblies: False
+
+reference_assemblies: False
+
+representative_assemblies: False
+
+exclude_from_metagenomes: True
+
+Genbank_assemblies: True
+
+Refseq_assemblies: True
+
+
+##Parameters for the filtering function
+
+Rank_to_filter_by: 'No'
+#None: Assemblies are ranked by their assembly status (complete or not)
+#and Refseq category (reference, representative ...)
+#If you want to filter by species, set this parameter to 'species'. The filtering function will list all unique species
+#and rank their assemblies according to assembly status and Refseq category.
+

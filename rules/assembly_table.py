@@ -2,11 +2,13 @@
 from Bio import Entrez
 #import random as rd
 import pandas as pd
+import time
 
 
 def taxid_find(name_input):
     '''
-    Function to return a taxonomy id based on a query
+    Function to parse input_list to convert scientific names to taxid
+    returns dictionary with taxid found",
     '''
 
     print('\n> Searching for taxIDs', name_input, '...')
@@ -18,12 +20,11 @@ def taxid_find(name_input):
     except ValueError:
         print('Query is not a taxID\nSearching for TaxID')
         taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList']
-        if len(taxid) == 1:
+        if len(list(taxid)) == 1:
             print('One TaxID:%s found' % taxid[0])
-            # TaxID.append(taxid[0])
-        if len(taxid) > 1:
-            print('%sTaxIDfound' % len(taxid))
-        if len(taxid) == 0:
+        if len(list(taxid)) > 1:
+            print('%sTaxIDfound, change query (taking first TaxID)' % len(list(taxid)))
+        if len(list(taxid)) == 0:
             print('\nERROR: TaxID not found! \nChange search term!')
     return taxid[0]
 
@@ -49,12 +50,12 @@ def search_assemblies(TaxID, Genbank=False, Refseq=True,
     if exclude_metagenomes:
         search_term += 'AND (all[filter] NOT "derived from metagenome"[filter])'
 
-    print('> Search term \n%s' % search_term)
+    print(search_term % TaxID)
 
     assembly_dic = Entrez.read(Entrez.esearch(db='assembly', term=search_term % TaxID, retmax=100000))['IdList']
 
     print('\nFound %i assemblies' % len(assembly_dic))
-    print(assembly_dic)
+    #print(assembly_dic)
 
     if len(assembly_dic) == 0:
         assembly_dic = None
@@ -62,36 +63,52 @@ def search_assemblies(TaxID, Genbank=False, Refseq=True,
 
     return assembly_dic
 
+def _chunks(l, n):
+    return [l[i:i+n] for i in range(0, len(l), n)]
+
 def generate_table(assembly_list):
+    assembly_list=','.join(assembly_list)
     assembly_tax_link = Entrez.read(Entrez.elink(dbfrom='assembly', db='taxonomy', id=assembly_list))
     all_taxid = [i['Id'] for i in assembly_tax_link[0]['LinkSetDb'][0]['Link']]
-    taxonomy_summary = Entrez.read(Entrez.efetch(db='taxonomy', id=all_taxid))
+    taxonomy_summary = Entrez.read(Entrez.efetch(db='taxonomy', id=','.join(all_taxid)))
     assembly_summary = Entrez.read(Entrez.esummary(db='assembly', id=assembly_list))
-    target_ranks = ['superkingdom', 'phylum', 'order', 'family', 'genus', 'species']
 
-    dic = {}#dic = dictionary regrouping info on tax ids
+    target_ranks = ['species', 'genus', 'family', 'order', 'phylum', 'superkingdom']
+    dic = {}
     for i in range(len(taxonomy_summary)):
         dic[all_taxid[i]] = {}
         if taxonomy_summary[i]['Rank'] in target_ranks:
             dic[all_taxid[i]][taxonomy_summary[i]['Rank']] = taxonomy_summary[i]['ScientificName']
         for j in taxonomy_summary[i]['LineageEx']:
-
             rank = j['Rank']
             if rank in target_ranks:
                 names = j['ScientificName']
                 dic[all_taxid[i]][rank] = names
 
-    dico = {}# dico = dictionary regrouping info on the assemblies
-    for i in range(len(assembly_summary['DocumentSummarySet']['DocumentSummary'])):
-        assembly_ID = assembly_summary['DocumentSummarySet']['DocumentSummary'][i].attributes['uid']
+        for n, rank in enumerate(target_ranks):
+            if rank not in dic[all_taxid[i]]:  # If a target rank is lacking
+                previous_rank = dic[all_taxid[i]][target_ranks[n - 1]].split(" ")[
+                    0]  # Get previous rank from the position of the lacking rank
+                placeholder = '%s_' % rank[0] + previous_rank  # First letter of the lacking rank + previous rank
+                dic[all_taxid[i]][rank] = placeholder
+
+    dico = {}
+    assembly_ID = [assembly_summary['DocumentSummarySet']['DocumentSummary'][i].attributes['uid'] for i in
+                   range(len(assembly_summary['DocumentSummarySet']['DocumentSummary']))]
+
+    for i in range(len(assembly_ID)):
+        dico[assembly_ID[i]] = {}
         taxonomy_ID = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['Taxid']
-        dico[assembly_ID] = dic[taxonomy_ID]# get the tax info for all assemblies
         Refseq_cat = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['RefSeq_category']
+        Genbank_path = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['FtpPath_GenBank']
         assembly_stat = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['AssemblyStatus']
-        ftp_path = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['FtpPath_RefSeq']
-        dico[assembly_ID]['Refseq_cat'] = Refseq_cat
-        dico[assembly_ID]['AssemblySatus'] = assembly_stat
-        dico[assembly_ID]['FtpPath_RefSeq'] = ftp_path
+        Refseq_path = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['FtpPath_RefSeq']
+        dico[assembly_ID[i]]['AssemblyStatus'] = assembly_stat
+        dico[assembly_ID[i]]['Refseq_category'] = Refseq_cat
+        dico[assembly_ID[i]]['FtpPath_Refseq'] = Refseq_path
+        dico[assembly_ID[i]]['FtpPath_Genbank'] = Genbank_path
+        for rank in dic[taxonomy_ID]:
+            dico[assembly_ID[i]][rank] = dic[taxonomy_ID][rank]
 
     assembly_table = pd.DataFrame.from_dict(dico, orient='index')
     return assembly_table
@@ -105,19 +122,39 @@ Entrez.email = snakemake.params['NCBI_email']
 
 Entrez.api_key = snakemake.params['NCBI_key']
 
-complete_or_not=snakemake.params['complete_assemblies']
+comp=snakemake.params['comp']
 
-print(complete_or_not)
+ref=snakemake.params['ref']
 
-print(snakemake.wildcards.entry)
+rep=snakemake.params['rep']
+
+met=snakemake.params['met']
+
+gb=snakemake.params['gb']
+
+rs=snakemake.params['rs']
+
 
 taxid=taxid_find(snakemake.wildcards.entry)
 
 
-print(taxid)
-assemblies=search_assemblies(taxid,complete=complete_or_not)
-tb=generate_table(assemblies)
-print(snakemake.output[0])
-tb.to_csv(snakemake.output[0],sep='\t')
+assemblies_found=search_assemblies(taxid,Genbank=gb,Refseq=rs,complete=comp,
+                                   reference=ref,representative=rep,exclude_metagenomes=met)
+
+if len(assemblies_found)>300:
+    assemblies_chunks=_chunks(assemblies_found,300)#Divide assembly lists by chunks of 300 if more than 300 found
+    table_chunks=[]
+    for n,chunks in enumerate(assemblies_chunks):
+        print(n)
+        tb=generate_table(chunks)
+        table_chunks.append(tb)
+        #time.sleep(1)
+    all_tb = pd.concat(table_chunks,sort=False)
+else:
+    all_tb=generate_table(assemblies_found)
+
+all_tb.index.name='AssemblyID'
+
+all_tb.to_csv(snakemake.output[0],sep='\t')
 
 
