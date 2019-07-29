@@ -43,9 +43,6 @@ checkpoint combine_assembly_tables:
     script: 'combine_tables.py'
 
 
-
-
-
 rule dl_assemblies:
     conda: '../envs/Assembly_finder.yml'
 
@@ -56,3 +53,14 @@ rule dl_assemblies:
     params: NCBI_email = config['NCBI_email']
 
     script: 'dl.py'
+
+
+rule unzip_assemblies:
+    input:
+        'assembly_gz/{sample}.fna.gz'
+    output:
+        'assembly_gz/{sample}.fna'
+    shell:
+        """
+        gzip -d {input[0]}
+        """

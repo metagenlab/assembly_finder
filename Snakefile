@@ -11,4 +11,4 @@ rule all:
     input: parse_summary_tb
 
 include: 'rules/find_assemblies.rules'
-
+include: 'rules/merge_fasta.rules'
