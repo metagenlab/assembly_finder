@@ -19,14 +19,14 @@ def taxid_find(name_input):
 
     except ValueError:
         print('Query is not a taxID\nSearching for TaxID')
-        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList']
+        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList'][0]
         if len(list(taxid)) == 1:
             print('One TaxID:%s found' % taxid[0])
         if len(list(taxid)) > 1:
             print('%sTaxIDfound, change query (taking first TaxID)' % len(list(taxid)))
         if len(list(taxid)) == 0:
             print('\nERROR: TaxID not found! \nChange search term!')
-    return taxid[0]
+    return taxid
 
 
 def search_assemblies(TaxID, Genbank=False, Refseq=True,
