@@ -1,4 +1,4 @@
-input_table_path: '/media/data/2019_Farid/assembly_finder_test/input_table.tsv'
+input_table_path: '/home/master_students/bin/assembly_finder/input_table.tsv'
 
 NCBI_key: 'd50e3b721745c1b0fa064bf00ff9a003fc08'
 

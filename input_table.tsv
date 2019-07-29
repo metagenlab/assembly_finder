@@ -1,14 +1,21 @@
 UserInputNames	nb_genomes
-Pseudomonas	5
-Staphylococcus	4
-Homo sapiens	1
-Human rhinovirus A	1
-Influenza A virus	5
-respiratory syncytial virus	1
-Human coronavirus	1
-Respirovirus	1
-human adenovirus	1
-mus musculus	1
-1813735	1
-114185	1
-Streptococcus	3
+Acinetobacter baumannii (ATCC 17978)	1
+Actinomyces odontolyticus (ATCC 17982)	1
+Bacillus cereus (ATCC 10987)	1
+Bacteroides vulgatus (ATCC 8482)	1
+Bifidobacterium adolescentis (ATCC 15703)	1
+Clostridium beijerinckii (ATCC 35702)	1
+Cutibacterium acnes (ATCC 11828)	1
+Deinococcus radiodurans (ATCC BAAð816)	1
+Enterococcus faecalis (ATCC 47077)	1
+Escherichia coli (ATCC 700926)	1
+Helicobacter pylori (ATCC 700392)	1
+Lactobacillus gasseri (ATCC 33323)	1
+Neisseria meningitidis (ATCC BAAð335)	1
+Porphyromonas gingivalis (ATCC 33277)	1
+Pseudomonas aeruginosa (ATCC 9027)	1
+Rhodobacter sphaeroides (ATCC 17029)	1
+Staphylococcus aureus (ATCC BAAð1556)	1
+Staphylococcus epidermidis (ATCC 12228)	1
+Streptococcus agalactiae (ATCC BAAð611)	1
+Streptococcus mutans (ATCC 700610)	1
