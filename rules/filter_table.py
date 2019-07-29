@@ -31,7 +31,7 @@ Main
 '''
 
 nb_assemblies=pd.read_csv(snakemake.params['tb_path'],
-                          delimiter='\t',index_col=0).loc[snakemake.wildcards.entry]['nb_genomes']
+                          delimiter='\t',index_col=0).loc[int(snakemake.wildcards.entry)]['nb_genomes']
 
 tb=pd.read_csv(snakemake.input[0],delimiter='\t')
 filtered_table=select_assemblies(tb,nb=nb_assemblies,rank_to_select=snakemake.params['rank_filter'])

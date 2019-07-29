@@ -56,11 +56,14 @@ rule dl_assemblies:
 
 
 rule unzip_assemblies:
+    conda :
+        '../envs/Assembly_finder.yml'
     input:
         'assembly_gz/{sample}.fna.gz'
     output:
         'assembly_gz/{sample}.fna'
     shell:
-        """
-        gzip -d {input[0]}
-        """
+        '''
+        gzip -d {input[0]} 
+        cp {input[0]} {output[0]}        
+        '''

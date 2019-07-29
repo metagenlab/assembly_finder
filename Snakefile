@@ -4,6 +4,7 @@ def parse_summary_tb(wildcards):
     tb=pd.read_csv(checkpoint_output,delimiter='\t')
     filenames=tb['AssemblyNames']
     expd=expand('assembly_gz/{sample}.fna.gz',sample=filenames)
+    print(expd)
     return expd
 
 
