@@ -42,10 +42,6 @@ checkpoint combine_assembly_tables:
 
     script: 'combine_tables.py'
 
-
-
-
-
 rule dl_assemblies:
     conda: '../envs/Assembly_finder.yml'
 
