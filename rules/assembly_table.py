@@ -23,7 +23,7 @@ def taxid_find(name_input):
 
     except ValueError:
         print('Query is not a taxID\nSearching for TaxID (might get more than one hit)')
-        taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[Name Tokens]'%name_input, retmax=100))['IdList']
+        taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[all Names]'%name_input, retmax=100))['IdList']
         if len(taxid_list) == 1:
             print('One TaxID:{0} found'.format(taxid_list[0]))
             taxid = taxid_list[0]

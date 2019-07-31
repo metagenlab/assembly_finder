@@ -5,7 +5,7 @@ logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
 print = logger.info
 
 import pandas as pd
-def select_assemblies(table, nb=5, rank_to_select='None'):
+def select_assemblies(table, nb=1, rank_to_select='None'):
 
     fact_table = table.replace(['reference genome', 'representative genome', 'Complete Genome', 'Chromosome',
                                     'Scaffold','Contig','na'], [0, 1, 2, 3, 4, 5, 6])
@@ -27,9 +27,13 @@ def select_assemblies(table, nb=5, rank_to_select='None'):
         if len(unique_list)==0:
             print('{0} is not a target rank'.format(rank_to_select))
     else :
-        print('No filter specified, sorting assembly status and Refseq category')
+        print('No taxonomic rank specified, sorting according to assembly status and Refseq category')
 
-    sorted_table = sorted_table[0:nb]
+    if len(sorted_table)>=nb:
+        print('Selecting {0} sorted assemblies out of {1}'.format(nb,len(sorted_table)))
+        sorted_table = sorted_table[0:nb]
+    if len(sorted_table)<nb:
+        print('Found less than {0} assemblies in total, returning {1} instead'.format(nb,len(sorted_table)))
     return sorted_table
 
 '''
