@@ -23,17 +23,17 @@ def taxid_find(name_input):
 
     except ValueError:
         print('Query is not a taxID\nSearching for TaxID (might get more than one hit)')
-        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[Name Tokens]'%name_input, retmax=100))['IdList']
-        if len(taxid) == 1:
-            print('One TaxID:{0} found'.format(taxid[0]))
-
-        if len(taxid) > 1:
-            print('{0} TaxIDfound, change query (taking first TaxID)'.format(len(taxid)))
-
-        if len(taxid) == 0:
+        taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[Name Tokens]'%name_input, retmax=100))['IdList']
+        if len(taxid_list) == 1:
+            print('One TaxID:{0} found'.format(taxid_list[0]))
+            taxid = taxid_list[0]
+        if len(taxid_list) > 1:
+            print('{0} TaxIDfound, change query (taking first TaxID)'.format(len(taxid_list)))
+            taxid = taxid_list[0]
+        if len(taxid_list) == 0:
             print('\nERROR: TaxID not found! \nChange search term!')
             taxid=None
-        taxid = taxid[0]
+
     return taxid
 
 
@@ -63,7 +63,7 @@ def search_assemblies(TaxID, Genbank=False, Refseq=True,
     assembly_dic = Entrez.read(Entrez.esearch(db='assembly', term=search_term % TaxID, retmax=100000))['IdList']
 
     print('\nFound %i assemblies' % len(assembly_dic))
-    #print(assembly_dic)
+
 
     if len(assembly_dic) == 0:
         assembly_dic = None
