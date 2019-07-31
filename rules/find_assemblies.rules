@@ -27,10 +27,8 @@ import pandas as pd
 
 def parse_table(input):
     table=pd.read_csv(input,delimiter='\t')
-    print(table)
     names= list(table['UserInputNames'])
     expd=expand('tables/filtered/{entry}.tsv',entry=names)
-    print(expd)
     return expd
 
 checkpoint combine_assembly_tables:

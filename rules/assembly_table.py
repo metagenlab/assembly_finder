@@ -1,9 +1,13 @@
 
 from Bio import Entrez
-#import random as rd
-import pandas as pd
-import time
 
+import pandas as pd
+
+import logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler('assembly_table.log', 'a'))
+print = logger.info
 
 def taxid_find(name_input):
     '''
@@ -11,7 +15,7 @@ def taxid_find(name_input):
     returns dictionary with taxid found",
     '''
 
-    print('\n> Searching for taxIDs', name_input, '...')
+    print('\n> Searching for taxIDs {0} ...'.format(name_input))
     try:
         int(name_input)
         print('Query is a taxID')
@@ -19,13 +23,16 @@ def taxid_find(name_input):
 
     except ValueError:
         print('Query is not a taxID\nSearching for TaxID')
-        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList'][0]
-        if len(list(taxid)) == 1:
-            print('One TaxID:%s found' % taxid[0])
-        if len(list(taxid)) > 1:
-            print('%sTaxIDfound, change query (taking first TaxID)' % len(list(taxid)))
-        if len(list(taxid)) == 0:
+        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList']
+        if len(taxid) == 1:
+            print('One TaxID:{0} found'.format(taxid[0]))
+
+        if len(taxid) > 1:
+            print('{0}TaxIDfound, change query (taking first TaxID)'.format(len(taxid)))
+
+        if len(taxid) == 0:
             print('\nERROR: TaxID not found! \nChange search term!')
+        taxid = taxid[0]
     return taxid
 
 

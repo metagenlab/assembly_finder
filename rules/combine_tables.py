@@ -13,5 +13,4 @@ for i in links:
     splt=i.split('/')
     filenames.append(splt[len(splt)-1])
 df.insert(loc=0,column='AssemblyNames',value=filenames)
-print(df)
 df.to_csv('table_combined.tsv',sep='\t',index=False)

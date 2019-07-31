@@ -1,3 +1,8 @@
+import logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler('filter_table.log', 'a'))
+print = logger.info
 
 import pandas as pd
 def select_assemblies(table, nb=5, rank_to_select='No'):
