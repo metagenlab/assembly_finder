@@ -9,6 +9,7 @@ rule generate_assembly_tables:
           rep=config['representative_assemblies'],met=config['exclude_from_metagenomes'],
           gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies']
 
+    resources: ncbi_requests=1
     script: 'assembly_table.py'
 
 
