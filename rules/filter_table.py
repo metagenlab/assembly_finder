@@ -12,7 +12,8 @@ def select_assemblies(table, nb=5, rank_to_select='None'):
     sorted_table = fact_table.sort_values(['Refseq_category', 'AssemblyStatus'], ascending=[True, True])
 
     if rank_to_select != 'None':
-        print('Filtering according to %s,%s and %s' % (rank_to_select, 'assembly status', 'category'))
+        print('Filtering according to {0}, sorting {1} and {2}'.format(rank_to_select,'assembly status',
+                                                                       'Refseq category'))
         select_index = []
         unique_list = list(set(sorted_table[rank_to_select]))
 
@@ -22,11 +23,11 @@ def select_assemblies(table, nb=5, rank_to_select='None'):
                 #randomly select one assembly ID for each unique selected rank (species for example)
             sorted_table=sorted_table.loc[select_index, :]
         if len(unique_list)==1:
-            print('Same %s for all assemblies, no filtering'%rank_to_select)
+            print('Same {0} for all assemblies, no filtering'.format(rank_to_select))
         if len(unique_list)==0:
-            print('%s is not a target rank'%rank_to_select)
+            print('{0} is not a target rank'.format(rank_to_select))
     else :
-        print('No filter specified, selecting according to assembly status and category')
+        print('No filter specified, sorting assembly status and Refseq category')
 
     sorted_table = sorted_table[0:nb]
     return sorted_table
