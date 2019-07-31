@@ -5,13 +5,13 @@ logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
 print = logger.info
 
 import pandas as pd
-def select_assemblies(table, nb=5, rank_to_select='No'):
+def select_assemblies(table, nb=5, rank_to_select='None'):
 
     fact_table = table.replace(['reference genome', 'representative genome', 'Complete Genome', 'Chromosome',
                                     'Scaffold','Contig','na'], [0, 1, 2, 3, 4, 5, 6])
     sorted_table = fact_table.sort_values(['Refseq_category', 'AssemblyStatus'], ascending=[True, True])
 
-    if rank_to_select != 'No':
+    if rank_to_select != 'None':
         print('Filtering according to %s,%s and %s' % (rank_to_select, 'assembly status', 'category'))
         select_index = []
         unique_list = list(set(sorted_table[rank_to_select]))

@@ -22,16 +22,17 @@ def taxid_find(name_input):
         taxid = name_input
 
     except ValueError:
-        print('Query is not a taxID\nSearching for TaxID')
-        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term=name_input, retmax=50))['IdList']
+        print('Query is not a taxID\nSearching for TaxID (might get more than one hit)')
+        taxid = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[Name Tokens]'%name_input, retmax=100))['IdList']
         if len(taxid) == 1:
             print('One TaxID:{0} found'.format(taxid[0]))
 
         if len(taxid) > 1:
-            print('{0}TaxIDfound, change query (taking first TaxID)'.format(len(taxid)))
+            print('{0} TaxIDfound, change query (taking first TaxID)'.format(len(taxid)))
 
         if len(taxid) == 0:
             print('\nERROR: TaxID not found! \nChange search term!')
+            taxid=None
         taxid = taxid[0]
     return taxid
 
