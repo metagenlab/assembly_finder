@@ -6,7 +6,7 @@ import pandas as pd
 import logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
-logger.addHandler(logging.FileHandler('assembly_table.log', 'a'))
+logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
 print = logger.info
 
 def taxid_find(name_input):

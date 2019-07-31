@@ -1,7 +1,7 @@
 import logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
-logger.addHandler(logging.FileHandler('filter_table.log', 'a'))
+logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
 print = logger.info
 
 import pandas as pd
