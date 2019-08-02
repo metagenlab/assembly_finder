@@ -10,6 +10,9 @@ rule generate_assembly_tables:
           gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies']
 
     resources: ncbi_requests=1
+
+    log: 'logs/not_filtered/{entry}.log'
+
     script: 'assembly_table.py'
 
 
@@ -21,6 +24,8 @@ rule filter_assembly_tables:
     output: 'tables/filtered/{entry}.tsv'
 
     params: tb_path=config["input_table_path"], rank_filter=config['Rank_to_filter_by']
+
+    log: 'logs/filtered/{entry}.log'
 
     script: 'filter_table.py'
 
@@ -49,5 +54,7 @@ rule dl_assemblies:
     output: 'assembly_gz/{sample}.fna.gz'
 
     params: NCBI_email = config['NCBI_email']
+
+    log: 'logs/assembly_gz/{sample}.log'
 
     script: 'dl.py'

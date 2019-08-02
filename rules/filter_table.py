@@ -1,8 +1,6 @@
 import logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger()
-logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
-print = logger.info
+
+logging.basicConfig(format='%(asctime)s %(message)s',filename=snakemake.log[0], level=logging.DEBUG)
 
 import pandas as pd
 def select_assemblies(table, nb=1, rank_to_select='None'):
@@ -12,7 +10,7 @@ def select_assemblies(table, nb=1, rank_to_select='None'):
     sorted_table = fact_table.sort_values(['Refseq_category', 'AssemblyStatus'], ascending=[True, True])
 
     if rank_to_select != 'None':
-        print('Filtering according to {0}, sorting {1} and {2}'.format(rank_to_select,'assembly status',
+        logging.info('Filtering according to {0}, sorting {1} and {2}'.format(rank_to_select,'assembly status',
                                                                        'Refseq category'))
         select_index = []
         unique_list = list(set(sorted_table[rank_to_select]))
@@ -23,17 +21,17 @@ def select_assemblies(table, nb=1, rank_to_select='None'):
                 #randomly select one assembly ID for each unique selected rank (species for example)
             sorted_table=sorted_table.loc[select_index, :]
         if len(unique_list)==1:
-            print('Same {0} for all assemblies, no filtering'.format(rank_to_select))
+            logging.info('Same {0} for all assemblies, no filtering'.format(rank_to_select))
         if len(unique_list)==0:
-            print('{0} is not a target rank'.format(rank_to_select))
+            logging.error('{0} is not a target rank'.format(rank_to_select))
     else :
-        print('No taxonomic rank specified, sorting according to assembly status and Refseq category')
+        logging.info('No taxonomic rank specified, sorting according to assembly status and Refseq category')
 
     if len(sorted_table)>=nb:
-        print('Selecting {0} sorted assemblies out of {1}'.format(nb,len(sorted_table)))
+        logging.info('Selecting {0} sorted assemblies out of {1}'.format(nb,len(sorted_table)))
         sorted_table = sorted_table[0:nb]
     if len(sorted_table)<nb:
-        print('Found less than {0} assemblies in total, returning {1} instead'.format(nb,len(sorted_table)))
+        logging.warning('Found less than {0} assemblies in total, returning {1} instead'.format(nb,len(sorted_table)))
     return sorted_table
 
 '''

@@ -4,10 +4,8 @@ from Bio import Entrez
 import pandas as pd
 
 import logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger()
-logger.addHandler(logging.FileHandler('assembly_finder.log', 'a'))
-print = logger.info
+
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',datefmt='%d %b %Y %H:%M:%S',filename=snakemake.log[0], level=logging.DEBUG)
 
 def taxid_find(name_input):
     '''
@@ -15,31 +13,31 @@ def taxid_find(name_input):
     returns dictionary with taxid found",
     '''
 
-    print('\n> Searching for taxIDs {0} ...'.format(name_input))
+    logging.info('> Searching for taxIDs {0} ...'.format(name_input))
     try:
         int(name_input)
-        print('Query is a taxID')
+        logging.info('Query is a taxID')
         taxid = name_input
 
     except ValueError:
-        print('Query is not a taxID\nSearching for TaxID (might get more than one hit)')
-        taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term='%s[all Names]'%name_input, retmax=100))['IdList']
+        logging.warning('Query is not a taxID, enter taxID to be more precise')
+        logging.info('Search term: {0}[all Names]'.format(name_input))
+        taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term='{0}[all Names]'.format(name_input), retmax=100))['IdList']
         if len(taxid_list) == 1:
-            print('One TaxID:{0} found'.format(taxid_list[0]))
             taxid = taxid_list[0]
+            logging.info('TaxID:{0} found'.format(taxid))
         if len(taxid_list) > 1:
-            print('{0} TaxIDfound, change query (taking first TaxID)'.format(len(taxid_list)))
             taxid = taxid_list[0]
+            logging.warning('{0} TaxIDfound, change query (taking first one : {1})'.format(len(taxid_list)), taxid)
         if len(taxid_list) == 0:
-            print('\nERROR: TaxID not found! \nChange search term!')
             taxid=None
+            logging.error('TaxID not found! Change search term!')
 
     return taxid
 
-
 def search_assemblies(TaxID, Genbank=False, Refseq=True,
                       representative=True, reference=True, complete=True, exclude_metagenomes=True):
-    search_term = 'txid%s[Organism:exp] AND (latest[filter]) AND (all[filter] NOT "derived from surveillance project"[filter] AND all[filter] NOT anomalous[filter])) '
+    search_term = 'txid{0}[Organism:exp] AND (latest[filter]) AND (all[filter] NOT "derived from surveillance project"[filter] AND all[filter] NOT anomalous[filter])) '
 
     if Refseq and not Genbank:
         search_term += 'AND("latest refseq"[filter]) '
@@ -58,16 +56,15 @@ def search_assemblies(TaxID, Genbank=False, Refseq=True,
     if exclude_metagenomes:
         search_term += 'AND (all[filter] NOT "derived from metagenome"[filter])'
 
-    print(search_term % TaxID)
+    logging.info('> Search term: {0}'.format(search_term.format(TaxID)))
 
-    assembly_dic = Entrez.read(Entrez.esearch(db='assembly', term=search_term % TaxID, retmax=100000))['IdList']
+    assembly_dic = Entrez.read(Entrez.esearch(db='assembly', term=search_term.format(TaxID), retmax=100000))['IdList']
 
-    print('\nFound %i assemblies' % len(assembly_dic))
-
+    logging.info('Found {0} assemblies'.format(len(assembly_dic)))
 
     if len(assembly_dic) == 0:
         assembly_dic = None
-        print('\nError: change search term')
+        logging.error('No assemblies found ! Change search term!')
 
     return assembly_dic
 
@@ -151,9 +148,10 @@ assemblies_found=search_assemblies(taxid,Genbank=gb,Refseq=rs,complete=comp,
 
 if len(assemblies_found)>300:
     assemblies_chunks=_chunks(assemblies_found,300)#Divide assembly lists by chunks of 300 if more than 300 found
+    logging.info('Parsing assemblies by chucks of 300')
     table_chunks=[]
     for n,chunks in enumerate(assemblies_chunks):
-        print(n)
+        logging.info('chunk n°{0}'.format(n))
         tb=generate_table(chunks)
         table_chunks.append(tb)
         #time.sleep(1)
