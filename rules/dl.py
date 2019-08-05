@@ -1,6 +1,6 @@
 import logging
 
-logging.basicConfig(format='%(asctime)s %(message)s',filename=snakemake.log[0], level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',datefmt='%d %b %Y %H:%M:%S',filename=snakemake.log[0], level=logging.DEBUG)
 
 import os
 import ftplib
