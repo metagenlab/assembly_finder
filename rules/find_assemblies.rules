@@ -55,6 +55,6 @@ rule dl_assemblies:
 
     params: NCBI_email = config['NCBI_email']
 
-    log: 'logs/assembly_gz/{sample}.log'
+    log: 'logs/downloads/{sample}.log'
 
     script: 'dl.py'
