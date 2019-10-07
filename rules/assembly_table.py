@@ -112,6 +112,7 @@ def generate_table(assembly_list):
         dico[assembly_ID[i]]['Refseq_category'] = Refseq_cat
         dico[assembly_ID[i]]['FtpPath_Refseq'] = Refseq_path
         dico[assembly_ID[i]]['FtpPath_Genbank'] = Genbank_path
+        dico[assembly_ID[i]]['Taxid'] = taxonomy_ID
         for rank in dic[taxonomy_ID]:
             dico[assembly_ID[i]][rank] = dic[taxonomy_ID][rank]
 
