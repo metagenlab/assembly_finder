@@ -5,8 +5,8 @@ Main
 import pandas as pd
 df_list=[pd.read_csv(i,delimiter='\t') for i in snakemake.input]
 df=pd.concat(df_list,sort=False)
-df=df.replace([0, 1, 2, 3, 4, 5, 6],['reference genome', 'representative genome','Complete Genome',
-                                     'Chromosome','Scaffold','Contig','na'])
+df=df.replace({'Refseq_category':{0:'reference genome',1:'representative genome',6:'na'},'AssemblyStatus':{2:'Complete Genome',3:
+                                     'Chromosome',4:'Scaffold',5:'Contig',6:'na'}})
 links=list(df['FtpPath_Genbank'])
 filenames=[]
 for i in links:
