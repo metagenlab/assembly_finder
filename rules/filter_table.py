@@ -5,16 +5,15 @@ logging.basicConfig(format='%(asctime)s %(message)s',filename=snakemake.log[0], 
 import pandas as pd
 def select_assemblies(table, nb=1, rank_to_select='None'):
 
-    fact_table = table.replace(['reference genome', 'representative genome', 'Complete Genome', 'Chromosome',
-                                    'Scaffold','Contig','na'], [0, 1, 2, 3, 4, 5, 6])
-    sorted_table = fact_table.sort_values(['Refseq_category', 'AssemblyStatus'], ascending=[True, True])
+    fact_table = table.replace({'Refseq_category':{'reference genome':0, 'representative genome':1,'na':6},'AssemblyStatus':{'Complete Genome':2,'Chromosome':3,
+                                    'Scaffold':4,'Contig':5,'na':6}})
+    sorted_table = fact_table.sort_values(['Refseq_category', 'AssemblyStatus', 'Contig_count', 'Release_date_Genbank'],
+                                          ascending=[True, True, True, False])
 
     if rank_to_select != 'None':
-        logging.info('Filtering according to {0}, sorting {1} and {2}'.format(rank_to_select,'assembly status',
-                                                                       'Refseq category'))
+        logging.info(f'Filtering according to {rank_to_select}, Refseq categories, assembly status, contig count and release date')
         select_index = []
         unique_list = list(set(sorted_table[rank_to_select]))
-
         if len(unique_list) > 1:
             for i in unique_list:
                 select_index.append(sorted_table[sorted_table[rank_to_select] == i].sample(1).index[0])
@@ -25,7 +24,7 @@ def select_assemblies(table, nb=1, rank_to_select='None'):
         if len(unique_list)==0:
             logging.error('{0} is not a target rank'.format(rank_to_select))
     else :
-        logging.info('No taxonomic rank specified, sorting according to assembly status and Refseq category')
+        logging.info('No taxonomic rank specified, sorting according to Refseq category, assembly status, contig count and release date')
 
     if len(sorted_table)>=nb:
         logging.info('Selecting {0} sorted assemblies out of {1}'.format(nb,len(sorted_table)))
