@@ -1,10 +1,10 @@
 ###########assembly finder config
 
-input_table_path: 'input_table.tsv'
+input_table_path: path/to/input_table
 
-NCBI_key: 'd50e3b721745c1b0fa064bf00ff9a003fc08'
+NCBI_key: your_ncbi_api_key
 
-NCBI_email: 'farid.chaabane@unil.ch'
+NCBI_email: your_ncbi_email
 
 ##Parameters for search_assemblies function
 #This set of parameters is to search all possible assemblies
