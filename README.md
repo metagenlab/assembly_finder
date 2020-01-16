@@ -50,11 +50,11 @@ Refseq_assemblies: True
 ##Filtering function parameter
 Rank_to_filter_by: 'None'
 ```
-####E-utilities parameters
+#### E-utilities parameters
 Assembly finder uses NCBI's Entrez utilities to search for genomes in the assembly database. Thus, the user is required to create an NCBI account with an API key to avoid IP address bans and have higher requests rate per second  (Go to http://www.ncbi.nlm.nih.gov/account/ to sign-up).
-####Search filter parameters
+#### Search filter parameters
 The user can expand or narrow down the set of assemblies found per query by modifying search filters. For example, parameters shown above include all Refseq and Genbank genomes except assemblies from metagenomes.
-####Filtering function parameter
+#### Filtering function parameter
 For each query, assembly informations are retrieved and stored in tables which are then sorted according to Refseq category, assembly status, contig count and Genbank release date by a filtering function.
 The filtering function can then be set to keep one assembly per taxonomic rank. For example, after ranking the best assemblies at the top of the table, the user can choose one assembly per species by setting Rank_to_filter_by to 'species'. 
 By default, no specific taxonomic rank is used to select assemblies.
