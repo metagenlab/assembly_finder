@@ -7,7 +7,7 @@ def parse_summary_tb(wildcards):
     return expd
 
 
-rule all:
+rule all_download:
     input: parse_summary_tb
 
 include: 'rules/find_assemblies.rules'
