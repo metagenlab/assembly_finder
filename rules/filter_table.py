@@ -3,7 +3,7 @@ import logging
 logging.basicConfig(format='%(asctime)s %(message)s',filename=snakemake.log[0], level=logging.DEBUG)
 
 import pandas as pd
-def select_assemblies(table, nb=1, rank_to_select='None'):
+def select_assemblies(table, nb, rank_to_select='None'):
 
     fact_table = table.replace({'Refseq_category':{'reference genome':0, 'representative genome':1,'na':6},'AssemblyStatus':{'Complete Genome':2,'Chromosome':3,
                                     'Scaffold':4,'Contig':5,'na':6}})
@@ -39,7 +39,7 @@ Main
 input_tb=pd.read_csv(snakemake.params['tb_path'],
                           delimiter='\t',index_col=0)
 input_tb.index=input_tb.index.astype('str')
-nb_assemblies=input_tb.loc[snakemake.wildcards.entry]['nb_genomes']
+nb_assemblies=int(input_tb.loc[snakemake.wildcards.entry]['nb_genomes'])
 
 tb=pd.read_csv(snakemake.input[0],delimiter='\t')
 filtered_table=select_assemblies(tb,nb=nb_assemblies,rank_to_select=snakemake.params['rank_filter'])
