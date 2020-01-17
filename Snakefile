@@ -1,4 +1,4 @@
-
+import pandas as pd
 def parse_summary_tb(wildcards):
     checkpoint_output = checkpoints.combine_assembly_tables.get(**wildcards).output[0]
     tb=pd.read_csv(checkpoint_output,delimiter='\t')
