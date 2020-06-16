@@ -72,10 +72,10 @@ def _chunks(l, n):
 
 def generate_table(assembly_list):
     assembly_list=','.join(assembly_list)
-    assembly_tax_link = Entrez.read(Entrez.elink(dbfrom='assembly', db='taxonomy', id=assembly_list))
+    assembly_tax_link = Entrez.read(Entrez.elink(dbfrom='assembly', db='taxonomy', id=assembly_list),validate=False)
     all_taxid = [i['Id'] for i in assembly_tax_link[0]['LinkSetDb'][0]['Link']]
-    taxonomy_summary = Entrez.read(Entrez.efetch(db='taxonomy', id=','.join(all_taxid)))
-    assembly_summary = Entrez.read(Entrez.esummary(db='assembly', id=assembly_list))
+    taxonomy_summary = Entrez.read(Entrez.efetch(db='taxonomy', id=','.join(all_taxid)),validate=False)
+    assembly_summary = Entrez.read(Entrez.esummary(db='assembly', id=assembly_list),validate=False)
 
     target_ranks = ['species', 'genus', 'family', 'order', 'phylum', 'superkingdom']
     dic = {}
