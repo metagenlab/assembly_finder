@@ -1,6 +1,8 @@
 
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
+    
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     output: 'tables/not_filtered/{entry}.tsv'
 
@@ -19,6 +21,8 @@ rule generate_assembly_tables:
 rule filter_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
+
     input: 'tables/not_filtered/{entry}.tsv'
 
     output: 'tables/filtered/{entry}.tsv'
@@ -34,6 +38,8 @@ entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNa
 checkpoint combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
+
     input: expand('tables/filtered/{entry}.tsv',entry=entries)
 
     output: 'table_combined.tsv'
@@ -42,6 +48,8 @@ checkpoint combine_assembly_tables:
 
 rule download_assemblies:
     conda: '../envs/Assembly_finder.yml'
+
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     input: 'table_combined.tsv'
 
