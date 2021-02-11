@@ -106,12 +106,15 @@ def generate_table(assembly_list):
         Genbank_path = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['FtpPath_GenBank']
         contig_count = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['Meta'].split(
             ' <Stat category="contig_count" sequence_tag="all">')[1].split('</Stat>')[0]
+        assembly_length = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['Meta'].split(
+            ' <Stat category="total_length" sequence_tag="all">')[1].split('</Stat>')[0]
         Genbank_release_date = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['AsmReleaseDate_GenBank']
         assembly_stat = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['AssemblyStatus']
         Refseq_path = assembly_summary['DocumentSummarySet']['DocumentSummary'][i]['FtpPath_RefSeq']
         dico[assembly_ID[i]]['AssemblyStatus'] = assembly_stat
         dico[assembly_ID[i]]['Refseq_category'] = Refseq_cat
         dico[assembly_ID[i]]['Contig_count'] = contig_count
+        dico[assembly_ID[i]]['Assembly_length'] = assembly_length
         dico[assembly_ID[i]]['Release_date_Genbank'] = Genbank_release_date
         dico[assembly_ID[i]]['FtpPath_Refseq'] = Refseq_path
         dico[assembly_ID[i]]['FtpPath_Genbank'] = Genbank_path
