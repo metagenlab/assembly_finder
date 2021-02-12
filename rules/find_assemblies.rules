@@ -45,10 +45,10 @@ rule download_assemblies:
 
     input: 'table_combined.tsv'
 
-    output: 'assembly_gz/{sample}.fna.gz'
+    output: 'assembly_gz/{assemblyname}.fna.gz'
 
     params: NCBI_email = config['NCBI_email']
 
-    log: 'logs/downloads/{sample}.log'
+    log: 'logs/downloads/{assemblyname}.log'
 
     script: 'dl.py'
