@@ -9,7 +9,7 @@ import pandas as pd
 
 def dl_fna_ftp(ftp_login,input_table):
         table=pd.read_csv(input_table,sep='\t',index_col=0)
-        full_path=table.loc[snakemake.wildcards.sample]['FtpPath_Genbank']
+        full_path=table.loc[snakemake.wildcards.assemblyname]['FtpPath_Genbank']
         split_path=full_path.split('/')
         redundant_name=split_path[-1]
         path=full_path.split('ftp://ftp.ncbi.nlm.nih.gov/')[1]
