@@ -1,3 +1,4 @@
+import pandas as pd
 
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
@@ -29,21 +30,21 @@ rule filter_assembly_tables:
 
     script: 'filter_table.py'
 
-import pandas as pd
+
 entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
 checkpoint combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
     input: expand('tables/filtered/{entry}.tsv',entry=entries)
 
-    output: 'table_combined.tsv'
+    output: 'assemblies-summary.tsv'
 
     script: 'combine_tables.py'
 
 rule download_assemblies:
     conda: '../envs/Assembly_finder.yml'
 
-    input: 'table_combined.tsv'
+    input: 'assemblies-summary.tsv'
 
     output: 'assembly_gz/{assemblyname}.fna.gz'
 

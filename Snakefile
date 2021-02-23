@@ -6,9 +6,10 @@ def parse_summary_tb(wildcards):
     expd=expand('assembly_gz/{assemblyname}.fna.gz',assemblyname=filenames)
     return expd
 
+include: 'rules/find_assemblies.rules'
 
 rule all_download:
     input: parse_summary_tb
 
-include: 'rules/find_assemblies.rules'
+
 
