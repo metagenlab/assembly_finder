@@ -18,4 +18,4 @@ for i in links:
     splt=i.split('/')
     filenames.append(splt[len(splt)-1])
 df.insert(loc=0,column='AssemblyNames',value=filenames)
-df.to_csv('table_combined.tsv',sep='\t',index=False)
+df.to_csv(snakemake.output[0],sep='\t',index=False)
