@@ -1,5 +1,5 @@
 import pandas as pd
-
+community_name=config['community_name']
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
@@ -37,14 +37,14 @@ checkpoint combine_assembly_tables:
 
     input: expand('tables/filtered/{entry}.tsv',entry=entries)
 
-    output: 'assemblies-summary.tsv'
+    output: f'{community_name}-assemblies-summary.tsv'
 
     script: 'combine_tables.py'
 
 rule download_assemblies:
     conda: '../envs/Assembly_finder.yml'
 
-    input: 'assemblies-summary.tsv'
+    input: f'{community_name}-assemblies-summary.tsv'
 
     output: 'assembly_gz/{assemblyname}.fna.gz'
 
