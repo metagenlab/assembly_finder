@@ -1,0 +1,4 @@
+channels:
+  - hcc
+dependencies:
+  - aspera-cli = 3.9.1

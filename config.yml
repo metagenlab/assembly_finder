@@ -3,6 +3,7 @@ community_name: metagenome-1
 input_table_path: path/to/input_table
 NCBI_key: your_ncbi_api_key
 NCBI_email: your_ncbi_email
+update_ete3: False
 ##Parameters for search_assemblies function
 #This set of parameters is to search all possible assemblies
 complete_assemblies: False

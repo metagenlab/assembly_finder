@@ -3,7 +3,8 @@ import pandas as pd
 import logging
 from ete3 import NCBITaxa
 ncbi = NCBITaxa()
-ncbi.update_taxonomy_database()
+if snakemake.params.update:
+    ncbi.update_taxonomy_database()
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',datefmt='%d %b %Y %H:%M:%S',
                     filename=snakemake.log[0], level=logging.DEBUG)
 
@@ -45,8 +46,13 @@ def search_assemblies(TaxID, Genbank=False, Refseq=True, representative=True, re
         search_term += 'AND("latest genbank"[filter]) '
     if Genbank and Refseq:
         search_term += 'AND ("latest genbank"[filter] OR "latest refseq"[filter]) '
-    if complete:
+    if complete and not representative and not reference:
         search_term += 'AND ("complete genome"[filter]) '
+    if complete and representative and not reference:
+        search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) '
+    if complete and representative and reference:
+        search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) OR ' \
+                       '("reference genome"[filter]) '
     if representative and not reference:
         search_term += 'AND ("representative genome"[filter]) '
     if reference and not representative:

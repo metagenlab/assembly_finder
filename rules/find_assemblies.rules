@@ -1,5 +1,6 @@
 import pandas as pd
 community_name=config['community_name']
+
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
@@ -8,11 +9,14 @@ rule generate_assembly_tables:
     params: NCBI_key = config['NCBI_key'], NCBI_email = config['NCBI_email'],
           comp=config['complete_assemblies'],ref=config['reference_assemblies'],
           rep=config['representative_assemblies'],met=config['exclude_from_metagenomes'],
-          gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies']
+          gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies'],
+          update=config['update_ete3']
 
     resources: ncbi_requests=1
 
     log: 'logs/not_filtered/{entry}.log'
+
+    benchmark: "benchmark/find-assemblies/{entry}.txt"
 
     script: 'assembly_table.py'
 
@@ -41,15 +45,33 @@ checkpoint combine_assembly_tables:
 
     script: 'combine_tables.py'
 
-rule download_assemblies:
+rule get_ftp_links_list:
     conda: '../envs/Assembly_finder.yml'
 
     input: f'{community_name}-assemblies-summary.tsv'
 
-    output: 'assembly_gz/{assemblyname}.fna.gz'
+    output: f"assembly_gz/{community_name}-ftp-links.txt"
 
-    params: NCBI_email = config['NCBI_email']
+    script: "concat-ftp-links.py"
 
-    log: 'logs/downloads/{assemblyname}.log'
+def filenames(wildcards):
+    f = checkpoints.combine_assembly_tables.get(**wildcards).output[0]
+    assemblynames = pd.read_csv(f,sep='\t')['AssemblyNames']
+    return assemblynames
 
-    script: 'dl.py'
+rule download_assemblies:
+    conda: "../envs/download.yml"
+
+    input: f"assembly_gz/{community_name}-ftp-links.txt"
+
+    output: expand("assembly_gz/{assemblyname}_genomic.fna.gz", assemblyname=lambda wildcards:filenames(wildcards))
+
+    log: f"logs/downloads/{community_name}.log"
+
+    benchmark: f"benchmark/downloads/{community_name}.txt"
+
+    shell:
+        """
+        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
+        --host=ftp.ncbi.nlm.nih.gov --file-list={input} ./assembly_gz &>> {log}
+        """

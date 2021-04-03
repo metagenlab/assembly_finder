@@ -1,15 +1,12 @@
 import pandas as pd
-def parse_summary_tb(wildcards):
-    checkpoint_output = checkpoints.combine_assembly_tables.get(**wildcards).output[0]
-    tb=pd.read_csv(checkpoint_output,delimiter='\t')
-    filenames=tb['AssemblyNames']
-    expd=expand('assembly_gz/{assemblyname}.fna.gz',assemblyname=filenames)
-    return expd
-
 include: 'rules/find_assemblies.rules'
 
+def downloaded_list(wildcards):
+    f = checkpoints.combine_assembly_tables.get(**wildcards).output[0]
+    assemblynames = pd.read_csv(f,sep='\t')['AssemblyNames']
+    return expand("assembly_gz/{assemblyname}_genomic.fna.gz", assemblyname=assemblynames)
+
+community_name=config["community_name"]
 rule all_download:
-    input: parse_summary_tb
-
-
-
+    input: f"{community_name}-assemblies-summary.tsv",
+           downloaded_list
