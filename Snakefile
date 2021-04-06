@@ -1,12 +1,13 @@
-import pandas as pd
+import os
 include: 'rules/find_assemblies.rules'
-
+community_name=config['community_name']
 def downloaded_list(wildcards):
-    f = checkpoints.combine_assembly_tables.get(**wildcards).output[0]
-    assemblynames = pd.read_csv(f,sep='\t')['AssemblyNames']
-    return expand("assembly_gz/{assemblyname}_genomic.fna.gz", assemblyname=assemblynames)
+    checkpoint_output = checkpoints.download_assemblies.get(**wildcards).output[0]
+    directory = '/'.join((checkpoint_output.split('/')[0:2]))
+    return expand(f'assembly_gz/{community_name}/{{i}}_genomic.fna.gz',
+           i=glob_wildcards(os.path.join(directory, '{i}_genomic.fna.gz')).i)
 
-community_name=config["community_name"]
 rule all_download:
     input: f"{community_name}-assemblies-summary.tsv",
-           downloaded_list
+            downloaded_list,
+            f"assembly_gz/{community_name}/{community_name}.done"
