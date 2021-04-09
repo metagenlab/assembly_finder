@@ -4,7 +4,7 @@ FROM continuumio/miniconda3:4.7.12
 ################## METADATA ######################
  
 LABEL base.image="miniconda3:4.7.12"
-LABEL version="v.1.0"
+LABEL version="v.1.1"
 LABEL software="assembly_finder"
 LABEL tags="Genomics"
  
