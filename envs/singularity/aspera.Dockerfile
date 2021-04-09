@@ -24,4 +24,4 @@ RUN conda update conda && \
 RUN conda init bash
 ENTRYPOINT ["/bin/bash"]
 ENV PATH /opt/conda/envs/download/bin:$PATH
-ENV CONDA_PREFIX = "/opt/conda"
+ENV CONDA_PREFIX "/opt/conda/envs/download"
