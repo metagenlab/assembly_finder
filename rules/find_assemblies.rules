@@ -4,7 +4,7 @@ community_name=config['community_name']
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
     
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     output: 'tables/not_filtered/{entry}.tsv'
 
@@ -26,7 +26,7 @@ rule generate_assembly_tables:
 rule filter_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     input: 'tables/not_filtered/{entry}.tsv'
 
@@ -43,7 +43,7 @@ entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNa
 rule combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     input: expand('tables/filtered/{entry}.tsv',entry=entries)
 
@@ -54,7 +54,7 @@ rule combine_assembly_tables:
 rule get_ftp_links_list:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     input: f'{community_name}-assemblies-summary.tsv'
 
