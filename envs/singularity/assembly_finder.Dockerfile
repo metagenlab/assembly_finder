@@ -6,8 +6,6 @@ FROM continuumio/miniconda3:4.7.12
 LABEL base.image="miniconda3:4.7.12"
 LABEL version="v.1.0"
 LABEL software="assembly_finder"
-#LABEL software.version="1.0"
-#LABEL description="Cutadapt http://dx.doi.org/10.14806/ej.17.1.200 with Biopython"
 LABEL tags="Genomics"
  
 ################## MAINTAINER ######################

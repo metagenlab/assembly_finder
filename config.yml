@@ -1,28 +1,18 @@
 ###########assembly finder config
-
+community_name: metagenome-1
 input_table_path: path/to/input_table
-
 NCBI_key: your_ncbi_api_key
-
 NCBI_email: your_ncbi_email
-
+update_ete3: False
 ##Parameters for search_assemblies function
 #This set of parameters is to search all possible assemblies
 complete_assemblies: False
-
 reference_assemblies: False
-
 representative_assemblies: False
-
 exclude_from_metagenomes: True
-
 Genbank_assemblies: True
-
 Refseq_assemblies: True
-
-
 ##Parameters for the filtering function
-
 Rank_to_filter_by: 'None'
 #None: Assemblies are ranked by their assembly status (complete or not)
 #and Refseq category (reference, representative ...)

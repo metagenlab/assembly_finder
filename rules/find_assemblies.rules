@@ -1,3 +1,5 @@
+import pandas as pd
+community_name=config['community_name']
 
 rule generate_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
@@ -9,11 +11,14 @@ rule generate_assembly_tables:
     params: NCBI_key = config['NCBI_key'], NCBI_email = config['NCBI_email'],
           comp=config['complete_assemblies'],ref=config['reference_assemblies'],
           rep=config['representative_assemblies'],met=config['exclude_from_metagenomes'],
-          gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies']
+          gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies'],
+          update=config['update_ete3']
 
     resources: ncbi_requests=1
 
     log: 'logs/not_filtered/{entry}.log'
+
+    benchmark: "benchmark/find-assemblies/{entry}.txt"
 
     script: 'assembly_table.py'
 
@@ -33,30 +38,49 @@ rule filter_assembly_tables:
 
     script: 'filter_table.py'
 
-import pandas as pd
+
 entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
-checkpoint combine_assembly_tables:
+rule combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
     container: "docker://metagenlab/assemblyfinder:v.1.0"
 
     input: expand('tables/filtered/{entry}.tsv',entry=entries)
 
-    output: 'table_combined.tsv'
+    output: f'{community_name}-assemblies-summary.tsv'
 
     script: 'combine_tables.py'
 
-rule download_assemblies:
+rule get_ftp_links_list:
     conda: '../envs/Assembly_finder.yml'
 
     container: "docker://metagenlab/assemblyfinder:v.1.0"
 
-    input: 'table_combined.tsv'
+    input: f'{community_name}-assemblies-summary.tsv'
 
-    output: 'assembly_gz/{sample}.fna.gz'
+    output: temp(f"assembly_gz/{community_name}/{community_name}-ftp-links.txt")
 
-    params: NCBI_email = config['NCBI_email']
+    script: "concat-ftp-links.py"
 
-    log: 'logs/downloads/{sample}.log'
 
-    script: 'dl.py'
+checkpoint download_assemblies:
+    conda: "../envs/download.yml"
+
+    container: "docker://metagenlab/aspera-cli-conda:v.1.0"
+
+    input: f"assembly_gz/{community_name}/{community_name}-ftp-links.txt"
+
+    output: f"assembly_gz/{community_name}/{community_name}.done"
+
+    log: f"logs/downloads/{community_name}.log"
+
+    benchmark: f"benchmark/downloads/{community_name}.txt"
+
+    params: f"assembly_gz/{community_name}"
+
+    shell:
+        """
+        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
+        --host=ftp.ncbi.nlm.nih.gov --file-list={input} {params} &>> {log}
+        touch {output}
+        """

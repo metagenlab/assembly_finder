@@ -4,6 +4,6 @@ channels:
  - conda-forge
 
 dependencies:
- - biopython = 1.73
- - pandas = 0.24.2
- - python = 3.7.3
+ - biopython = 1.78
+ - pandas = 1.2.2
+ - ete3 = 3.1.2
