@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 community_name=config['community_name']
 
 rule check_for_update_ete3:
