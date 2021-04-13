@@ -1,55 +1,60 @@
 import pandas as pd
+import os
 community_name=config['community_name']
 
-rule generate_assembly_tables:
+rule check_for_update_ete3:
     conda: '../envs/Assembly_finder.yml'
     
     container: "docker://metagenlab/assemblyfinder:v.1.0"
 
-    output: 'tables/not_filtered/{entry}.tsv'
+    output: temp('ete3-update.txt')
 
-    params: NCBI_key = config['NCBI_key'], NCBI_email = config['NCBI_email'],
-          comp=config['complete_assemblies'],ref=config['reference_assemblies'],
-          rep=config['representative_assemblies'],met=config['exclude_from_metagenomes'],
-          gb=config['Genbank_assemblies'],rs=config['Refseq_assemblies'],
-          update=config['update_ete3']
+    log: 'logs/ete3/update.log'
+
+    params: os.path.join(workflow.basedir,'rules/update-ete3.py')
+
+    shell:
+        """
+        python3 {params} -i ${{HOME}} -o {output} &> {log}
+        """
+
+rule get_assembly_tables:
+    conda: '../envs/Assembly_finder.yml'
+
+    container: "docker://metagenlab/assemblyfinder:v.1.0"
+
+    input: config["input_table_path"],
+           'ete3-update.txt'
+
+    output: all='tables/{entry}-all.tsv',
+            filtered='tables/{entry}-filtered.tsv'
+
+    params: ncbi_key = config['NCBI_key'], ncbi_email = config['NCBI_email'],
+          comp=config['complete_assemblies'], ref=config['reference_assemblies'],
+          rep=config['representative_assemblies'], met=config['exclude_from_metagenomes'],
+          gb=config['Genbank_assemblies'], rs=config['Refseq_assemblies'], rank_filter=config['Rank_to_filter_by']
 
     resources: ncbi_requests=1
 
-    log: 'logs/not_filtered/{entry}.log'
+    log: 'logs/find-assemblies/{entry}.log'
 
     benchmark: "benchmark/find-assemblies/{entry}.txt"
 
     script: 'assembly_table.py'
 
-
-rule filter_assembly_tables:
-    conda: '../envs/Assembly_finder.yml'
-
-    container: "docker://metagenlab/assemblyfinder:v.1.0"
-
-    input: 'tables/not_filtered/{entry}.tsv'
-
-    output: 'tables/filtered/{entry}.tsv'
-
-    params: tb_path=config["input_table_path"], rank_filter=config['Rank_to_filter_by']
-
-    log: 'logs/filtered/{entry}.log'
-
-    script: 'filter_table.py'
-
-
 entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
+
 rule combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
     container: "docker://metagenlab/assemblyfinder:v.1.0"
 
-    input: expand('tables/filtered/{entry}.tsv',entry=entries)
+    input: expand('tables/{entry}-filtered.tsv',entry=entries)
 
     output: f'{community_name}-assemblies-summary.tsv'
 
     script: 'combine_tables.py'
+
 
 rule get_ftp_links_list:
     conda: '../envs/Assembly_finder.yml'
