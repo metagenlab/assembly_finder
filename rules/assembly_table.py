@@ -115,7 +115,6 @@ class AssemblyFinder:
         summaries = assembly_summary['DocumentSummarySet']['DocumentSummary']
         uids = [summ.attributes['uid'] for summ in summaries]
         taxids = [summ['Taxid'] for summ in summaries]
-        names = [summ['AssemblyName'] for summ in summaries]
         cat = [summ['RefSeq_category'] for summ in summaries]
         status = [summ['AssemblyStatus'] for summ in summaries]
         gbftp = [summ['FtpPath_GenBank'] for summ in summaries]
@@ -129,6 +128,7 @@ class AssemblyFinder:
             ' <Stat category="total_length" sequence_tag="all">')[1].split(
             '</Stat>')[0]) for summ in summaries]
         dates = [summ['AsmReleaseDate_GenBank'] for summ in summaries]
+        names = [name.split('/')[-1] for name in gbftp]
         assemblies_tb = pd.DataFrame(list(zip(uids, names, status, cat, contigs, lens, dates, rsftp, gbftp, taxids)),
                                      columns=['AssemblyID', 'AssemblyNames', 'AssemblyStatus', 'Refseq_category',
                                               'Contig_count', 'Assembly_length', 'Release_date_Genbank',
