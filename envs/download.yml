@@ -1,3 +1,4 @@
+name: download
 channels:
   - hcc
 dependencies:

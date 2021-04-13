@@ -1,3 +1,4 @@
+name: Assembly_finder
 channels:
  - bioconda
  - conda-forge
