@@ -11,8 +11,6 @@ rule check_for_update_ete3:
 
     log: 'logs/ete3/update.log'
 
-    params: os.path.join('update-ete3.py')
-
     script: 'update-ete3.py'
 
 rule get_assembly_tables:
