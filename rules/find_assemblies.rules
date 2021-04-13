@@ -9,12 +9,7 @@ rule check_for_update_ete3:
 
     log: 'logs/ete3/update.log'
 
-    params: os.path.join(workflow.basedir,'rules/update-ete3.py')
-
-    shell:
-        """
-        python3 {params} -i ${{HOME}} -o {output} &> {log}
-        """
+    script: 'update-ete3.py'
 
 rule get_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
