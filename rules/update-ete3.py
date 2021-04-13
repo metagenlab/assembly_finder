@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+import sys
+with open(snakemake.log[0], "w") as f:
+    sys.stderr = sys.stdout = f
+
 from argparse import ArgumentParser
 import os
 from datetime import datetime
 from ete3 import NCBITaxa
 ncbi = NCBITaxa()
-
 
 def update_ete3(env, out):
     sqldb = os.path.join(env, '.etetoolkit', 'taxa.sqlite')  # path to ete sql db
