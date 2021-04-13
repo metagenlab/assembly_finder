@@ -5,7 +5,7 @@ community_name=config['community_name']
 rule check_for_update_ete3:
     conda: '../envs/Assembly_finder.yml'
     
-    container: "docker://metagenlab/assemblyfinder:v.1.0"
+    container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     output: temp('ete3-update.txt')
 
@@ -18,7 +18,7 @@ rule check_for_update_ete3:
 rule get_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.0"
+    container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: config["input_table_path"],
            'ete3-update.txt'
@@ -44,7 +44,7 @@ entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNa
 rule combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.0"
+    container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: expand('tables/{entry}-filtered.tsv',entry=entries)
 
@@ -56,7 +56,7 @@ rule combine_assembly_tables:
 rule get_ftp_links_list:
     conda: '../envs/Assembly_finder.yml'
 
-    container: "docker://metagenlab/assemblyfinder:v.1.0"
+    container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: f'{community_name}-assemblies-summary.tsv'
 
