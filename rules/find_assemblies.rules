@@ -1,5 +1,13 @@
 import pandas as pd
 community_name=config['community_name']
+try:
+    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
+    isassembly = False
+    col = 'UserInputNames'
+except KeyError:
+    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['AssemblyNames'])
+    isassembly = True
+    col = 'AssemblyNames'
 
 rule check_for_update_ete3:
     conda: '../envs/Assembly_finder.yml'
@@ -26,7 +34,8 @@ rule get_assembly_tables:
     params: ncbi_key = config['NCBI_key'], ncbi_email = config['NCBI_email'],
           comp=config['complete_assemblies'], ref=config['reference_assemblies'],
           rep=config['representative_assemblies'], met=config['exclude_from_metagenomes'],
-          gb=config['Genbank_assemblies'], rs=config['Refseq_assemblies'], rank_filter=config['Rank_to_filter_by']
+          gb=config['Genbank_assemblies'], rs=config['Refseq_assemblies'], rank_filter=config['Rank_to_filter_by'],
+          assembly = isassembly, column = col
 
     resources: ncbi_requests=1
 
@@ -36,7 +45,6 @@ rule get_assembly_tables:
 
     script: 'assembly_table.py'
 
-entries=list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
 
 rule combine_assembly_tables:
     conda: '../envs/Assembly_finder.yml'

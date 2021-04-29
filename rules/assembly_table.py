@@ -1,21 +1,24 @@
 from Bio import Entrez
 import pandas as pd
+import numpy as np
 import logging
 from ete3 import NCBITaxa
 ncbi = NCBITaxa()
 
 
 class AssemblyFinder:
-    def __init__(self, name, genbank=False, refseq=True, representative=True, reference=True, complete=True,
+    def __init__(self, name, isassembly=False, genbank=False, refseq=True, representative=True, reference=True,
+                 complete=True,
                  exclude_metagenomes=True, nb=1, rank_to_select='None', outf='f.tsv', outnf='nf.tsv'):
         self.name = name
+        self.assembly = isassembly
         self.genbank = genbank
         self.refseq = refseq
         self.representative = representative
         self.reference = reference
         self.complete = complete
         self.exclude_metagenomes = exclude_metagenomes
-        self.target_ranks = ['species', 'genus', 'family', 'order', 'phylum', 'superkingdom']
+        self.target_ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
         self.nchunks = 10000
         self.rank_to_select = rank_to_select
         self.nb = nb
@@ -23,7 +26,47 @@ class AssemblyFinder:
         self.outnf = outnf
         logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%d %b %Y %H:%M:%S',
                             filename=snakemake.log[0], level=logging.DEBUG)
-        logging.captureWarnings(True)
+
+    # Static methods to apply functions on assembly summary table
+    def get_stat(self, meta, stat):
+        """
+        function to extract assembly Meta stats (contig count, assembly length)
+        """
+        return meta.split(f' <Stat category="{stat}" sequence_tag="all">')[1].split('</Stat>')[0]
+
+    def get_names(self, gbftp):
+        """
+        function to extract assembly file names
+        """
+        return gbftp.split('/')[-1]
+
+    def get_lin_tax(self, lineages):
+        """
+        function to extract assembly file names
+        """
+        ranks = ncbi.get_rank(lineages).values()
+        ranknames = ncbi.get_taxid_translator(lineages).values()
+        return dict(zip(ranks, ranknames))
+
+    def replace_nans(self, tb):
+        """
+        function to replace unknown taxonomic rank with placeholder names
+        """
+        tb = tb.replace(np.nan, 'unknown')
+        for i in range(len(tb)):
+            for n, col in enumerate(tb.columns):
+                if tb.iloc[i, n] == 'unknown' and col != 'superkingdom':
+                    tmpname = tb.iloc[i, n - 1] + '_' + col[0]
+                    if col == 'species':
+                        tmpname = tb.iloc[i, n - 1] + '_' + col[0:1]
+                    tb.iloc[i, n] = tmpname
+        return tb
+
+    def chunks(self, ls, n):
+        """
+        function to split assembly list into chunks
+        """
+        return [ls[i:i + n] for i in range(0, len(ls), n)]
 
     def taxid_find(self):
         """
@@ -52,29 +95,32 @@ class AssemblyFinder:
         return taxid
 
     def search_assemblies(self):
-        taxid = self.taxid_find()
-        search_term = f'txid{taxid}[Organism:exp] '
-        if self.refseq and not self.genbank:
-            search_term += 'AND("latest refseq"[filter]) '
-        if self.genbank and not self.refseq:
-            search_term += 'AND("latest genbank"[filter]) '
-        if self.genbank and self.refseq:
-            search_term += 'AND ("latest genbank"[filter] OR "latest refseq"[filter]) '
-        if self.complete and not self.representative and not self.reference:
-            search_term += 'AND ("complete genome"[filter]) '
-        if self.complete and self.representative and not self.reference:
-            search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) '
-        if self.complete and self.representative and self.reference:
-            search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) OR ' \
-                           '("reference genome"[filter]) '
-        if self.representative and not self.reference:
-            search_term += 'AND ("representative genome"[filter]) '
-        if self.reference and not self.representative:
-            search_term += 'AND ("reference genome"[filter]) '
-        if self.representative and self.reference:
-            search_term += 'AND ("representative genome"[filter] OR "reference genome"[filter]) '
-        if self.exclude_metagenomes:
-            search_term += 'AND (all[filter] NOT "derived from metagenome"[filter])'
+        if self.assembly:  # If the input is an assembly name or Gbuid use it as a search term
+            search_term = f'{self.name}'
+        else:  # If not, search ncbi taxonomy for the taxid
+            taxid = self.taxid_find()
+            search_term = f'txid{taxid}[Organism:exp] '
+            if self.refseq and not self.genbank:
+                search_term += 'AND("latest refseq"[filter]) '
+            if self.genbank and not self.refseq:
+                search_term += 'AND("latest genbank"[filter]) '
+            if self.genbank and self.refseq:
+                search_term += 'AND ("latest genbank"[filter] OR "latest refseq"[filter]) '
+            if self.complete and not self.representative and not self.reference:
+                search_term += 'AND ("complete genome"[filter]) '
+            if self.complete and self.representative and not self.reference:
+                search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) '
+            if self.complete and self.representative and self.reference:
+                search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) OR ' \
+                               '("reference genome"[filter]) '
+            if self.representative and not self.reference:
+                search_term += 'AND ("representative genome"[filter]) '
+            if self.reference and not self.representative:
+                search_term += 'AND ("reference genome"[filter]) '
+            if self.representative and self.reference:
+                search_term += 'AND ("representative genome"[filter] OR "reference genome"[filter]) '
+            if self.exclude_metagenomes:
+                search_term += 'AND (all[filter] NOT "derived from metagenome"[filter])'
         assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=500000))['IdList']
         logging.info(f'> Search term: {search_term}')
         logging.info(f'found {len(assembly_ids)} assemblies')
@@ -82,74 +128,47 @@ class AssemblyFinder:
             raise Exception('No assemblies found ! Change search term!')
         return assembly_ids
 
-    def get_lineage(self, txid, target_ranks):
-        tax = {txid: {'Taxid': txid}}
-        lineage = ncbi.get_lineage(txid)
-        names = ncbi.get_taxid_translator(lineage)
-        ranks = ncbi.get_rank(lineage)
-        rank_list = list(ranks.values())
-        name_list = list(names.values())
-        rank2names = dict(zip(rank_list, name_list))
-        for lineage_taxid in lineage:
-            rank = ranks[lineage_taxid]
-            if rank in target_ranks:
-                tax[txid][f"{rank}_taxid"] = str(int(lineage_taxid))
-                for n, rank in enumerate(target_ranks):
-                    if rank in rank2names.keys():
-                        tax[txid][rank] = rank2names[rank]
-                    else:
-                        previous_name = 'root'
-                        for ranks_to_skip in range(1, len(target_ranks) + 1):
-                            previous_rank = target_ranks[n - ranks_to_skip]
-                            if previous_rank in rank2names.keys():
-                                previous_name = rank2names[previous_rank]
-                                break
-                            if previous_rank not in rank2names.keys():
-                                continue
-                        tax[txid][rank] = f'{previous_name}_{rank[0:1]}'
-        return tax
-
-    def generate_table(self, assemblies):
+    def generate_assembly_table(self, assemblies):
         assembly_list = ','.join(assemblies)
         assembly_summary = Entrez.read(Entrez.esummary(db='assembly', id=assembly_list), validate=False)
         summaries = assembly_summary['DocumentSummarySet']['DocumentSummary']
-        uids = [summ.attributes['uid'] for summ in summaries]
-        taxids = [summ['Taxid'] for summ in summaries]
-        cat = [summ['RefSeq_category'] for summ in summaries]
-        status = [summ['AssemblyStatus'] for summ in summaries]
-        gbftp = [summ['FtpPath_GenBank'] for summ in summaries]
-        rsftp = [summ['FtpPath_RefSeq'] for summ in summaries]
-        unique_taxids = list(set(taxids))
-        linear_taxonomy = [self.get_lineage(atxid, self.target_ranks) for atxid in unique_taxids]
-        contigs = [int(summ['Meta'].split(
-            ' <Stat category="contig_count" sequence_tag="all">')[1].split(
-            '</Stat>')[0]) for summ in summaries]
-        lens = [int(summ['Meta'].split(
-            ' <Stat category="total_length" sequence_tag="all">')[1].split(
-            '</Stat>')[0]) for summ in summaries]
-        dates = [summ['AsmReleaseDate_GenBank'] for summ in summaries]
-        names = [name.split('/')[-1] for name in gbftp]
-        assemblies_tb = pd.DataFrame(list(zip(uids, names, status, cat, contigs, lens, dates, rsftp, gbftp, taxids)),
-                                     columns=['AssemblyID', 'AssemblyNames', 'AssemblyStatus', 'Refseq_category',
-                                              'Contig_count', 'Assembly_length', 'Release_date_Genbank',
-                                              'FtpPath_Refseq', 'FtpPath_Genbank', 'Taxid'])
-        assemblies_tax = [pd.DataFrame.from_dict(lint, orient='index') for lint in linear_taxonomy]
-        assemblies_tax = pd.concat(assemblies_tax)
-        merged_table = pd.merge(assemblies_tb, assemblies_tax, on='Taxid')
+        tb = pd.DataFrame.from_records(summaries)
+        columns = ['GbUid', 'RefSeq_category', 'AssemblyStatus', 'FtpPath_GenBank', 'FtpPath_RefSeq', 'Meta',
+                   'AsmReleaseDate_GenBank', 'ContigN50', 'ScaffoldN50', 'Coverage', 'Taxid']
+        subset = tb[columns]
+        lens = subset.apply(lambda x: self.get_stat(x['Meta'], stat='total_length'), axis=1)
+        contigs = subset.apply(lambda x: self.get_stat(x['Meta'], stat='contig_count'), axis=1)
+        subset.insert(loc=subset.shape[1] - 1, value=lens, column='Assembly_length')
+        subset.insert(loc=subset.shape[1] - 1, value=contigs, column='Contig_count')
+        subset.insert(loc=1, value=subset['FtpPath_GenBank'].apply(self.get_names), column='AssemblyNames')
+        subset = subset.drop('Meta', axis=1)
+        return subset
+
+    def add_lineage(self, assembly_tb):
+        unique_taxids = list(set(assembly_tb['Taxid']))
+        taxid2lineage = ncbi.get_lineage_translator(unique_taxids)
+        tax = {taxid: self.get_lin_tax(lineage) for taxid, lineage in taxid2lineage.items()}
+        lineage_tb = pd.DataFrame.from_dict(tax, orient='index')
+        lineage_tb.index.set_names('Taxid', inplace=True)
+        lineage_tb.reset_index(inplace=True)
+        ordered_ranks = self.target_ranks[::-1]
+        ordered_ranks.append('Taxid')
+        lin_cols = list(lineage_tb.columns)
+        all_cols = list(set().union(lin_cols, ordered_ranks))
+        lineage_tb = lineage_tb.reindex(columns=all_cols, fill_value=np.nan)
+        lineage_tb = lineage_tb[ordered_ranks]
+        lineage_tb = self.replace_nans(lineage_tb)
+        lineage_tb = lineage_tb.astype({'Taxid': 'string'})
+        merged_table = assembly_tb.merge(lineage_tb, on='Taxid')
         return merged_table
 
-    def chunks(self, lst, n):
-        return [lst[i:i + n] for i in range(0, len(lst), n)]
-
     def select_assemblies(self, table):
-
-        fact_table = table.replace({'Refseq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
+        fact_table = table.replace({'RefSeq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
                                     'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
         sorted_table = fact_table.sort_values(
-            ['Refseq_category', 'AssemblyStatus', 'Contig_count', 'Release_date_Genbank'],
+            ['RefSeq_category', 'AssemblyStatus', 'Contig_count', 'AsmReleaseDate_GenBank'],
             ascending=[True, True, True, False])
-
         if self.rank_to_select != 'None':
             logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
                          f'contig count and release date')
@@ -173,7 +192,7 @@ class AssemblyFinder:
             sorted_table = sorted_table[0:self.nb]
         if len(sorted_table) < self.nb:
             logging.warning(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
-        sorted_table = sorted_table.replace({'Refseq_category': {0: 'reference genome', 1: 'representative genome',
+        sorted_table = sorted_table.replace({'RefSeq_category': {0: 'reference genome', 1: 'representative genome',
                                                                  6: 'na'},
                                              'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',
                                                                 5: 'Contig', 6: 'na'}})
@@ -188,11 +207,13 @@ class AssemblyFinder:
             table_chunks = []
             for n, chunk in enumerate(assemblies_chunks):
                 logging.info(f'chunk n°{n}')
-                tb = self.generate_table(chunk)
+                assembly_tb = self.generate_assembly_table(chunk)
+                tb = self.add_lineage(assembly_tb)
                 table_chunks.append(tb)
             non_filtered_tb = pd.concat(table_chunks, sort=False)
         else:
-            non_filtered_tb = self.generate_table(assemblies_found)
+            assembly_tb = self.generate_assembly_table(assemblies_found)
+            non_filtered_tb = self.add_lineage(assembly_tb)
 
         non_filtered_tb.to_csv(self.outnf, sep='\t', index=None)
         filtered_tb = self.select_assemblies(non_filtered_tb)
@@ -212,11 +233,13 @@ met = snakemake.params['met']
 gb = snakemake.params['gb']
 rs = snakemake.params['rs']
 entry = snakemake.wildcards.entry
-intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={'UserInputNames': 'str'})
-intb.set_index('UserInputNames', inplace=True)
-nb = intb.loc[entry]['nb_genomes']
+assembly = snakemake.params['assembly']
+column = snakemake.params['column']
 rank = snakemake.params['rank_filter']
-find_assemblies = AssemblyFinder(name=entry, genbank=gb, refseq=rs, representative=rep, reference=ref,
-                                 complete=comp, exclude_metagenomes=met, nb=nb, rank_to_select=rank,
+intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
+intb.set_index(f'{column}', inplace=True)
+nb = intb.loc[entry]['nb_genomes']
+find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, genbank=gb, refseq=rs, representative=rep,
+                                 reference=ref, complete=comp, exclude_metagenomes=met, nb=nb, rank_to_select=rank,
                                  outnf=snakemake.output.all, outf=snakemake.output.filtered)
 find_assemblies.run()
