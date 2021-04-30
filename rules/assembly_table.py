@@ -1,5 +1,6 @@
 from Bio import Entrez
 import pandas as pd
+import warnings
 import numpy as np
 import logging
 from ete3 import NCBITaxa
@@ -201,6 +202,7 @@ class AssemblyFinder:
     def run(self):
         assemblies_found = self.search_assemblies()
         if len(assemblies_found) > self.nchunks:
+            warnings.warn(f'{len(assemblies_found)} assemblies found, restrict search term to find less assemblies')
             assemblies_chunks = self.chunks(assemblies_found,
                                             self.nchunks)  # Divide assembly lists by chunks of 10000
             logging.info(f'Parsing assemblies by chucks of {self.nchunks}')
