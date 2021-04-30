@@ -42,7 +42,7 @@ class AssemblyFinder:
 
     def get_lin_tax(self, lineages):
         """
-        function to extract assembly file names
+        function to get lineages from a list of taxids
         """
         ranks = ncbi.get_rank(lineages).values()
         ranknames = ncbi.get_taxid_translator(lineages).values()
@@ -166,9 +166,9 @@ class AssemblyFinder:
         fact_table = table.replace({'RefSeq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
                                     'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
-        sorted_table = fact_table.sort_values(
-            ['RefSeq_category', 'AssemblyStatus', 'Contig_count', 'AsmReleaseDate_GenBank'],
-            ascending=[True, True, True, False])
+        sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'Contig_count',
+                                               'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
+                                              ascending=[True, True, True, False, False, False])
         if self.rank_to_select != 'None':
             logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
                          f'contig count and release date')
