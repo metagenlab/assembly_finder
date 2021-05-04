@@ -102,26 +102,26 @@ class AssemblyFinder:
             taxid = self.taxid_find()
             search_term = f'txid{taxid}[Organism:exp] '
             if self.refseq and not self.genbank:
-                search_term += 'AND("latest refseq"[filter]) '
+                search_term += 'AND ("latest refseq"[filter] '
             if self.genbank and not self.refseq:
-                search_term += 'AND("latest genbank"[filter]) '
+                search_term += 'AND ("latest genbank"[filter] '
             if self.genbank and self.refseq:
-                search_term += 'AND ("latest genbank"[filter] OR "latest refseq"[filter]) '
+                search_term += 'AND (latest[filter] '
             if self.complete and not self.representative and not self.reference:
-                search_term += 'AND ("complete genome"[filter]) '
+                search_term += 'AND "complete genome"[filter] '
             if self.complete and self.representative and not self.reference:
-                search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) '
+                search_term += 'AND "complete genome"[filter] OR "representative genome"[filter] '
             if self.complete and self.representative and self.reference:
-                search_term += 'AND ("complete genome"[filter]) OR ("representative genome"[filter]) OR ' \
-                               '("reference genome"[filter]) '
+                search_term += 'AND "complete genome"[filter] OR "representative genome"[filter] OR ' \
+                               '"reference genome"[filter] '
             if self.representative and not self.reference:
-                search_term += 'AND ("representative genome"[filter]) '
+                search_term += 'AND "representative genome"[filter] '
             if self.reference and not self.representative:
-                search_term += 'AND ("reference genome"[filter]) '
+                search_term += 'AND "reference genome"[filter] '
             if self.representative and self.reference:
-                search_term += 'AND ("representative genome"[filter] OR "reference genome"[filter]) '
+                search_term += 'AND "representative genome"[filter] OR "reference genome"[filter] '
             if self.exclude_metagenomes:
-                search_term += 'AND (all[filter] NOT "derived from metagenome"[filter])'
+                search_term += 'AND all[filter] NOT metagenome[filter])'
         assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=500000))['IdList']
         logging.info(f'> Search term: {search_term}')
         logging.info(f'found {len(assembly_ids)} assemblies')
