@@ -1,13 +1,13 @@
 import pandas as pd
 community_name=config['community_name']
 try:
-    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['UserInputNames'])
+    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['TaxonomyInput'])
     isassembly = False
-    col = 'UserInputNames'
+    col = 'TaxonomyInput'
 except KeyError:
-    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['AssemblyNames'])
+    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['AssemblyInput'])
     isassembly = True
-    col = 'AssemblyNames'
+    col = 'AssemblyInput'
 
 rule check_for_update_ete3:
     conda: '../envs/Assembly_finder.yml'
@@ -54,6 +54,8 @@ rule combine_assembly_tables:
     input: expand('tables/{entry}-filtered.tsv',entry=entries)
 
     output: f'{community_name}-assemblies-summary.tsv'
+
+    params: column=col
 
     script: 'combine_tables.py'
 
