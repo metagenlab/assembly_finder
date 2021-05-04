@@ -142,7 +142,7 @@ class AssemblyFinder:
         subset.insert(loc=subset.shape[1] - 1, value=lens, column='Assembly_length')
         subset.insert(loc=subset.shape[1] - 1, value=contigs, column='Contig_count')
         subset.insert(loc=1, value=subset['FtpPath_GenBank'].apply(self.get_names), column='AssemblyNames')
-        subset.rename(columns={'Coverage': 'Assembly_coverage'}, inplace=True)
+        subset = subset.rename(columns={'Coverage': 'Assembly_coverage'})
         subset = subset.drop('Meta', axis=1)
         return subset
 
