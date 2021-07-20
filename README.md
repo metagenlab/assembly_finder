@@ -24,10 +24,9 @@ Assembly finder requires as input a tsv table containing queries, and a configur
 ### Input table example
 Assembly finder searches NCBI's assembly database for a number of genomes at a given taxonomic rank or taxid inputted in a tsv table as shown below.
 ```
-UserInputNames           nb_genomes
+TaxnonomyInput           nb_genomes
 1813735                  1
 114185                   1
-ATCC_13985               1
 staphylococcus_aureus    1
 ```
 The workflow accepts taxonomy identifiers, taxonomic ranks (like species names) and strain numbers as queries as long as they are found in NCBI's taxonomy database. 
