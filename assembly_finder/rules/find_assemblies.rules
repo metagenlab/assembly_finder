@@ -35,6 +35,7 @@ rule get_assembly_tables:
           comp=config['complete_assemblies'], ref=config['reference_assemblies'],
           rep=config['representative_assemblies'], met=config['exclude_from_metagenomes'],
           gb=config['Genbank_assemblies'], rs=config['Refseq_assemblies'], rank_filter=config['Rank_to_filter_by'],
+          n_by_rank=config['n_by_rank'],
           assembly = isassembly, column = col
 
     resources: ncbi_requests=1

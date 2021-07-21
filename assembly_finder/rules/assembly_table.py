@@ -10,7 +10,7 @@ ncbi = NCBITaxa()
 class AssemblyFinder:
     def __init__(self, name, isassembly=False, genbank=False, refseq=True, representative=True, reference=True,
                  complete=True,
-                 exclude_metagenomes=True, nb=1, rank_to_select='None', outf='f.tsv', outnf='nf.tsv'):
+                 exclude_metagenomes=True, nb=1, rank_to_select=False, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
         self.assembly = isassembly
         self.genbank = genbank
@@ -25,6 +25,7 @@ class AssemblyFinder:
         self.nb = nb
         self.outf = outf
         self.outnf = outnf
+        self.n_by_rank = n_by_rank
         logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%d %b %Y %H:%M:%S',
                             filename=snakemake.log[0], level=logging.DEBUG)
 
@@ -168,22 +169,29 @@ class AssemblyFinder:
         fact_table = table.replace({'RefSeq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
                                     'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
+        # make sure the path to Genbank ftp is available
+        fact_table = fact_table[fact_table.FtpPath_GenBank != '']
         sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'Contig_count',
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
                                               ascending=[True, True, True, False, False, False])
-        if self.rank_to_select != 'None':
+        
+        if self.rank_to_select:
             logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
                          f'contig count and release date')
             select_index = []
             unique_list = list(set(sorted_table[self.rank_to_select]))
-            if len(unique_list) > 1:
+            if len(unique_list) > 0:
                 for i in unique_list:
-                    select_index.append(sorted_table[sorted_table[self.rank_to_select] == i].sample(1).index[0])
-                    # randomly select one assembly ID for each unique selected rank (species for example)
+                    target = sorted_table[sorted_table[self.rank_to_select] == i]
+                    if len(target) >= self.n_by_rank:
+                        select_index += target.iloc[0:self.n_by_rank].index.to_list()
+                    else:
+                        select_index += target.index.to_list()
+                    # randomly select self.n_by_rank assembly ID for each unique selected rank (species for example)
                 sorted_table = sorted_table.loc[select_index, :]
-            if len(unique_list) == 1:
-                logging.info(f'Same {self.rank_to_select} for all assemblies, Filtering according to Refseq '
-                             f'categories, assembly status,contig count and release date')
+            #if len(unique_list) == 1:
+            #    logging.info(f'Same {self.rank_to_select} for all assemblies, Filtering according to Refseq '
+            #                 f'categories, assembly status,contig count and release date')
             if len(unique_list) == 0:
                 logging.error(f'{self.rank_to_select} is not a target rank')
         else:
@@ -242,7 +250,8 @@ rank = snakemake.params['rank_filter']
 intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
 intb.set_index(f'{column}', inplace=True)
 nb = int(intb.loc[entry]['nb_genomes'])
+n_by_rank = snakemake.params['n_by_rank']
 find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, genbank=gb, refseq=rs, representative=rep,
                                  reference=ref, complete=comp, exclude_metagenomes=met, nb=nb, rank_to_select=rank,
-                                 outnf=snakemake.output.all, outf=snakemake.output.filtered)
+                                 outnf=snakemake.output.all, outf=snakemake.output.filtered, n_by_rank=n_by_rank)
 find_assemblies.run()
