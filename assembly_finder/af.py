@@ -28,7 +28,7 @@ def get_snakefile():
 @click.pass_context
 def cli(obj):
     """
-    MeSS is a snakemake workflow used for simulating metagenomic mock communities
+    assembly_finder is a snakemake workflow used to download genome assemblies from RefSeq and Genbank
     """
 
 
@@ -119,7 +119,8 @@ def cli(obj):
     "-f",
     "--filter_rank",
     help="Rank filter",
-    default="None",
+    default=False,
+    is_flag=False
 )
 @click.option(
     "-nr",
@@ -162,7 +163,7 @@ def run_workflow(conda_prefix,
     Genbank_assemblies: True
     Refseq_assemblies: True
     ##Parameters for the filtering function
-    Rank_to_filter_by: 'None'
+    Rank_to_filter_by: False
         
     """
     import datetime

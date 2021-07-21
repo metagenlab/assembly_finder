@@ -10,7 +10,7 @@ ncbi = NCBITaxa()
 class AssemblyFinder:
     def __init__(self, name, isassembly=False, genbank=False, refseq=True, representative=True, reference=True,
                  complete=True,
-                 exclude_metagenomes=True, nb=1, rank_to_select='None', outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
+                 exclude_metagenomes=True, nb=1, rank_to_select=False, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
         self.assembly = isassembly
         self.genbank = genbank
@@ -175,7 +175,7 @@ class AssemblyFinder:
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
                                               ascending=[True, True, True, False, False, False])
         
-        if self.rank_to_select != 'None':
+        if self.rank_to_select:
             logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
                          f'contig count and release date')
             select_index = []
@@ -184,7 +184,7 @@ class AssemblyFinder:
                 for i in unique_list:
                     target = sorted_table[sorted_table[self.rank_to_select] == i]
                     if len(target) >= self.n_by_rank:
-                        select_index += target.sample(self.n_by_rank).index.to_list()
+                        select_index += target.iloc[0:self.n_by_rank].index.to_list()
                     else:
                         select_index += target.index.to_list()
                     # randomly select self.n_by_rank assembly ID for each unique selected rank (species for example)
