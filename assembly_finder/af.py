@@ -120,7 +120,8 @@ def cli(obj):
     "--filter_rank",
     help="Rank filter",
     default=False,
-    is_flag=False
+    is_flag=False,
+    type=str
 )
 @click.option(
     "-nr",
@@ -129,6 +130,14 @@ def cli(obj):
     type=int,
     default=1,
 )
+@click.option(
+    "-o",
+    "--output_prefix",
+    help="Output prefix (default: execution date)",
+    type=str,
+    default=False,
+)
+
 
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 
@@ -146,6 +155,7 @@ def run_workflow(conda_prefix,
                  refseq_assemblies,
                  filter_rank,
                  n_by_rank,
+                 output_prefix,
                  snakemake_args):
     """
     Runs assembly_finder pipeline with all steps
@@ -168,7 +178,8 @@ def run_workflow(conda_prefix,
     """
     import datetime
     
-    today = datetime.datetime.today().strftime("%Y-%m-%d")
+    if not output_prefix:
+        output_prefix = datetime.datetime.today().strftime("%Y-%m-%d")
 
     if dryrun_status:
         dryrun = '-n'
@@ -186,7 +197,7 @@ def run_workflow(conda_prefix,
         f"--config input_table_path={input_table} " 
         f"NCBI_key={ncbi_key} "
         f"NCBI_email={ncbi_email} "
-        f"community_name={today} "
+        f"community_name={output_prefix} "
         f"complete_assemblies={complete_assemblies} "
         f"reference_assemblies={reference_assemblies} "
         f"representative_assemblies={representative_assemblies} "
