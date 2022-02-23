@@ -86,7 +86,7 @@ Assemblies are saved in the assembly_gz/ directory.
 
 ## Running Assembly Finder in command line 
 
-Assembly Finder can also be executed from the command line without configuration file.
+Assembly Finder can also be executed from the command line without configuration file. 
 
 ```
 Usage: af run [OPTIONS] [SNAKEMAKE_ARGS]...
