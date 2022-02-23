@@ -31,11 +31,10 @@ def cli(obj):
     assembly_finder is a snakemake workflow used to download genome assemblies from RefSeq and Genbank
     """
 
-
 @cli.command(
     "run",
     context_settings=dict(ignore_unknown_options=True),
-    short_help="run all assembly_finder pipeline steps"
+    short_help="run assembly_finder with command line arguments"
 )
 @click.option(
     "-i",
@@ -204,6 +203,73 @@ def run_workflow(conda_prefix,
         f"Refseq_assemblies={refseq_assemblies} "
         f"Rank_to_filter_by={filter_rank} "
         f"n_by_rank={n_by_rank} "
+        f"{' '.join(snakemake_args)}")
+    logging.info("Executing: %s" % cmd)
+    try:
+        subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        # removes the traceback
+        logging.critical(e)
+        exit(1)
+
+
+@cli.command(
+    "conf",
+    context_settings=dict(ignore_unknown_options=True),
+    short_help="run assembly_finder using config file"
+)
+@click.option(
+    "-c",
+    "--config-file",
+    type=click.Path(exists=True, resolve_path=True),
+    help="path to config file",
+)
+@click.option(
+    "-c",
+    "--cores",
+    type=int,
+    help="number of cores to allow for the workflow",
+    default=2,
+)
+@click.option(
+    "-p",
+    "--conda-prefix",
+    type=click.Path(exists=True, resolve_path=True),
+    help="path to conda environment",
+)
+@click.option(
+    "-n",
+    "--dryrun_status",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Snakemake dryrun to see the scheduling plan",
+)
+@click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
+
+def run_workflow_conf(config_file, cores, dryrun_status, conda_prefix, snakemake_args):
+    """
+    Runs assembly_finder using config file
+
+    config: path/to/config.yml
+        
+    """
+
+    if dryrun_status:
+        dryrun = '-n'
+    else:
+        dryrun = ''
+
+    if conda_prefix is None:
+        conda_prefix = os.environ['CONDA_PREFIX']
+    if not os.path.exists(conda_prefix):
+        logging.critical(f"conda env path not found: {conda_prefix}")
+        sys.exit(1)
+    cmd = (
+        f"snakemake --snakefile {get_snakefile()} --use-conda --conda-prefix {conda_prefix} "
+        f" --cores {cores} "
+        f" --configfile {config_file} "
+        f"all_download {dryrun} "
         f"{' '.join(snakemake_args)}")
     logging.info("Executing: %s" % cmd)
     try:

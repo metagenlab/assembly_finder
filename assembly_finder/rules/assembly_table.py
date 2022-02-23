@@ -249,7 +249,7 @@ column = snakemake.params['column']
 rank = snakemake.params['rank_filter']
 intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
 intb.set_index(f'{column}', inplace=True)
-nb = int(intb.loc[entry]['nb_genomes'])
+nb = int(intb.loc[entry]['NbGenomes'])
 n_by_rank = snakemake.params['n_by_rank']
 find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, genbank=gb, refseq=rs, representative=rep,
                                  reference=ref, complete=comp, exclude_metagenomes=met, nb=nb, rank_to_select=rank,
