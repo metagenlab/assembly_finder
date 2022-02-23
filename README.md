@@ -9,7 +9,7 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 ```
 #### Assembly Finder
-Clone the github repository
+Install with conda
 ```bash
 conda install -c bioconda -c conda-forge -c hcc assembly_finder
 ```
