@@ -44,6 +44,13 @@ def cli(obj):
     help="path to assembly_finder input_table_path",
 )
 @click.option(
+    "-o",
+    "--output_prefix",
+    help="Output prefix (default: execution date)",
+    type=str,
+    default=False,
+)
+@click.option(
     "-p",
     "--conda-prefix",
     type=click.Path(exists=True, resolve_path=True),
@@ -130,19 +137,11 @@ def cli(obj):
     type=int,
     default=1,
 )
-@click.option(
-    "-o",
-    "--output_prefix",
-    help="Output prefix (default: execution date)",
-    type=str,
-    default=False,
-)
-
-
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 
 def run_workflow(conda_prefix, 
-                 input_table, 
+                 input_table,
+                 output_prefix,
                  dryrun_status, 
                  cores,
                  ncbi_key,
@@ -155,13 +154,12 @@ def run_workflow(conda_prefix,
                  refseq_assemblies,
                  filter_rank,
                  n_by_rank,
-                 output_prefix,
                  snakemake_args):
     """
     Runs assembly_finder pipeline with all steps
 
     
-    input_table_path: path/to/input_table
+    input_table: path/to/input_table
     ncbi_key: your_ncbi_api_key
     ncbi_email: your_ncbi_email
     ##Parameters for search_assemblies function

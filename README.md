@@ -66,3 +66,47 @@ conda activate snakemake
 snakemake --snakefile pipeline/path/Snakefile --configfile config.yml --use-conda --conda-prefix path/to/conda/envs --resources ncbi_requests=3 --cores 10 all_download
 ```
 Assemblies are saved in the assembly_gz/ directory.
+
+## Wrapper 
+
+```
+Usage: af run [OPTIONS] [SNAKEMAKE_ARGS]...
+
+  Runs assembly_finder pipeline with all steps
+
+  input_table_path: path/to/input_table ncbi_key: your_ncbi_api_key
+  ncbi_email: your_ncbi_email ##Parameters for search_assemblies function
+  #This set of parameters is to search all possible assemblies
+  complete_assemblies: False reference_assemblies: False
+  representative_assemblies: False exclude_from_metagenomes: True
+  Genbank_assemblies: True Refseq_assemblies: True ##Parameters for the
+  filtering function Rank_to_filter_by: False
+
+Options:
+  -i, --input-table PATH          path to assembly_finder input_table_path
+  -p, --conda-prefix PATH         path to conda environment
+  -n, --dryrun_status             Snakemake dryrun to see the scheduling plan
+                                  [default: False]
+
+  -c, --cores INTEGER             number of cores to allow for the workflow
+  -nk, --ncbi_key TEXT            ncbi key for Entrez
+  -ne, --ncbi_email TEXT          ncbi email for Entrez
+  -gc, --complete_assemblies TEXT
+                                  download only complete assemblies
+                                  (default=False)
+
+  -gr, --reference_assemblies TEXT
+                                  download only reference assemblies
+  -gre, --representative_assemblies TEXT
+                                  download only representative assemblies
+  -gb, --genbank_assemblies       download genbank assemblies (default True)
+  -rs, --refseq_assemblies        download refseq assemblies (default True)
+  -rs, --exclude_from_metagenomes
+                                  exclude metagnomes (default True)
+  -f, --filter_rank TEXT          Rank filter
+  -nr, --n_by_rank INTEGER        Max number of genome by target rank (eg
+                                  1/species)
+
+  -h, --help                      Show this message and exit.
+
+  ```
