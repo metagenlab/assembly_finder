@@ -10,8 +10,6 @@ except KeyError:
     col = 'AssemblyInput'
 
 rule check_for_update_ete3:
-    conda: '../envs/Assembly_finder.yml'
-    
     container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     output: temp('ete3-update.txt')
@@ -21,8 +19,6 @@ rule check_for_update_ete3:
     script: 'update-ete3.py'
 
 rule get_assembly_tables:
-    conda: '../envs/Assembly_finder.yml'
-
     container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: config["input_table_path"],
@@ -48,8 +44,6 @@ rule get_assembly_tables:
 
 
 rule combine_assembly_tables:
-    conda: '../envs/Assembly_finder.yml'
-
     container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: expand('tables/{entry}-filtered.tsv',entry=entries)
@@ -62,8 +56,6 @@ rule combine_assembly_tables:
 
 
 rule get_ftp_links_list:
-    conda: '../envs/Assembly_finder.yml'
-
     container: "docker://metagenlab/assemblyfinder:v.1.1"
 
     input: f'{community_name}-assemblies-summary.tsv'
@@ -74,8 +66,6 @@ rule get_ftp_links_list:
 
 
 checkpoint download_assemblies:
-    conda: "../envs/download.yml"
-
     container: "docker://metagenlab/aspera-cli-conda:v.1.0"
 
     input: f"assembly_gz/{community_name}/{community_name}-ftp-links.txt"

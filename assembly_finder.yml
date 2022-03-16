@@ -1,9 +1,11 @@
-name: Assembly_finder
+name: assembly_finder
 channels:
  - bioconda
  - conda-forge
+ - hcc
 
 dependencies:
  - biopython = 1.78
  - pandas = 1.2.2
  - ete3 = 3.1.2
+ - aspera-cli = 3.9.1
