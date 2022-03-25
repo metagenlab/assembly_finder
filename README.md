@@ -2,30 +2,30 @@
 Assembly finder is a snakemake workflow used for downloading genomes from NCBI's assembly database.
 
 ## Installation
-#### Conda
-Download and install miniconda 3 (Linux 64-bit)
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-```
-#### Assembly Finder
 Install with conda
 ```bash
-conda install -c bioconda -c conda-forge -c hcc assembly_finder
+conda install -c conda-forge mamba
+mamba create -c bioconda -n assembly_finder assembly_finder
 ```
 
 ## Required files
 Assembly finder requires as input a tsv table containing queries, and a configuration file for setting the workflow's parameters.
 
 ### Input table example
-Assembly finder searches NCBI's assembly database for a number of genomes at a given taxonomic rank or taxid inputted in a tsv table as shown below.
+Queries can be either taxonomy identifiers:
 ```
-TaxnonomyInput           NbGenomes
+Taxonomy           NbGenomes
 1813735                  1
 114185                   1
 staphylococcus_aureus    1
 ```
-The workflow accepts taxonomy identifiers, taxonomic ranks (like species names) and strain numbers as queries as long as they are found in NCBI's taxonomy database. 
+Or assembly accessions Genbank or refseq IDs as shown below:
+```
+Assembly           
+14228
+ASM28727v1
+15851438
+```
 
 ### Config file example
 ```
