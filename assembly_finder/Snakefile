@@ -1,6 +1,6 @@
 import os
-include: 'rules/find_assemblies.rules'
-community_name=config['community_name']
+include: 'rules/find_assemblies.smk'
+
 def downloaded_list(wildcards):
     checkpoint_output = checkpoints.download_assemblies.get(**wildcards).output[0]
     directory = '/'.join((checkpoint_output.split('/')[0:2]))

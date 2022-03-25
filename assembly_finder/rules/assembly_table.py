@@ -8,17 +8,14 @@ ncbi = NCBITaxa()
 
 
 class AssemblyFinder:
-    def __init__(self, name, isassembly=False, genbank=False, refseq=True, representative=True, reference=True,
-                 complete=True,
-                 exclude_metagenomes=True, nb=1, rank_to_select=False, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
+    def __init__(self, name, isassembly=False, db='', source='latest[filter]', category=[], assembly_level = [], exclude=[], annotation=True,
+                    nb=1, rank_to_select=False, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
-        self.assembly = isassembly
-        self.genbank = genbank
-        self.refseq = refseq
-        self.representative = representative
-        self.reference = reference
-        self.complete = complete
-        self.exclude_metagenomes = exclude_metagenomes
+        self.db = db
+        self.rcat = category
+        self.alvl = assembly_level
+        self.excl = exclude
+        self.annot = annotation
         self.target_ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
         self.nchunks = 10000
         self.rank_to_select = rank_to_select
@@ -101,33 +98,42 @@ class AssemblyFinder:
             search_term = f'{self.name}'
         else:  # If not, search ncbi taxonomy for the taxid
             taxid = self.taxid_find()
-            search_term = f'txid{taxid}[Organism:exp] '
-            if self.refseq and not self.genbank:
-                search_term += 'AND ("latest refseq"[filter] '
-            if self.genbank and not self.refseq:
-                search_term += 'AND ("latest genbank"[filter] '
-            if self.genbank and self.refseq:
-                search_term += 'AND (latest[filter] '
-            if self.complete and not self.representative and not self.reference:
-                search_term += 'AND "complete genome"[filter] '
-            if self.complete and self.representative and not self.reference:
-                search_term += 'AND "complete genome"[filter] OR "representative genome"[filter] '
-            if self.complete and self.representative and self.reference:
-                search_term += 'AND "complete genome"[filter] OR "representative genome"[filter] OR ' \
-                               '"reference genome"[filter] '
-            if self.representative and not self.reference:
-                search_term += 'AND "representative genome"[filter] '
-            if self.reference and not self.representative:
-                search_term += 'AND "reference genome"[filter] '
-            if self.representative and self.reference:
-                search_term += 'AND "representative genome"[filter] OR "reference genome"[filter] '
-            if self.exclude_metagenomes:
-                search_term += 'AND all[filter] NOT metagenome[filter])'
-        assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=500000))['IdList']
+            if len(self.db)>0:
+                self.source = f'"latest {db}"[filter]'
+            if len(self.rcat)>1:
+                refseq_category = f' AND ('
+                for n, r in enumerate(self.rcat):
+                    if n+1 == len(self.rcat):    
+                        refseq_category += f'"{r} genome"[filter]'
+                    else:
+                        refseq_category += f'"{r} genome"[filter] OR '
+                refseq_category += ')'
+            elif len(self.rcat) == 1:
+                refseq_category = f' AND "{rcat[0]} genome"[filter]'
+            if len(self.alvl) > 1:
+                assembly_level = ' AND ('
+                for n, a in enumerate(self.alvl):
+                    if n+1 == len(self.alvl):
+                        assembly_level += f'"{a}"[filter]'
+                    else:
+                        assembly_level += f'"{a}"[filter] OR '
+                assembly_level += ')'
+            elif len(self.alvl) == 1:
+                assembly_level = f' AND "{alvl[0]}"[filter]'
+            if len(self.excl)>0:
+                exclude = ' AND all[filter]'
+                for e in self.excl:
+                    exclude += f' NOT {e}[filter]'
+            if self.annot and (len(db)>0):
+                annotation = f' AND "{db} has annotation"[Properties]'
+            elif self.annot and (len(db)<=0):
+                annotation = f' AND "has annotation"[Properties]'
+            search_term = f'txid{taxid}[Organism:exp] AND ({source}{refseq_category}{assembly_level}{exclude}{annotation})'
+        assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=2000000))['IdList']
         logging.info(f'> Search term: {search_term}')
         logging.info(f'found {len(assembly_ids)} assemblies')
         if not assembly_ids:
-            raise Exception('No assemblies found ! Change search term!')
+            raise Warning('No assemblies found ! Change search term!')
         return assembly_ids
 
     def generate_assembly_table(self, assemblies):
@@ -169,49 +175,36 @@ class AssemblyFinder:
         fact_table = table.replace({'RefSeq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
                                     'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
-        # make sure the path to Genbank ftp is available
-        fact_table = fact_table[fact_table.FtpPath_GenBank != '']
+        # make sure the path to an ftp is available
+        if self.db == 'refseq':
+            fact_table = fact_table[fact_table.FtpPath_Refseq != '']
+        else:
+            fact_table == fact_table[fact_table.FtpPath_GenBank != '']
         sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'Contig_count',
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
-                                              ascending=[True, True, True, False, False, False])
+                                              ascending=[True, True, True, False, False, False]).replace(
+                                                  {'RefSeq_category': {0: 'reference genome', 1: 'representative genome',6: 'na'},
+                                                  'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',5: 'Contig', 6: 'na'}})
         
         if self.rank_to_select:
             logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
                          f'contig count and release date')
-            select_index = []
-            unique_list = list(set(sorted_table[self.rank_to_select]))
-            if len(unique_list) > 0:
-                for i in unique_list:
-                    target = sorted_table[sorted_table[self.rank_to_select] == i]
-                    if len(target) >= self.n_by_rank:
-                        select_index += target.iloc[0:self.n_by_rank].index.to_list()
-                    else:
-                        select_index += target.index.to_list()
-                    # randomly select self.n_by_rank assembly ID for each unique selected rank (species for example)
-                sorted_table = sorted_table.loc[select_index, :]
-            #if len(unique_list) == 1:
-            #    logging.info(f'Same {self.rank_to_select} for all assemblies, Filtering according to Refseq '
-            #                 f'categories, assembly status,contig count and release date')
-            if len(unique_list) == 0:
-                logging.error(f'{self.rank_to_select} is not a target rank')
+            uniq_rank = set(sorted_table[f'{rank}'])
+            sorted_table = pd.concat([sorted_table[f'{rank}' == ranks].iloc[:self.n_by_rank] for ranks in uniq_rank])
+        if isinstance(self.nb, int):
+            if len(sorted_table) >= self.nb:
+                logging.info(f'Selecting {self.nb} from every {self.rank_to_select} out of {len(sorted_table)} assemblies')
+
+            if len(sorted_table) < self.nb:
+                logging.warning(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
         else:
-            logging.info('No taxonomic rank specified, sorting according to Refseq category, '
-                         'assembly status, contig count and release date')
-        if len(sorted_table) >= self.nb:
-            logging.info(f'Selecting {self.nb} sorted assemblies out of {len(sorted_table)}')
-            sorted_table = sorted_table[0:self.nb]
-        if len(sorted_table) < self.nb:
-            logging.warning(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
-        sorted_table = sorted_table.replace({'RefSeq_category': {0: 'reference genome', 1: 'representative genome',
-                                                                 6: 'na'},
-                                             'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',
-                                                                5: 'Contig', 6: 'na'}})
+            logging.warning(f'No assembly number specified returning all assemblies found')
         return sorted_table
 
     def run(self):
         assemblies_found = self.search_assemblies()
         if len(assemblies_found) > self.nchunks:
-            warnings.warn(f'{len(assemblies_found)} assemblies found, restrict search term to find less assemblies')
+            raise Warning(f'{len(assemblies_found)} assemblies found, restrict search term to find less assemblies')
             assemblies_chunks = self.chunks(assemblies_found,
                                             self.nchunks)  # Divide assembly lists by chunks of 10000
             logging.info(f'Parsing assemblies by chucks of {self.nchunks}')
@@ -237,21 +230,26 @@ Main
 '''
 Entrez.email = snakemake.params['ncbi_email']
 Entrez.api_key = snakemake.params['ncbi_key']
-comp = snakemake.params['comp']
-ref = snakemake.params['ref']
-rep = snakemake.params['rep']
-met = snakemake.params['met']
-gb = snakemake.params['gb']
-rs = snakemake.params['rs']
 entry = snakemake.wildcards.entry
 assembly = snakemake.params['assembly']
+db = snakemake.params['db']
+cat = snakemake.params['rcat']
+alvl = snakemake.params['alvl']
+excl = snakemake.params['excl']
+annot = snakemake.params['annot']
 column = snakemake.params['column']
-rank = snakemake.params['rank_filter']
+rank = snakemake.params['rank']
 intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
 intb.set_index(f'{column}', inplace=True)
-nb = int(intb.loc[entry]['NbGenomes'])
+if assembly:
+    nb = 1
+else:
+    try:
+        nb = int(intb.loc[entry]['NbGenomes'])
+    except KeyError:
+        nb = None
 n_by_rank = snakemake.params['n_by_rank']
-find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, genbank=gb, refseq=rs, representative=rep,
-                                 reference=ref, complete=comp, exclude_metagenomes=met, nb=nb, rank_to_select=rank,
-                                 outnf=snakemake.output.all, outf=snakemake.output.filtered, n_by_rank=n_by_rank)
+find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, db=db, category=cat, assembly_level=alvl, exclude=excl,
+                                 nb=nb, rank_to_select=rank, annotation = annot, n_by_rank=n_by_rank,
+                                 outnf=snakemake.output.all, outf=snakemake.output.filtered, )
 find_assemblies.run()
