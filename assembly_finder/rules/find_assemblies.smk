@@ -1,7 +1,6 @@
 import pandas as pd
-community_name = config['community_name']
+outdir = config['outdir']
 try:
-    nrank = config['n_by_rank']
     ncbi_key = config['NCBI_key'] 
     ncbi_email = config['NCBI_email']
     alvl = config['assembly_level']
@@ -10,6 +9,8 @@ try:
     excl = config['exclude']
     annot = config['annotation']
     rank = config['Rank_to_filter_by']
+    nrank = config['n_by_rank']
+    nb = config['n_by_entry']
 except KeyError:
     ncbi_key = ''
     ncbi_email = ''
@@ -20,65 +21,53 @@ except KeyError:
     annot = True
     rank = None
     nrank = 1
+    nb = 'all'
 try:
-    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['Taxonomy'])
-    isassembly = False
-    col = 'Taxonomy'
-except KeyError:
-    entries = list(pd.read_csv(config['input_table_path'],delimiter='\t')['Assembly'])
-    isassembly = True
-    col = 'Assembly'
+    entries = list(pd.read_csv(config['input'], delimiter='\t')[0])
+
+except FileNotFoundError:
+    entries = config['input'].split(',')
 
 rule check_for_update_ete3:
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
-
     output: temp('ete3-update.txt')
 
-    log: f'{community_name}/logs/ete3-update.log'
+    log: f'{outdir}/logs/ete3-update.log'
 
     script: 'update-ete3.py'
 
 rule get_assembly_tables:
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    input: 'ete3-update.txt'
 
-    input: config["input_table_path"],
-           'ete3-update.txt'
+    output: all=f'{outdir}/tables/{{entry}}-all.tsv',
+            filtered=f'{outdir}/tables/{{entry}}-filtered.tsv'
 
-    output: all=f'{community_name}/tables/{{entry}}-all.tsv',
-            filtered=f'{community_name}/tables/{{entry}}-filtered.tsv'
-
-    params: ncbi_key=ncbi_key, ncbi_email=ncbi_email,
-            alvl=alvl, db=db, rcat=rcat, excl=excl,
-            annot = annot, rank=rank, n_by_rank=nrank,
-            assembly=isassembly, column=col
+    params: ncbi_key=ncbi_key,ncbi_email=ncbi_email,
+            alvl=alvl,db=db,rcat=rcat,excl=excl,
+            annot=annot,rank=rank,n_by_rank=nrank,nb=nb
 
     resources: ncbi_requests=1
 
-    log: f'{community_name}/logs/find-assemblies-{{entry}}.log'
+    log: f'{outdir}/logs/find-assemblies-{{entry}}.log'
 
-    benchmark: f"{community_name}/benchmark/find-assemblies-{{entry}}.txt"
+    benchmark: f"{outdir}/benchmark/find-assemblies-{{entry}}.txt"
 
     script: 'assembly_table.py'
 
 
 rule combine_assembly_tables:
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    input: expand(f'{outdir}/tables/{{entry}}-filtered.tsv',entry=entries)
 
-    input: expand(f'{community_name}/tables/{{entry}}-filtered.tsv',entry=entries)
+    output: f'{outdir}/assemblies-summary.tsv'
 
-    output: f'{community_name}/assemblies-summary.tsv'
-
-    params: column=col
-
-    script: 'combine_tables.py'
+    run:
+        pd.concat([pd.read_csv(tb, sep='\t') for tb in list(input)]).to_csv(output[0], sep='\t', index=None)
+        
 
 
 rule get_ftp_links_list:
-    container: "docker://metagenlab/assemblyfinder:v.1.1"
+    input: f'{outdir}/assemblies-summary.tsv'
 
-    input: f'{community_name}/assemblies-summary.tsv'
-
-    output: temp(f"{community_name}/assemblies/ftp-links.txt")
+    output: temp(f"{outdir}/assemblies/ftp-links.txt")
 
     params: db=db
     
@@ -86,17 +75,15 @@ rule get_ftp_links_list:
 
 
 checkpoint download_assemblies:
-    container: "docker://metagenlab/aspera-cli-conda:v.1.0"
+    input: f"{outdir}/assemblies/ftp-links.txt"
 
-    input: f"{community_name}/assemblies/ftp-links.txt"
+    output: f"{outdir}/assemblies/dl.done"
 
-    output: f"{community_name}/assemblies/dl.done"
+    log: f"{outdir}/logs/download.log"
 
-    log: f"{community_name}/logs/download.log"
+    benchmark: f"{outdir}/benchmark/downloads.txt"
 
-    benchmark: f"{community_name}/benchmark/downloads.txt"
-
-    params: f"{community_name}/assemblies"
+    params: f"{outdir}/assemblies"
 
     shell:
         """
