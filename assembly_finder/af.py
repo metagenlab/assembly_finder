@@ -38,16 +38,15 @@ def cli(obj):
 )
 @click.option(
     "-i",
-    "--input-table",
+    "--input",
     type=click.Path(exists=True, resolve_path=True),
-    help="path to assembly_finder input_table_path",
+    help="path to assembly_finder input_table_path or list of entries",
 )
 @click.option(
     "-o",
-    "--output_prefix",
-    help="Output prefix (default: execution date)",
+    "--output",
+    help="Output directory",
     type=str,
-    default=False,
 )
 @click.option(
     "-p",
@@ -64,10 +63,10 @@ def cli(obj):
     help="Snakemake dryrun to see the scheduling plan",
 )
 @click.option(
-    "-c",
-    "--cores",
+    "-t",
+    "--threads",
     type=int,
-    help="number of cores to allow for the workflow",
+    help="number of threads to allow for the workflow",
     default=2,
 )
 @click.option(
@@ -85,7 +84,7 @@ def cli(obj):
     default="",
 )
 @click.option(
-    "-gc",
+    "-db",
     "--complete_assemblies",
     help="download only complete assemblies (default=False)",
     default=True
@@ -113,19 +112,20 @@ def cli(obj):
     "-rs",
     "--refseq_assemblies",
     help="download refseq assemblies (default True)",
-    is_flag=True
+    type='str'
 )
 @click.option(
-    "-rs",
-    "--exclude_from_metagenomes",
-    help="exclude metagnomes (default True)",
-    is_flag=True
+    "-ex",
+    "--exclude",
+    help="exclude assemblies",
+    is_flag=True,
+    type=str
 )
 @click.option(
     "-f",
     "--filter_rank",
     help="Rank filter",
-    default=False,
+    default='',
     is_flag=False,
     type=str
 )
@@ -139,10 +139,10 @@ def cli(obj):
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 
 def run_workflow(conda_prefix, 
-                 input_table,
-                 output_prefix,
+                 input,
+                 output,
                  dryrun_status, 
-                 cores,
+                 threads,
                  ncbi_key,
                  ncbi_email,
                  complete_assemblies,
@@ -175,8 +175,8 @@ def run_workflow(conda_prefix,
     """
     import datetime
     
-    if not output_prefix:
-        output_prefix = datetime.datetime.today().strftime("%Y-%m-%d")
+    if not output:
+        output = datetime.datetime.today().strftime("%Y-%m-%d")
 
     if dryrun_status:
         dryrun = '-n'
@@ -189,12 +189,12 @@ def run_workflow(conda_prefix,
         sys.exit(1)
     cmd = (
         f"snakemake --snakefile {get_snakefile()} --use-conda --conda-prefix {conda_prefix} "
-        f" --cores {cores} "
+        f" --cores {threads} "
         f"all_download {dryrun} "
-        f"--config input_table_path={input_table} " 
+        f"--config input={input} " 
         f"NCBI_key={ncbi_key} "
         f"NCBI_email={ncbi_email} "
-        f"community_name={output_prefix} "
+        f"outdir={output} "
         f"complete_assemblies={complete_assemblies} "
         f"reference_assemblies={reference_assemblies} "
         f"representative_assemblies={representative_assemblies} "
@@ -219,16 +219,16 @@ def run_workflow(conda_prefix,
     short_help="run assembly_finder using config file"
 )
 @click.option(
-    "-c",
+    "-t",
     "--config-file",
     type=click.Path(exists=True, resolve_path=True),
     help="path to config file",
 )
 @click.option(
-    "-c",
-    "--cores",
+    "-t",
+    "--threads",
     type=int,
-    help="number of cores to allow for the workflow",
+    help="number of threads to allow for the workflow",
     default=2,
 )
 @click.option(
@@ -247,7 +247,7 @@ def run_workflow(conda_prefix,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 
-def run_workflow_conf(config_file, cores, dryrun_status, conda_prefix, snakemake_args):
+def run_workflow_conf(config_file, threads, dryrun_status, conda_prefix, snakemake_args):
     """
     Runs assembly_finder using config file
 
@@ -267,7 +267,7 @@ def run_workflow_conf(config_file, cores, dryrun_status, conda_prefix, snakemake
         sys.exit(1)
     cmd = (
         f"snakemake --snakefile {get_snakefile()} --use-conda --conda-prefix {conda_prefix} "
-        f" --cores {cores} "
+        f" --cores {threads} "
         f" --configfile {config_file} "
         f"all_download {dryrun} "
         f"{' '.join(snakemake_args)}")
