@@ -8,11 +8,10 @@ ncbi = NCBITaxa()
 
 
 class AssemblyFinder:
-    def __init__(self, name, isassembly=False, db='', source='latest[filter]', category=['reference', 'representative'],
+    def __init__(self, name, db='', source='latest[filter]', category=['reference', 'representative'],
                  assembly_level = ['complete genome'], exclude=['metagenome'], annotation=True,
-                 nb=None, rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
+                 nb='all', rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
-        self.assembly = isassembly
         self.db = db
         if self.db == 'refseq':
             self.ftpath = 'FtpPath_RefSeq'
@@ -76,35 +75,28 @@ class AssemblyFinder:
 
     def taxid_find(self):
         """
-        Function to parse input_list to convert scientific names to taxid
-        returns dictionary with taxid found
+        Function to convert an entry to a taxid
         """
-        logging.info(f'> Searching for taxIDs {self.name} ...')
+        logging.info(f'> Converting {self.name} to taxid ...')
         try:
-            int(self.name)
-            logging.info('Query is a taxID')
-            taxid = self.name
-
+            translate = ncbi.get_taxid_translator([self.name])
+            if not translate:
+                logging.info(f'{self.name} is a an ID but not a taxid, assuming it is UID')
+                taxid = None
+            else:
+                logging.info('found a name, entry is a taxid')
+                taxid = self.name
         except ValueError:
-            logging.warning('Query is not a taxID, enter taxID to be more precise')
-            logging.info(f'Search term: {self.name}[all Names]')
-            taxid_list = Entrez.read(Entrez.esearch(db='taxonomy', term=f'{self.name}[all Names]', retmax=100))[
-                'IdList']
-            if len(taxid_list) == 1:
-                taxid = taxid_list[0]
-                logging.info(f'TaxID:{taxid} found')
-            if len(taxid_list) > 1:
-                taxid = taxid_list[0]
-                logging.warning(f'{len(taxid_list)} TaxIDs found, change query (taking first one : {taxid})')
-            if len(taxid_list) == 0:
-                raise Exception('TaxID not found! Change search term!')
+            logging.info(f'{self.name} is a name, translating to taxid')
+            taxid = list(ncbi.get_name_translator([entry]).values())[0][0]
         return taxid
 
     def search_assemblies(self):
-        if self.assembly:  # If the input is an assembly name or Gbuid use it as a search term
-            search_term = f'{self.name}'
-        else:  # If not, search ncbi taxonomy for the taxid
-            taxid = self.taxid_find()
+          # If the  is an assembly name or Gbuid use it as a search term
+        taxid = self.taxid_find()
+        if not taxid: # If a taxid could not be found, asssume that entry is a UID
+            assembly_ids = [self.name]
+        else:  
             if len(self.db)>0:
                 self.source = f'"latest {db}"[filter]'
             if len(self.rcat)>1:
@@ -136,7 +128,7 @@ class AssemblyFinder:
             elif self.annot and (len(db)<=0):
                 annotation = f' AND "has annotation"[Properties]'
             search_term = f'txid{taxid}[Organism:exp] AND ({self.source}{refseq_category}{assembly_level}{exclude}{annotation})'
-        assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=2000000))['IdList']
+            assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=2000000))['IdList']
         logging.info(f'> Search term: {search_term}')
         logging.info(f'found {len(assembly_ids)} assemblies')
         if not assembly_ids:
@@ -153,10 +145,10 @@ class AssemblyFinder:
         subset = tb[columns]
         lens = subset.apply(lambda x: self.get_stat(x['Meta'], stat='total_length'), axis=1)
         contigs = subset.apply(lambda x: self.get_stat(x['Meta'], stat='contig_count'), axis=1)
-        subset.insert(loc=subset.shape[1] - 1, value=lens, column='Assembly_length')
-        subset.insert(loc=subset.shape[1] - 1, value=contigs, column='Contig_count')
-        subset.insert(loc=1, value=subset[f'{self.ftpath}'].apply(self.get_names), column='AssemblyNames')
-        subset = subset.rename(columns={'Coverage': 'Assembly_coverage'})
+        subset.insert(loc=subset.shape[1] - 1, value=lens, column='AssemblyLength')
+        subset.insert(loc=subset.shape[1] - 1, value=contigs, column='ContigCount')
+        subset.insert(loc=1, value=subset[f'{self.ftpath}'].apply(self.get_names), column='AssemblyName')
+        subset = subset.rename(columns={'Coverage': 'AssemblyCoverage'})
         subset = subset.drop('Meta', axis=1)
         return subset
 
@@ -184,21 +176,21 @@ class AssemblyFinder:
                                                        'Contig': 5, 'na': 6}})
         # make sure the path to an ftp is available
         fact_table == fact_table[fact_table[f'{self.ftpath}'] != '']
-        sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'Contig_count',
+        sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'ContigCount',
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
                                               ascending=[True, True, True, False, False, False]).replace(
                                                   {'RefSeq_category': {0: 'reference genome', 1: 'representative genome',6: 'na'},
                                                   'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',5: 'Contig', 6: 'na'}})
-        if (self.nb == None) and (self.rank_to_select in self.target_ranks) and (isinstance(self.n_by_rank, int)):
+        if (self.nb == 'all') and (self.rank_to_select in self.target_ranks) and (isinstance(self.n_by_rank, int)):
             logging.info(f'Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}')
             uniq_rank = set(sorted_table[f'{self.rank_to_select}'])
             sorted_table = pd.concat([sorted_table[sorted_table[f'{self.rank_to_select}'] == ranks].iloc[:self.n_by_rank] for ranks in uniq_rank])
-        elif self.nb != None:
+        elif self.nb != 'all':
             if len(sorted_table) >= self.nb:
                 logging.info(f'Selecting {self.nb} out of {len(sorted_table)} assemblies')
+                sorted_table = sorted_table.iloc[:self.nb]
             if len(sorted_table) < self.nb:
                 logging.info(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
-            sorted_table = sorted_table.iloc[:self.nb]
         return sorted_table
 
     def run(self):
@@ -221,6 +213,7 @@ class AssemblyFinder:
 
         non_filtered_tb.to_csv(self.outnf, sep='\t', index=None)
         filtered_tb = self.select_assemblies(non_filtered_tb)
+        filtered_tb.insert(loc = 0, value=[self.name] * len(filtered_tb), column='Input')
         filtered_tb.to_csv(self.outf, sep='\t', index=None)
         return filtered_tb
 
@@ -231,27 +224,16 @@ Main
 Entrez.email = snakemake.params['ncbi_email']
 Entrez.api_key = snakemake.params['ncbi_key']
 entry = snakemake.wildcards.entry
-assembly = snakemake.params['assembly']
 db = snakemake.params['db']
 cat = snakemake.params['rcat']
 alvl = snakemake.params['alvl']
 excl = snakemake.params['excl']
 annot = snakemake.params['annot']
-column = snakemake.params['column']
 rank = snakemake.params['rank']
 n_by_rank = snakemake.params['n_by_rank']
+nb = snakemake.params['nb']
 
-print(f'{assembly} {db} {cat} {alvl} {excl} {annot} {column} {rank} {n_by_rank}')
-intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
-intb.set_index(f'{column}', inplace=True)
-if assembly:
-    nb = 1
-else:
-    try:
-        nb = int(intb.loc[entry]['NbGenomes'])
-    except KeyError:
-        nb = None
-find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, db=db, category=cat, assembly_level=alvl, exclude=excl,
+find_assemblies = AssemblyFinder(name=entry,db=db, category=cat, assembly_level=alvl, exclude=excl,
                                  nb=nb, rank_to_select=rank, annotation = annot, n_by_rank=n_by_rank,
                                  outnf=snakemake.output.all, outf=snakemake.output.filtered)
 find_assemblies.run()
