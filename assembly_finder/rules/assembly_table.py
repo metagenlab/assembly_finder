@@ -8,10 +8,17 @@ ncbi = NCBITaxa()
 
 
 class AssemblyFinder:
-    def __init__(self, name, isassembly=False, db='', source='latest[filter]', category=[], assembly_level = [], exclude=[], annotation=True,
-                    nb=1, rank_to_select=False, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
+    def __init__(self, name, isassembly=False, db='', source='latest[filter]', category=['reference', 'representative'],
+                 assembly_level = ['complete genome'], exclude=['metagenome'], annotation=True,
+                 nb=None, rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
+        self.assembly = isassembly
         self.db = db
+        if self.db == 'refseq':
+            self.ftpath = 'FtpPath_RefSeq'
+        else:
+            self.ftpath = 'FtpPath_GenBank'
+        self.source = source
         self.rcat = category
         self.alvl = assembly_level
         self.excl = exclude
@@ -33,11 +40,11 @@ class AssemblyFinder:
         """
         return meta.split(f' <Stat category="{stat}" sequence_tag="all">')[1].split('</Stat>')[0]
 
-    def get_names(self, gbftp):
+    def get_names(self, ftp):
         """
         function to extract assembly file names
         """
-        return gbftp.split('/')[-1]
+        return ftp.split('/')[-1]
 
     def get_lin_tax(self, lineages):
         """
@@ -128,7 +135,7 @@ class AssemblyFinder:
                 annotation = f' AND "{db} has annotation"[Properties]'
             elif self.annot and (len(db)<=0):
                 annotation = f' AND "has annotation"[Properties]'
-            search_term = f'txid{taxid}[Organism:exp] AND ({source}{refseq_category}{assembly_level}{exclude}{annotation})'
+            search_term = f'txid{taxid}[Organism:exp] AND ({self.source}{refseq_category}{assembly_level}{exclude}{annotation})'
         assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=2000000))['IdList']
         logging.info(f'> Search term: {search_term}')
         logging.info(f'found {len(assembly_ids)} assemblies')
@@ -148,7 +155,7 @@ class AssemblyFinder:
         contigs = subset.apply(lambda x: self.get_stat(x['Meta'], stat='contig_count'), axis=1)
         subset.insert(loc=subset.shape[1] - 1, value=lens, column='Assembly_length')
         subset.insert(loc=subset.shape[1] - 1, value=contigs, column='Contig_count')
-        subset.insert(loc=1, value=subset['FtpPath_GenBank'].apply(self.get_names), column='AssemblyNames')
+        subset.insert(loc=1, value=subset[f'{self.ftpath}'].apply(self.get_names), column='AssemblyNames')
         subset = subset.rename(columns={'Coverage': 'Assembly_coverage'})
         subset = subset.drop('Meta', axis=1)
         return subset
@@ -176,29 +183,22 @@ class AssemblyFinder:
                                     'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
         # make sure the path to an ftp is available
-        if self.db == 'refseq':
-            fact_table = fact_table[fact_table.FtpPath_Refseq != '']
-        else:
-            fact_table == fact_table[fact_table.FtpPath_GenBank != '']
+        fact_table == fact_table[fact_table[f'{self.ftpath}'] != '']
         sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'Contig_count',
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
                                               ascending=[True, True, True, False, False, False]).replace(
                                                   {'RefSeq_category': {0: 'reference genome', 1: 'representative genome',6: 'na'},
                                                   'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',5: 'Contig', 6: 'na'}})
-        
-        if self.rank_to_select:
-            logging.info(f'Filtering according to {self.rank_to_select}, Refseq categories, assembly status, '
-                         f'contig count and release date')
-            uniq_rank = set(sorted_table[f'{rank}'])
-            sorted_table = pd.concat([sorted_table[f'{rank}' == ranks].iloc[:self.n_by_rank] for ranks in uniq_rank])
-        if isinstance(self.nb, int):
+        if (self.nb == None) and (self.rank_to_select in self.target_ranks) and (isinstance(self.n_by_rank, int)):
+            logging.info(f'Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}')
+            uniq_rank = set(sorted_table[f'{self.rank_to_select}'])
+            sorted_table = pd.concat([sorted_table[sorted_table[f'{self.rank_to_select}'] == ranks].iloc[:self.n_by_rank] for ranks in uniq_rank])
+        elif self.nb != None:
             if len(sorted_table) >= self.nb:
-                logging.info(f'Selecting {self.nb} from every {self.rank_to_select} out of {len(sorted_table)} assemblies')
-
+                logging.info(f'Selecting {self.nb} out of {len(sorted_table)} assemblies')
             if len(sorted_table) < self.nb:
-                logging.warning(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
-        else:
-            logging.warning(f'No assembly number specified returning all assemblies found')
+                logging.info(f'Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead')
+            sorted_table = sorted_table.iloc[:self.nb]
         return sorted_table
 
     def run(self):
@@ -239,6 +239,9 @@ excl = snakemake.params['excl']
 annot = snakemake.params['annot']
 column = snakemake.params['column']
 rank = snakemake.params['rank']
+n_by_rank = snakemake.params['n_by_rank']
+
+print(f'{assembly} {db} {cat} {alvl} {excl} {annot} {column} {rank} {n_by_rank}')
 intb = pd.read_csv(snakemake.input[0], sep='\t', dtype={f'{column}': 'str'})
 intb.set_index(f'{column}', inplace=True)
 if assembly:
@@ -248,8 +251,7 @@ else:
         nb = int(intb.loc[entry]['NbGenomes'])
     except KeyError:
         nb = None
-n_by_rank = snakemake.params['n_by_rank']
 find_assemblies = AssemblyFinder(name=entry, isassembly=assembly, db=db, category=cat, assembly_level=alvl, exclude=excl,
                                  nb=nb, rank_to_select=rank, annotation = annot, n_by_rank=n_by_rank,
-                                 outnf=snakemake.output.all, outf=snakemake.output.filtered, )
+                                 outnf=snakemake.output.all, outf=snakemake.output.filtered)
 find_assemblies.run()
