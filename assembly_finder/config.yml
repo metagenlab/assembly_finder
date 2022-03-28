@@ -1,5 +1,5 @@
 ###########assembly finder config
-community_name: metagenome-1
+outdir: metagenome-1
 input_table_path: path/to/input_table
 ncbi_key: your_ncbi_api_key
 ncbi_email: your_ncbi_email
