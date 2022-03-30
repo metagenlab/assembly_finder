@@ -28,10 +28,12 @@ def get_snakefile():
 @click.pass_context
 def cli(obj):
     """
-    ┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┬┌┐┌┌┬┐┌─┐┬─┐
-    ├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  ├┤ ││││ ││├┤ ├┬┘
-    ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └  ┴┘└┘─┴┘└─┘┴└─
-    github: https://github.com/metagenlab/assembly_finder
+    ==========================================================
+            ┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┬┌┐┌┌┬┐┌─┐┬─┐
+            ├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  ├┤ ││││ ││├┤ ├┬┘
+            ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └  ┴┘└┘─┴┘└─┘┴└─
+        github: https://github.com/metagenlab/assembly_finder
+    ==========================================================
     """
 @cli.command(
     'run',
@@ -42,7 +44,7 @@ def cli(obj):
     "-i",
     "--input",
     type=str,
-    help="path to assembly_finder input_table_path or list of entries",
+    help="path to assembly_finder input table or list of entries",
 )
 @click.option(
     "-o",
@@ -158,6 +160,13 @@ def cli(obj):
     type=str,
     default='all',
 )
+@click.option(
+    "-dl",
+    "--downloader",
+    help="Use wget or aspera to download genomes",
+    type=str,
+    default='aspera',
+)
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 
 def run_workflow(conda_prefix, 
@@ -176,6 +185,7 @@ def run_workflow(conda_prefix,
                  filter_rank,
                  n_by_rank,
                  n_by_entry,
+                 downloader,
                  snakemake_args):
     import datetime
     if not output:
@@ -207,6 +217,7 @@ def run_workflow(conda_prefix,
         f"Rank_to_filter_by={filter_rank} "
         f"n_by_rank={n_by_rank} "
         f"n_by_entry={n_by_entry} "
+        f"downloader={downloader} "
         f"{' '.join(snakemake_args)}")
     logging.info(f"Executing: {cmd}")
     try:
