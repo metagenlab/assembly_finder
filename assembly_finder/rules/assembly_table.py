@@ -9,7 +9,7 @@ ncbi = NCBITaxa()
 
 class AssemblyFinder:
     def __init__(self, name, uid=False, db='refseq', source='latest[filter]', category='',
-                 assembly_level='all', exclude='', annotation=True,
+                 assembly_level='all', exclude='', annotation=False,
                  nb='all', rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name.replace('_',' ')
         self.uid = uid
@@ -106,7 +106,7 @@ class AssemblyFinder:
             assembly_level=''
             exclude=''
             assembly_level=''
-            if len(self.db)>0:
+            if len(self.db)!='all':
                 self.source = f'"latest {db}"[filter]'
 
             if len(self.rcat)>1:
