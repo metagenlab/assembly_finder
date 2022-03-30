@@ -1,27 +1,18 @@
 import pandas as pd
+
 outdir = config['outdir']
-try:
-    ncbi_key = config['NCBI_key'] 
-    ncbi_email = config['NCBI_email']
-    alvl = config['assembly_level']
-    db = config['db']
-    rcat = config['refseq_category']
-    excl = config['exclude']
-    annot = config['annotation']
-    rank = config['Rank_to_filter_by']
-    nrank = config['n_by_rank']
-    nb = config['n_by_entry']
-except KeyError:
-    ncbi_key = ''
-    ncbi_email = ''
-    alvl = ['complete genome']
-    db = 'refseq'
-    rcat = ['reference', 'representative']
-    excl = ['metagenome']
-    annot = True
-    rank = None
-    nrank = 1
-    nb = 'all'
+ncbi_key = config['NCBI_key'] 
+ncbi_email = config['NCBI_email']
+uid = config['uid']
+alvl = config['assembly_level']
+db = config['db']
+rcat = config['refseq_category']
+excl = config['exclude']
+annot = config['annotation']
+rank = config['Rank_to_filter_by']
+nrank = config['n_by_rank']
+nb = config['n_by_entry']
+
 try:
     entries = list(pd.read_csv(config['input'], delimiter='\t')[0])
 
@@ -42,7 +33,7 @@ rule get_assembly_tables:
             filtered=f'{outdir}/tables/{{entry}}-filtered.tsv'
 
     params: ncbi_key=ncbi_key,ncbi_email=ncbi_email,
-            alvl=alvl,db=db,rcat=rcat,excl=excl,
+            alvl=alvl,db=db,uid=uid,rcat=rcat,excl=excl,
             annot=annot,rank=rank,n_by_rank=nrank,nb=nb
 
     resources: ncbi_requests=1
