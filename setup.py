@@ -14,7 +14,7 @@ setup(name='assembly_finder',
       author_email='trestan.pillonel@gmail.com',
       entry_points="""
       [console_scripts]
-     af = assembly_finder.af:cli
+     assembly_finder = assembly_finder.assembly_finder:cli
       """,
       include_package_data=True,
       keywords=[],
