@@ -12,9 +12,10 @@ annot = config['annotation']
 rank = config['Rank_to_filter_by']
 nrank = config['n_by_rank']
 nb = config['n_by_entry']
+dl = config['downloader']
 
 try:
-    entries = list(pd.read_csv(config['input'], delimiter='\t')[0])
+    entries = list(pd.read_csv(config['input'], delimiter='\t', header=None)[0])
 
 except FileNotFoundError:
     entries = config['input'].split(',')
@@ -48,21 +49,33 @@ rule get_assembly_tables:
 rule combine_assembly_tables:
     input: expand(f'{outdir}/tables/{{entry}}-filtered.tsv',entry=entries)
 
-    output: f'{outdir}/assemblies-summary.tsv'
+    output: f'{outdir}/assemblies_summary.tsv'
 
     run:
         pd.concat([pd.read_csv(tb, sep='\t') for tb in list(input)]).to_csv(output[0], sep='\t', index=None)
+
         
-
-
 rule get_ftp_links_list:
-    input: f'{outdir}/assemblies-summary.tsv'
+    input: f'{outdir}/assemblies_summary.tsv'
 
     output: temp(f"{outdir}/assemblies/ftp-links.txt")
 
-    params: db=db
+    params: db=db, dl=dl
     
-    script: "concat-ftp-links.py"
+    run:
+        if params.db == 'refseq':
+            ftplinks = pd.read_csv(input[0], sep='\t')['FtpPath_RefSeq']
+        else:
+            ftplinks = pd.read_csv(input[0], sep='\t')['FtpPath_GenBank']
+        links = []
+        for link in ftplinks:
+            if params.dl == 'aspera':
+                link = link.replace('ftp://ftp.ncbi.nlm.nih.gov', '')
+            link += '/' + link.split('/')[-1]+'_genomic.fna.gz\n'
+            links.append(link)
+            f = open(output[0], "w")
+            f.writelines(links)
+            f.close()
 
 
 checkpoint download_assemblies:
@@ -74,11 +87,19 @@ checkpoint download_assemblies:
 
     benchmark: f"{outdir}/benchmark/downloads.txt"
 
-    params: f"{outdir}/assemblies"
+    params: asmdir=f"{outdir}/assemblies", dl=dl
 
-    shell:
-        """
-        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
-        --host=ftp.ncbi.nlm.nih.gov --file-list={input} {params} 1> {log}
-        touch {output}
-        """
+    run:
+        if dl=='aspera':
+            shell(
+                """
+                ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
+                --host=ftp.ncbi.nlm.nih.gov --file-list={input} {params.asmdir} &> {log} 
+                touch {output}
+                """)
+        elif dl=='wget':
+            shell(
+                """
+                wget -i {input} -P {params.asmdir} &> {log}
+                touch {output}
+                """)
