@@ -28,13 +28,19 @@ def get_snakefile():
 @click.pass_context
 def cli(obj):
     """
-    ==========================================================
-            ┌─┐┌─┐┌─┐┌─┐┌┬┐┌┐ ┬ ┬ ┬  ┌─┐┬┌┐┌┌┬┐┌─┐┬─┐
-            ├─┤└─┐└─┐├┤ │││├┴┐│ └┬┘  ├┤ ││││ ││├┤ ├┬┘
-            ┴ ┴└─┘└─┘└─┘┴ ┴└─┘┴─┘┴   └  ┴┘└┘─┴┘└─┘┴└─
-        github: https://github.com/metagenlab/assembly_finder
-    ==========================================================
+    Snakemake pipeline for downloading genomes from NCBI
+    
+    github: https://github.com/metagenlab/assembly_finder
     """
+click.echo("                                                                                                                    ")
+click.echo("  █████╗ ███████╗███████╗███████╗███╗   ███╗██████╗ ██╗  ██╗   ██╗    ███████╗██╗███╗   ██╗██████╗ ███████╗██████╗  ")
+click.echo(" ██╔══██╗██╔════╝██╔════╝██╔════╝████╗ ████║██╔══██╗██║  ╚██╗ ██╔╝    ██╔════╝██║████╗  ██║██╔══██╗██╔════╝██╔══██╗ ")
+click.echo(" ███████║███████╗███████╗█████╗  ██╔████╔██║██████╔╝██║   ╚████╔╝     █████╗  ██║██╔██╗ ██║██║  ██║█████╗  ██████╔╝ ")
+click.echo(" ██╔══██║╚════██║╚════██║██╔══╝  ██║╚██╔╝██║██╔══██╗██║    ╚██╔╝      ██╔══╝  ██║██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗ ")
+click.echo(" ██║  ██║███████║███████║███████╗██║ ╚═╝ ██║██████╔╝███████╗██║       ██║     ██║██║ ╚████║██████╔╝███████╗██║  ██║ ")
+click.echo(" ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚═════╝ ╚══════╝╚═╝       ╚═╝     ╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝ ")
+click.echo(f"                                                                                         version {__version__}     ")
+
 @cli.command(
     'run',
     context_settings=dict(ignore_unknown_options=True),
@@ -125,7 +131,7 @@ def cli(obj):
     "--annotation",
     help="select assemblies with annotation",
     is_flag=True,
-    default=True,
+    default=False,
     show_default=True
 )
 @click.option(
@@ -159,6 +165,7 @@ def cli(obj):
     help="Number of genomes per entry",
     type=str,
     default='all',
+    show_default=True
 )
 @click.option(
     "-dl",
