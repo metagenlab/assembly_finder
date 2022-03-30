@@ -11,7 +11,7 @@ class AssemblyFinder:
     def __init__(self, name, uid=False, db='refseq', source='latest[filter]', category='',
                  assembly_level='all', exclude='', annotation=True,
                  nb='all', rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
-        self.name = name
+        self.name = name.replace('_',' ')
         self.uid = uid
         self.db = db
         if self.db == 'refseq':
@@ -92,7 +92,7 @@ class AssemblyFinder:
                 taxid = self.name
         except ValueError:
             logging.info(f'{self.name} is a name, translating to taxid')
-            taxid = list(ncbi.get_name_translator([entry]).values())[0][0]
+            taxid = list(ncbi.get_name_translator([self.name]).values())[0][0]
         return taxid
 
     def search_assemblies(self):
@@ -185,16 +185,16 @@ class AssemblyFinder:
         return merged_table
 
     def select_assemblies(self, table):
-        fact_table = table.replace({'RefSeq_category': {'reference genome': 0, 'representative genome': 1, 'na': 6},
-                                    'AssemblyStatus': {'Complete Genome': 2, 'Chromosome': 3, 'Scaffold': 4,
+        fact_table = table.replace({'RefSeq_category': {'reference genome': 1, 'representative genome': 2, 'na': 6},
+                                    'AssemblyStatus': {'Complete Genome': 0, 'Chromosome': 3, 'Scaffold': 4,
                                                        'Contig': 5, 'na': 6}})
         # make sure the path to an ftp is available
         fact_table == fact_table[fact_table[f'{self.ftpath}'] != '']
-        sorted_table = fact_table.sort_values(['RefSeq_category', 'AssemblyStatus', 'ContigCount',
+        sorted_table = fact_table.sort_values(['AssemblyStatus', 'RefSeq_category', 'ContigCount',
                                                'ScaffoldN50', 'ContigN50', 'AsmReleaseDate_GenBank'],
                                               ascending=[True, True, True, False, False, False]).replace(
-                                                  {'RefSeq_category': {0: 'reference genome', 1: 'representative genome',6: 'na'},
-                                                  'AssemblyStatus': {2: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',5: 'Contig', 6: 'na'}})
+                                                  {'RefSeq_category': {1: 'reference genome', 2: 'representative genome',6: 'na'},
+                                                  'AssemblyStatus': {0: 'Complete Genome', 3: 'Chromosome', 4: 'Scaffold',5: 'Contig', 6: 'na'}})
         if (self.nb == 'all') and (self.rank_to_select in self.target_ranks) and (isinstance(self.n_by_rank, int)):
             logging.info(f'Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}')
             uniq_rank = set(sorted_table[f'{self.rank_to_select}'])
@@ -210,7 +210,7 @@ class AssemblyFinder:
     def run(self):
         assemblies_found = self.search_assemblies()
         if len(assemblies_found) > self.nchunks:
-            raise Warning(f'{len(assemblies_found)} assemblies found, restrict search term to find less assemblies')
+            warnings.warn(f'{len(assemblies_found)} assemblies found, restrict search term to find less assemblies')
             assemblies_chunks = self.chunks(assemblies_found,
                                             self.nchunks)  # Divide assembly lists by chunks of 10000
             logging.info(f'Parsing assemblies by chucks of {self.nchunks}')
