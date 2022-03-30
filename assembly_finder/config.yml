@@ -1,19 +1,18 @@
 ###########assembly finder config
-outdir: metagenome-1
-input_table_path: path/to/input_table
-ncbi_key: your_ncbi_api_key
-ncbi_email: your_ncbi_email
+outdir: outdir_name
+input: path/to/input_table or comma seperated string of inputs
+NCBI_key: your_ncbi_api_key
+NCBI_email: your_ncbi_email
 ##Parameters for search_assemblies function
-#This set of parameters is to search all possible assemblies
-complete_assemblies: False
-reference_assemblies: False
-representative_assemblies: False
-exclude_from_metagenomes: True
-Genbank_assemblies: True
-Refseq_assemblies: True
-##Parameters for the filtering function
-Rank_to_filter_by: 'None'
-#None: Assemblies are ranked by their assembly status (complete or not)
-#and Refseq category (reference, representative ...)
-#If you want to filter by species, set this parameter to 'species'. The filtering function will list all unique species
-#and rank their assemblies according to assembly status and Refseq category.
+uid: False #If inputs are UIDs or not
+db: refseq #Download from either refseq or genbank
+assembly_level: complete_genome #Download complete genome, chromosome, contig or scaffold
+refseq_category: all #Download reference,representative or all
+annotation: True #Only select assemblies with annotation
+exclude: 'metagenome' #Assemblies to exclude from search
+Rank_to_filter_by: species #Filter by species
+n_by_rank: 1 #Get 1 assembly per rank
+n_by_entry: all #By default select all found assemblies per input
+donwloader: aspera #Use either aspera or wget to download assemblies
+
+
