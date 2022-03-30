@@ -8,24 +8,28 @@ ncbi = NCBITaxa()
 
 
 class AssemblyFinder:
-    def __init__(self, name, db='', source='latest[filter]', category=['reference', 'representative'],
-                 assembly_level = ['complete genome'], exclude=['metagenome'], annotation=True,
+    def __init__(self, name, uid=False, db='refseq', source='latest[filter]', category='',
+                 assembly_level='all', exclude='', annotation=True,
                  nb='all', rank_to_select=None, outf='f.tsv', outnf='nf.tsv', n_by_rank=1):
         self.name = name
+        self.uid = uid
         self.db = db
         if self.db == 'refseq':
             self.ftpath = 'FtpPath_RefSeq'
         else:
             self.ftpath = 'FtpPath_GenBank'
         self.source = source
-        self.rcat = category
-        self.alvl = assembly_level
-        self.excl = exclude
+        self.rcat = category.split(',')
+        self.alvl = [a.replace('_', ' ') for a in assembly_level.split(',')]
+        self.excl = [e.replace('_', ' ') for e in exclude.split(',')]
         self.annot = annotation
         self.target_ranks = ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'superkingdom']
         self.nchunks = 10000
         self.rank_to_select = rank_to_select
-        self.nb = nb
+        try:
+            self.nb = int(nb)
+        except ValueError:
+            self.nb = nb
         self.outf = outf
         self.outnf = outnf
         self.n_by_rank = n_by_rank
@@ -92,13 +96,19 @@ class AssemblyFinder:
         return taxid
 
     def search_assemblies(self):
-          # If the  is an assembly name or Gbuid use it as a search term
-        taxid = self.taxid_find()
-        if not taxid: # If a taxid could not be found, asssume that entry is a UID
+          # If the entry is an assembly name or Gbuid use it as a search term
+        if self.uid:
             assembly_ids = [self.name]
-        else:  
+        else:
+            taxid = self.taxid_find()
+            annotation=''
+            refseq_category=''
+            assembly_level=''
+            exclude=''
+            assembly_level=''
             if len(self.db)>0:
                 self.source = f'"latest {db}"[filter]'
+
             if len(self.rcat)>1:
                 refseq_category = f' AND ('
                 for n, r in enumerate(self.rcat):
@@ -107,8 +117,10 @@ class AssemblyFinder:
                     else:
                         refseq_category += f'"{r} genome"[filter] OR '
                 refseq_category += ')'
-            elif len(self.rcat) == 1:
-                refseq_category = f' AND "{rcat[0]} genome"[filter]'
+
+            elif len(self.rcat) == 1 and (self.rcat[0] != 'all'):
+                refseq_category = f' AND "{self.rcat[0]} genome"[filter]'
+
             if len(self.alvl) > 1:
                 assembly_level = ' AND ('
                 for n, a in enumerate(self.alvl):
@@ -117,16 +129,18 @@ class AssemblyFinder:
                     else:
                         assembly_level += f'"{a}"[filter] OR '
                 assembly_level += ')'
-            elif len(self.alvl) == 1:
-                assembly_level = f' AND "{alvl[0]}"[filter]'
+            elif len(self.alvl) == 1 and (self.alvl[0] != 'all'):
+                assembly_level = f' AND "{self.alvl[0]}"[filter]'
+            
             if len(self.excl)>0:
                 exclude = ' AND all[filter]'
                 for e in self.excl:
-                    exclude += f' NOT {e}[filter]'
+                    exclude += f' NOT {e}[filter]'  
             if self.annot and (len(db)>0):
                 annotation = f' AND "{db} has annotation"[Properties]'
             elif self.annot and (len(db)<=0):
                 annotation = f' AND "has annotation"[Properties]'
+
             search_term = f'txid{taxid}[Organism:exp] AND ({self.source}{refseq_category}{assembly_level}{exclude}{annotation})'
             assembly_ids = Entrez.read(Entrez.esearch(db='assembly', term=search_term, retmax=2000000))['IdList']
         logging.info(f'> Search term: {search_term}')
@@ -224,6 +238,7 @@ Main
 Entrez.email = snakemake.params['ncbi_email']
 Entrez.api_key = snakemake.params['ncbi_key']
 entry = snakemake.wildcards.entry
+uid = snakemake.params['uid']
 db = snakemake.params['db']
 cat = snakemake.params['rcat']
 alvl = snakemake.params['alvl']
