@@ -8,6 +8,6 @@ def downloaded_list(wildcards):
            i=glob_wildcards(os.path.join(directory, '{i}_genomic.fna.gz')).i)
 
 rule all_download:
-    input: f"{outdir}/assemblies-summary.tsv",
+    input: f"{outdir}/assemblies_summary.tsv",
             downloaded_list,
             f"{outdir}/assemblies/dl.done"
