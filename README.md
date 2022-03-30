@@ -1,131 +1,94 @@
 # Assembly Finder
+
 Assembly finder is a snakemake workflow used for downloading genomes from NCBI's assembly database.
 
-## Installation
-Install with conda
+# Installation
+Install with [mamba](https://github.com/mamba-org/mamba) 
 ```bash
-conda install -c conda-forge mamba
-mamba create -c bioconda -n assembly_finder assembly_finder
+mamba create -c bioconda -c conda-forge -c hcc -c metagenlab -n assembly_finder assembly_finder
 ```
 
-## Required files
-Assembly finder requires as input a tsv table containing queries, and a configuration file for setting the workflow's parameters.
-
-### Input table example
-Queries can be either taxonomy identifiers:
-```
-Taxonomy           NbGenomes
-1813735                  1
-114185                   1
-staphylococcus_aureus    1
-```
-Or assembly accessions Genbank or refseq IDs as shown below:
-```
-Assembly           
-14228
-ASM28727v1
-15851438
-```
-
-### Config file example
-```
-input_table_path: path/to/input_table
-
-##E-utilities parameters
-NCBI_key: your_ncbi_api_key
-NCBI_email: your_ncbi_email
-
-##Search filter parameters
-complete_assemblies: False
-reference_assemblies: False
-representative_assemblies: False
-exclude_from_metagenomes: True
-Genbank_assemblies: True
-Refseq_assemblies: True
-
-##Filtering function parameter
-Rank_to_filter_by: 'None'
-```
-
-#### E-utilities parameters
-Assembly finder uses NCBI's Entrez utilities to search for genomes in the assembly database. Thus, the user is required to create an NCBI account with an API key to avoid IP address bans and have higher requests rate per second  (Go to http://www.ncbi.nlm.nih.gov/account/ to sign-up).
-
-#### Search filter parameters
-The user can expand or narrow down the set of assemblies found per query by modifying search filters. For example, parameters shown above include all Refseq and Genbank genomes except assemblies from metagenomes.
-
-#### Filtering function parameter
-For each query, assembly informations are retrieved and stored in tables which are then sorted according to Refseq category, assembly status, contig count and Genbank release date by a filtering function.
-The filtering function can then be set to keep one assembly per taxonomic rank. For example, after ranking the best assemblies at the top of the table, the user can choose one assembly per species by setting Rank_to_filter_by to 'species'. 
-By default, no specific taxonomic rank is used to select assemblies.
-
-## Running Assembly Finder using config file
-
+# Usage
 ```bash
-Usage: af conf [OPTIONS] [SNAKEMAKE_ARGS]...
+assembly_finder run -i <input> -o <outdir> -ne <ncbi_email> -nk <ncbi_key> -t <threads>
+```
 
-  Runs assembly_finder using config file
-
-  config: path/to/config.yml
+# Parameters
+```bash
+  █████╗ ███████╗███████╗███████╗███╗   ███╗██████╗ ██╗  ██╗   ██╗    ███████╗██╗███╗   ██╗██████╗ ███████╗██████╗
+ ██╔══██╗██╔════╝██╔════╝██╔════╝████╗ ████║██╔══██╗██║  ╚██╗ ██╔╝    ██╔════╝██║████╗  ██║██╔══██╗██╔════╝██╔══██╗
+ ███████║███████╗███████╗█████╗  ██╔████╔██║██████╔╝██║   ╚████╔╝     █████╗  ██║██╔██╗ ██║██║  ██║█████╗  ██████╔╝
+ ██╔══██║╚════██║╚════██║██╔══╝  ██║╚██╔╝██║██╔══██╗██║    ╚██╔╝      ██╔══╝  ██║██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗
+ ██║  ██║███████║███████║███████╗██║ ╚═╝ ██║██████╔╝███████╗██║       ██║     ██║██║ ╚████║██████╔╝███████╗██║  ██║
+ ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝╚═════╝ ╚══════╝╚═╝       ╚═╝     ╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝
+                                                                                         version 1.1.0
+Usage: assembly_finder run [OPTIONS] [SNAKEMAKE_ARGS]...
 
 Options:
-  -c, --config-file PATH   path to config file
-  -c, --cores INTEGER      number of cores to allow for the workflow
-  -p, --conda-prefix PATH  path to conda environment
-  -n, --dryrun_status      Snakemake dryrun to see the scheduling plan
-                           [default: False]
-  -h, --help               Show this message and exit.
+  -i, --input TEXT             path to assembly_finder input table or list of
+                               entries
+  -o, --output TEXT            Output directory
+  -p, --conda-prefix PATH      path to conda environment
+  -n, --dryrun_status          Snakemake dryrun to see the scheduling plan
+  -t, --threads INTEGER        number of threads to allow for the workflow
+                               [default: 2]
+  -nk, --ncbi_key TEXT         ncbi key for Entrez
+  -ne, --ncbi_email TEXT       ncbi email for Entrez
+  -db, --database TEXT         download from refseq or genbank  [default:
+                               refseq]
+  -id, --uid                   are inputs UIDs
+  -rc, --refseq_category TEXT  select reference and/or representative genomes
+                               [default: all]
+  -al, --assembly_level TEXT   select complete_genome, chromosome, scaffold or
+                               contig level assemblies  [default:
+                               complete_genome]
+  -an, --annotation            select assemblies with annotation
+  -ex, --exclude TEXT          exclude genomes  [default: metagenome]
+  -f, --filter_rank TEXT       Rank to filter by (example: species)  [default:
+                               none]
+  -nr, --n_by_rank INTEGER     Max number of genome by target rank (example: 1
+                               per species)
+  -nb, --n_by_entry TEXT       Number of genomes per entry
+  -dl, --downloader TEXT       Use wget or aspera to download genomes
+  -h, --help                   Show this message and exit.
 ```
-
-Below is an example command to run assembly finder with 10 cores and a maximum of 3 NCBI requests per second using the previously described required files.
-
+# Defaults
+## Input type
+assembly_finder assumes that inputs are either scientific names or taxids. If you want to download specific assemblies, you have to provide their UID and the -id flag.
+## Number of genomes per entry
+assembly_finder downloads all assemblies per entries. less can be selected by modifying the -nb flag.
+(-nb 1 to select only one genome per entry)
+## NCBI filters
+By default assembly_finder downloads from the refseq database: reference, representative (and na) complete, annotated genomes, excluding genomes from metagenomes. 
+assembly_finder does not select assemblies with annotations, to do so add the -an flag.
+## Taxonomy filters
+To filter n assemblies from taxonomic rank (species, genus, etc...) :
 ```bash
-af conf --configfile config.yml --resources ncbi_requests=3 --cores 10
+-f <rank> -nr <n>
+```
+## Downloader
+Batch download of files is done via [aspera-cli](https://github.com/IBM/aspera-cli).
+[wget](https://www.gnu.org/software/wget) can be used instead by specifying -dl wget
+
+# Examples
+## Download the top 1 assemblies for each bacterial species
+```bash
+assembly_finder run -i bacteria -o <outdir> -ne <ncbi_email> -nk <ncbi_key> -f species -nr 1 
+```
+## Donwload all refseq bacteria viruses and archaea complete genomes (exclude metagenome and anomalous)
+```bash
+assembly_finder run -i 'bacteria,viruses,archaea' -o <outdir> -ne <ncbi_email> -nk <ncbi_key> -al complete_genome -ex 'metagenome,anomalous' -t 3 
+```
+## Download specific assemblies from genbank
+```bash
+assembly_finder run -i <'UID1,UID2','UID3'> -o <outdir> -db genbank -uid
 ```
 
-Assemblies are saved in the assembly_gz/ directory.
+# Outputs
+Compressed fasta files are saved in the assemblies directory, and an assemblies_summary.tsv report file is generated.
 
-## Running Assembly Finder in command line 
-
-Assembly Finder can also be executed from the command line without configuration file. 
-
-```
-Usage: af run [OPTIONS] [SNAKEMAKE_ARGS]...
-
-  Runs assembly_finder pipeline with all steps
-
-  input_table_path: path/to/input_table ncbi_key: your_ncbi_api_key
-  ncbi_email: your_ncbi_email ##Parameters for search_assemblies function
-  #This set of parameters is to search all possible assemblies
-  complete_assemblies: False reference_assemblies: False
-  representative_assemblies: False exclude_from_metagenomes: True
-  Genbank_assemblies: True Refseq_assemblies: True ##Parameters for the
-  filtering function Rank_to_filter_by: False
-
-Options:
-  -i, --input-table PATH          path to assembly_finder input_table_path
-  -p, --conda-prefix PATH         path to conda environment
-  -n, --dryrun_status             Snakemake dryrun to see the scheduling plan
-                                  [default: False]
-
-  -c, --cores INTEGER             number of cores to allow for the workflow
-  -nk, --ncbi_key TEXT            ncbi key for Entrez
-  -ne, --ncbi_email TEXT          ncbi email for Entrez
-  -gc, --complete_assemblies TEXT
-                                  download only complete assemblies
-                                  (default=False)
-
-  -gr, --reference_assemblies TEXT
-                                  download only reference assemblies
-  -gre, --representative_assemblies TEXT
-                                  download only representative assemblies
-  -gb, --genbank_assemblies       download genbank assemblies (default True)
-  -rs, --refseq_assemblies        download refseq assemblies (default True)
-  -rs, --exclude_from_metagenomes
-                                  exclude metagnomes (default True)
-  -f, --filter_rank TEXT          Rank filter
-  -nr, --n_by_rank INTEGER        Max number of genome by target rank (eg
-                                  1/species)
-
-  -h, --help                      Show this message and exit.
-
-  ```
+assembly_summary.tsv example :
+|AssemblyName|RefSeq_category|AssemblyStatus|ContigN50| AssemblyLength|ContigCount|Taxid|species
+|-|-|-|-|-|-|-|-|
+|GCF_000898155.1_ViralProj167578|reference genome|Complete Genome|9908|9908|1|861561|Cyrtanthus elatus virus A
+|GCF_000864765.1_ViralProj15476|reference genome|Complete Genome|9181|9181|1|11676|Human immunodeficiency virus 1
