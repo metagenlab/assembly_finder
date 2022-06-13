@@ -13,10 +13,19 @@ rank = config['Rank_to_filter_by']
 nrank = config['n_by_rank']
 nb = config['n_by_entry']
 dl = config['downloader']
+istb = False
 
+def get_nb(entry, istab, tb, nb):
+    if istab:
+        df = pd.read_csv(tb, sep='\t', names=['entry','nb'], index_col='entry')
+        
+        return int(df.loc[entry]['nb'])
+
+    else:
+        return nb
 try:
-    entries = list(pd.read_csv(config['input'], delimiter='\t', header=None)[0])
-
+    entries = list(pd.read_csv(config['input'], sep='\t', header=None)[0])
+    istb = True
 except FileNotFoundError:
     entries = config['input'].split(',')
 
@@ -35,7 +44,8 @@ rule get_assembly_tables:
 
     params: ncbi_key=ncbi_key,ncbi_email=ncbi_email,
             alvl=alvl,db=db,uid=uid,rcat=rcat,excl=excl,
-            annot=annot,rank=rank,n_by_rank=nrank,nb=nb
+            annot=annot,rank=rank,n_by_rank=nrank,
+            nb = lambda wildcards: get_nb(wildcards.entry, istb, config['input'], config['n_by_entry'])
 
     resources: ncbi_requests=1
 
