@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-entry = str(config["input"])
+inp = str(config["input"])
 outdir = config["outdir"]
 ncbi_key = config["NCBI_key"]
 ncbi_email = config["NCBI_email"]
@@ -16,18 +16,10 @@ nrank = config["n_by_rank"]
 nb = config["n_by_entry"]
 dl = config["downloader"]
 
-def get_nb(entry, tb, nb):
-    try:
-        df = pd.read_csv(tb, sep="\t", names=["entry", "nb"], index_col="entry")
-        return int(df.loc[str(entry)]["nb"])
-    except KeyError:
-        return nb
-
-if os.path.isfile(entry):
-    entries = list(pd.read_csv(entry, sep="\t", header=None)[0])
-    istb = True
+if os.path.isfile(inp):
+    entries = list(pd.read_csv(inp, sep="\t", header=None)[0])
 else:
-    entries = entry.split(",")
+    entries = inp.split(",")
 
 rule check_for_update_ete3:
     output:
@@ -36,6 +28,14 @@ rule check_for_update_ete3:
         f"{outdir}/logs/ete3-update.log",
     script:
         "update-ete3.py"
+
+
+def get_nb(entry, tb, nb):
+    if os.path.isfile(tb):
+        df = pd.read_csv(tb, sep="\t", names=["entry", "nb"], index_col="entry")
+        return int(df.loc[int(entry)]["nb"])
+    else:
+        return nb
 
 
 rule get_assembly_tables:
@@ -56,7 +56,7 @@ rule get_assembly_tables:
         rank=rank,
         n_by_rank=nrank,
         nb=lambda wildcards: get_nb(
-            wildcards.entry, config["input"], config["n_by_entry"]
+            wildcards.entry, inp, config["n_by_entry"]
         )
     resources:
         ncbi_requests=1,

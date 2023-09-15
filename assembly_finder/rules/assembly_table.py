@@ -257,19 +257,17 @@ class AssemblyFinder:
                 },
             }
         )
-        # make sure the path to an ftp is available
-        fact_table == fact_table[fact_table[f"{self.ftpath}"] != ""]
         sorted_table = fact_table.sort_values(
             [
                 "AssemblyStatus",
                 "RefSeq_category",
                 "ContigCount",
-                "AssemblyCoverage"
+                "AssemblyCoverage",
                 "ScaffoldN50",
                 "ContigN50",
                 "AsmReleaseDate_GenBank",
             ],
-            ascending=[True, True, True, False ,False, False, False],
+            ascending=[True, True, True, False, False, False, False],
         ).replace(
             {
                 "RefSeq_category": {
@@ -285,6 +283,7 @@ class AssemblyFinder:
                     6: "na",
                 },
             }
+        
         )
         if (
             (self.nb == "all")
@@ -303,13 +302,13 @@ class AssemblyFinder:
                     for ranks in uniq_rank
                 ]
             )
-        elif self.nb != "all":
-            if len(sorted_table) >= self.nb:
+        else:
+            if len(sorted_table) >= int(self.nb):
                 logging.info(
                     f"Selecting {self.nb} out of {len(sorted_table)} assemblies"
                 )
                 sorted_table = sorted_table.iloc[: self.nb]
-            if len(sorted_table) < self.nb:
+            if len(sorted_table) < int(self.nb):
                 logging.info(
                     f"Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead"
                 )
