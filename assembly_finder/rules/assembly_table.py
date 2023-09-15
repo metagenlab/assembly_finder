@@ -264,11 +264,12 @@ class AssemblyFinder:
                 "AssemblyStatus",
                 "RefSeq_category",
                 "ContigCount",
+                "AssemblyCoverage"
                 "ScaffoldN50",
                 "ContigN50",
                 "AsmReleaseDate_GenBank",
             ],
-            ascending=[True, True, True, False, False, False],
+            ascending=[True, True, True, False ,False, False, False],
         ).replace(
             {
                 "RefSeq_category": {
