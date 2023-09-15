@@ -1,13 +1,16 @@
 import os
-include: 'rules/find_assemblies.smk'
+include: "rules/find_assemblies.smk"
 
 def downloaded_list(wildcards):
     checkpoint_output = checkpoints.download_assemblies.get(**wildcards).output[0]
-    directory = '/'.join((checkpoint_output.split('/')[0:2]))
-    return expand(f'{outdir}/assemblies/{{i}}_genomic.fna.gz',
-           i=glob_wildcards(os.path.join(directory, '{i}_genomic.fna.gz')).i)
+    directory = "/".join((checkpoint_output.split("/")[0:2]))
+    return expand(
+        f"{outdir}/assemblies/{{i}}_genomic.fna.gz",
+        i=glob_wildcards(os.path.join(directory, "{i}_genomic.fna.gz")).i,
+    )
 
 rule all_download:
-    input: f"{outdir}/assemblies_summary.tsv",
-            downloaded_list,
-            f"{outdir}/assemblies/dl.done"
+    input:
+        f"{outdir}/assemblies_summary.tsv",
+        downloaded_list,
+        f"{outdir}/assemblies/dl.done",
