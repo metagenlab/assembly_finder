@@ -21,6 +21,7 @@ if os.path.isfile(inp):
 else:
     entries = inp.split(",")
 
+
 rule check_for_update_ete3:
     output:
         temp("ete3-update.txt"),
@@ -55,9 +56,7 @@ rule get_assembly_tables:
         annot=annot,
         rank=rank,
         n_by_rank=nrank,
-        nb=lambda wildcards: get_nb(
-            wildcards.entry, inp, config["n_by_entry"]
-        )
+        nb=lambda wildcards: get_nb(wildcards.entry, inp, config["n_by_entry"]),
     resources:
         ncbi_requests=1,
     log:
@@ -72,7 +71,7 @@ rule combine_assembly_tables:
     input:
         expand(f"{outdir}/tables/{{entry}}-filtered.tsv", entry=entries),
     output:
-        f"{outdir}/assemblies_summary.tsv",
+        f"{outdir}/summary.tsv",
     run:
         pd.concat([pd.read_csv(tb, sep="\t") for tb in list(input)]).to_csv(
             output[0], sep="\t", index=None
@@ -81,7 +80,7 @@ rule combine_assembly_tables:
 
 rule get_ftp_links_list:
     input:
-        f"{outdir}/assemblies_summary.tsv",
+        f"{outdir}/summary.tsv",
     output:
         temp(f"{outdir}/assemblies/ftp-links.txt"),
     params:
@@ -107,7 +106,7 @@ checkpoint download_assemblies:
     input:
         f"{outdir}/assemblies/ftp-links.txt",
     output:
-        f"{outdir}/assemblies/dl.done",
+        temp(f"{outdir}/assemblies/dl.done"),
     log:
         f"{outdir}/logs/download.log",
     benchmark:

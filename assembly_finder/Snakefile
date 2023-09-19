@@ -11,6 +11,6 @@ def downloaded_list(wildcards):
 
 rule all_download:
     input:
-        f"{outdir}/assemblies_summary.tsv",
+        f"{outdir}/summary.tsv",
         downloaded_list,
         f"{outdir}/assemblies/dl.done",
