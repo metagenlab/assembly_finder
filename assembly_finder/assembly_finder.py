@@ -5,6 +5,7 @@ import os
 import sys
 import click
 import subprocess
+import datetime
 
 
 logging.basicConfig(
@@ -52,7 +53,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(help=desc, context_settings=CONTEXT_SETTINGS)
-@click.version_option(version, "-v", "--version")
 @click.option(
     "-i",
     "--input",
@@ -167,6 +167,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default="aspera",
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
+@click.version_option(version, "-v", "--version")
+
 def cli(
     conda_prefix,
     input,
@@ -187,8 +189,6 @@ def cli(
     downloader,
     snakemake_args,
 ):
-    import datetime
-
     if not output:
         output = datetime.datetime.today().strftime("%Y-%m-%d")
 
