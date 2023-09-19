@@ -39,6 +39,7 @@ class AssemblyFinder:
         self.annot = annotation
         self.target_ranks = [
             "strain",
+            "subspecies",
             "species",
             "genus",
             "family",
@@ -200,7 +201,7 @@ class AssemblyFinder:
             "ContigN50",
             "ScaffoldN50",
             "Coverage",
-            "Taxid",
+            "Taxid"
         ]
         subset = tb[columns]
         lens = subset.apply(
@@ -209,14 +210,13 @@ class AssemblyFinder:
         contigs = subset.apply(
             lambda x: self.get_stat(x["Meta"], stat="contig_count"), axis=1
         )
-        subset.insert(loc=subset.shape[1] - 1, value=lens, column="AssemblyLength")
+        subset.insert(loc=subset.shape[1] - 1, value=lens, column="TotalLength")
         subset.insert(loc=subset.shape[1] - 1, value=contigs, column="ContigCount")
         subset.insert(
             loc=1,
             value=subset[f"{self.ftpath}"].apply(self.get_names),
             column="AssemblyName",
         )
-        subset = subset.rename(columns={"Coverage": "AssemblyCoverage"})
         subset = subset.drop("Meta", axis=1)
         return subset
 
@@ -259,15 +259,16 @@ class AssemblyFinder:
         )
         sorted_table = fact_table.sort_values(
             [
+                "Taxid",
                 "AssemblyStatus",
                 "RefSeq_category",
                 "ContigCount",
-                "AssemblyCoverage",
+                "Coverage",
                 "ScaffoldN50",
                 "ContigN50",
                 "AsmReleaseDate_GenBank",
             ],
-            ascending=[True, True, True, False, False, False, False],
+            ascending=[True, True, True, True, False, False, False, False],
         ).replace(
             {
                 "RefSeq_category": {
