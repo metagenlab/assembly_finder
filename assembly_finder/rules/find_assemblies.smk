@@ -87,16 +87,13 @@ rule get_ftp_links_list:
         db=db,
         dl=dl,
     run:
-        if params.db == "refseq":
-            ftplinks = pd.read_csv(input[0], sep="\t")["FtpPath_RefSeq"]
-        else:
-            ftplinks = pd.read_csv(input[0], sep="\t")["FtpPath_GenBank"]
+        ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         links = []
         for link in ftplinks:
             if params.dl == "aspera":
                 link = link.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
-            link += "/" + link.split("/")[-1] + "_genomic.fna.gz\n"
-            links.append(link)
+            links.append(link + "/" + link.split("/")[-1] + "_genomic.fna.gz\n")
+            # links.append(link + "/" + "md5checksums.txt\n")
             f = open(output[0], "w")
             f.writelines(links)
             f.close()
