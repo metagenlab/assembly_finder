@@ -28,18 +28,40 @@ class AssemblyFinder:
         self.name = name.replace("_", " ")
         self.uid = uid
         self.db = db
+
         if self.db == "refseq":
-            self.ftpath = "FtpPath_RefSeq"
+            self.dbuid = "RsUid"
+            self.ftp = "FtpPath_RefSeq"
+
         else:
-            self.ftpath = "FtpPath_GenBank"
+            self.db = "genbank"
+            self.dbuid = "GbUid"
+            self.ftp = "FtpPath_GenBank"
+
+        self.columns = [
+            self.dbuid,
+            "AssemblyAccession",
+            "AssemblyName",
+            self.ftp,
+            "AssemblyStatus",
+            "RefSeq_category",
+            "ContigCount",
+            "ContigL50",
+            "ContigN50",
+            "Coverage",
+            "TotalLength",
+            "Taxid",
+            "Organism",
+            "Sub_type",
+            "Sub_value",
+        ]
+
         self.source = source
         self.rcat = category.split(",")
         self.alvl = [a.replace("_", " ") for a in assembly_level.split(",")]
         self.excl = [e.replace("_", " ") for e in exclude.split(",")]
         self.annot = annotation
         self.target_ranks = [
-            "strain",
-            "subspecies",
             "species",
             "genus",
             "family",
@@ -73,12 +95,6 @@ class AssemblyFinder:
             "</Stat>"
         )[0]
 
-    def get_names(self, ftp):
-        """
-        function to extract assembly file names
-        """
-        return ftp.split("/")[-1]
-
     def get_lin_tax(self, lineages):
         """
         function to get lineages from a list of taxids
@@ -97,7 +113,7 @@ class AssemblyFinder:
                 if tb.iloc[i, n] == "unknown" and col != "superkingdom":
                     tmpname = tb.iloc[i, n - 1] + "_" + col[0]
                     if col == "species":
-                        tmpname = tb.iloc[i, n - 1] + "_" + col[0:1]
+                        tmpname = tb.iloc[i, n - 1] + "_" + col[0:2]
                     tb.iloc[i, n] = tmpname
         return tb
 
@@ -188,37 +204,30 @@ class AssemblyFinder:
         assembly_summary = Entrez.read(
             Entrez.esummary(db="assembly", id=assembly_list), validate=False
         )
-        summaries = assembly_summary["DocumentSummarySet"]["DocumentSummary"]
-        tb = pd.DataFrame.from_records(summaries)
-        columns = [
-            "GbUid",
-            "RefSeq_category",
-            "AssemblyStatus",
-            "FtpPath_GenBank",
-            "FtpPath_RefSeq",
-            "Meta",
-            "AsmReleaseDate_GenBank",
-            "ContigN50",
-            "ScaffoldN50",
-            "Coverage",
-            "Taxid"
-        ]
-        subset = tb[columns]
-        lens = subset.apply(
-            lambda x: self.get_stat(x["Meta"], stat="total_length"), axis=1
+        tb = pd.DataFrame.from_records(
+            assembly_summary["DocumentSummarySet"]["DocumentSummary"]
         )
-        contigs = subset.apply(
+
+        lens = tb.apply(lambda x: self.get_stat(x["Meta"], stat="total_length"), axis=1)
+        contigs = tb.apply(
             lambda x: self.get_stat(x["Meta"], stat="contig_count"), axis=1
         )
-        subset.insert(loc=subset.shape[1] - 1, value=lens, column="TotalLength")
-        subset.insert(loc=subset.shape[1] - 1, value=contigs, column="ContigCount")
-        subset.insert(
-            loc=1,
-            value=subset[f"{self.ftpath}"].apply(self.get_names),
-            column="AssemblyName",
-        )
-        subset = subset.drop("Meta", axis=1)
-        return subset
+        l50 = tb.apply(lambda x: self.get_stat(x["Meta"], stat="contig_l50"), axis=1)
+        tb.insert(loc=tb.shape[1] - 1, value=lens, column="TotalLength")
+        tb.insert(loc=tb.shape[1] - 1, value=contigs, column="ContigCount")
+        tb.insert(loc=tb.shape[1] - 1, value=l50, column="ContigL50")
+        sub_types = []
+        sub_values = []
+        for biosource in tb.Biosource:
+            try:
+                sub_types.append(biosource["InfraspeciesList"][0]["Sub_type"])
+                sub_values.append(biosource["InfraspeciesList"][0]["Sub_value"])
+            except IndexError:
+                sub_types.append("na")
+                sub_values.append("na")
+        tb["Sub_type"] = sub_types
+        tb["Sub_value"] = sub_values
+        return tb
 
     def add_lineage(self, assembly_tb):
         unique_taxids = list(set(assembly_tb["Taxid"]))
@@ -241,6 +250,7 @@ class AssemblyFinder:
         return merged_table
 
     def select_assemblies(self, table):
+        table.drop("Meta", axis=1, inplace=True)
         fact_table = table.replace(
             {
                 "RefSeq_category": {
@@ -263,12 +273,12 @@ class AssemblyFinder:
                 "AssemblyStatus",
                 "RefSeq_category",
                 "ContigCount",
+                "ContigL50",
                 "Coverage",
-                "ScaffoldN50",
                 "ContigN50",
-                "AsmReleaseDate_GenBank",
+                "LastUpdateDate",
             ],
-            ascending=[True, True, True, True, False, False, False, False],
+            ascending=[True, True, True, True, True, False, False, False],
         ).replace(
             {
                 "RefSeq_category": {
@@ -284,7 +294,6 @@ class AssemblyFinder:
                     6: "na",
                 },
             }
-        
         )
         if (
             (self.nb == "all")
@@ -313,7 +322,28 @@ class AssemblyFinder:
                 logging.info(
                     f"Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead"
                 )
-        return sorted_table
+        sel_cols = self.columns + self.target_ranks[::-1]
+        subset = sorted_table[sel_cols]
+        renamed_cols = [
+            "uid",
+            "asm_accession",
+            "asm_name",
+            "ftp_path",
+            "asm_status",
+            "refseq_category",
+            "contig_count",
+            "contig_l50",
+            "contig_n50",
+            "coverage",
+            "genome_size",
+            "taxid",
+            "organism",
+            "sub_type",
+            "sub_value",
+        ] + self.target_ranks[::-1]
+        subset.columns = renamed_cols
+        subset.insert(loc=0, value=[self.db] * len(subset), column="database")
+        return subset
 
     def run(self):
         assemblies_found = self.search_assemblies()
@@ -338,7 +368,7 @@ class AssemblyFinder:
 
         non_filtered_tb.to_csv(self.outnf, sep="\t", index=None)
         filtered_tb = self.select_assemblies(non_filtered_tb)
-        filtered_tb.insert(loc=0, value=[self.name] * len(filtered_tb), column="Input")
+        filtered_tb.insert(loc=0, value=[self.name] * len(filtered_tb), column="entry")
         filtered_tb.to_csv(self.outf, sep="\t", index=None)
         return filtered_tb
 
