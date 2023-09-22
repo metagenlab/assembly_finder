@@ -89,41 +89,84 @@ rule get_ftp_links_list:
     run:
         ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         links = []
-        for link in ftplinks:
-            if params.dl == "aspera":
-                link = link.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
-            links.append(link + "/" + link.split("/")[-1] + "_genomic.fna.gz\n")
-            # links.append(link + "/" + "md5checksums.txt\n")
-            f = open(output[0], "w")
-            f.writelines(links)
-            f.close()
+        with open(output[0], "w") as ftp_links:
+            for link in ftplinks:
+                src_dir = link.split("/")[-1]
+                if params.dl == "aspera":
+                    link = link.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
+                ftp_links.write(link + "/" + src_dir + "_genomic.fna.gz\n")
 
 
 checkpoint download_assemblies:
     input:
         f"{outdir}/assemblies/ftp-links.txt",
     output:
-        temp(f"{outdir}/assemblies/dl.done"),
+        temp(f"{outdir}/assemblies/checksums.txt"),
     log:
         f"{outdir}/logs/download.log",
     benchmark:
         f"{outdir}/benchmark/downloads.txt"
     params:
-        asmdir=f"{outdir}/assemblies",
         dl=dl,
+        asmdir=f"{outdir}/assemblies",
     run:
         if dl == "aspera":
             shell(
                 """
                 ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
-                --host=ftp.ncbi.nlm.nih.gov --file-list={input} {params.asmdir} &> {log} 
-                touch {output}
+                --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
+                --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
+                mv {params.asmdir}/*.manifest.txt {output}
                 """
             )
         elif dl == "wget":
             shell(
                 """
                 wget -i {input} -P {params.asmdir} &> {log}
-                touch {output}
                 """
             )
+
+
+rule format_checksum:
+    input:
+        f"{outdir}/assemblies/checksums.txt",
+    output:
+        temp(f"{outdir}/assemblies/aspera-checks.txt"),
+    run:
+        d = {
+            line.replace('"', "")
+            .replace("\n", "")
+            .split(", ")[1]
+            .split(":")[1]: os.path.relpath(
+                line.replace('"', "").replace("\n", "").split(", ")[0].split(" ")[0]
+            )
+            for line in open(input[0])
+            if line.startswith('"')
+        }
+        pd.DataFrame.from_dict([d]).transpose().reset_index().to_csv(
+            output[0], sep="\t", index=None, header=None
+        )
+
+
+def downloads(wildcards):
+    checkpoint_output = checkpoints.download_assemblies.get(**wildcards).output[0]
+    directory = "/".join((checkpoint_output.split("/")[0:2]))
+    return expand(
+        f"{outdir}/assemblies/{{i}}.fna.gz",
+        i=glob_wildcards(os.path.join(directory, "{i}.fna.gz")).i,
+    )
+
+
+rule verify_checksums:
+    input:
+        f"{outdir}/assemblies/aspera-checks.txt",
+        downloads,
+    output:
+        temp(f"{outdir}/assemblies/sha256.txt"),
+    params:
+        asmdir=f"{outdir}/assemblies",
+    shell:
+        """
+        sha256sum {params.asmdir}/*.fna.gz | sed 's/ \+ /\t/g' > {output} 
+        diff <(sort {output}) <(sort {input[0]})
+        """
