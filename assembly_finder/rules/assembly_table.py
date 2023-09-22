@@ -39,6 +39,7 @@ class AssemblyFinder:
             self.ftp = "FtpPath_GenBank"
 
         self.columns = [
+            "entry",
             self.dbuid,
             "AssemblyAccession",
             "AssemblyName",
@@ -251,6 +252,7 @@ class AssemblyFinder:
 
     def select_assemblies(self, table):
         table.drop("Meta", axis=1, inplace=True)
+        table.insert(loc=0, value=[self.name] * len(table), column="entry")
         fact_table = table.replace(
             {
                 "RefSeq_category": {
@@ -269,6 +271,7 @@ class AssemblyFinder:
         )
         sorted_table = fact_table.sort_values(
             [
+                "entry",
                 "Taxid",
                 "AssemblyStatus",
                 "RefSeq_category",
@@ -278,7 +281,7 @@ class AssemblyFinder:
                 "ContigN50",
                 "LastUpdateDate",
             ],
-            ascending=[True, True, True, True, True, False, False, False],
+            ascending=[True, True, True, True, True, True, False, False, False],
         ).replace(
             {
                 "RefSeq_category": {
@@ -325,6 +328,7 @@ class AssemblyFinder:
         sel_cols = self.columns + self.target_ranks[::-1]
         subset = sorted_table[sel_cols]
         renamed_cols = [
+            "entry",
             "uid",
             "asm_accession",
             "asm_name",
@@ -342,7 +346,7 @@ class AssemblyFinder:
             "sub_value",
         ] + self.target_ranks[::-1]
         subset.columns = renamed_cols
-        subset.insert(loc=0, value=[self.db] * len(subset), column="database")
+        subset.insert(loc=1, value=[self.db] * len(subset), column="database")
         return subset
 
     def run(self):
@@ -368,7 +372,6 @@ class AssemblyFinder:
 
         non_filtered_tb.to_csv(self.outnf, sep="\t", index=None)
         filtered_tb = self.select_assemblies(non_filtered_tb)
-        filtered_tb.insert(loc=0, value=[self.name] * len(filtered_tb), column="entry")
         filtered_tb.to_csv(self.outf, sep="\t", index=None)
         return filtered_tb
 
