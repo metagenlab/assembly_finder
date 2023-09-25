@@ -139,7 +139,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-f",
     "--filter_rank",
     help="Rank to filter by (example: species)",
-    default="species",
+    default="none",
     is_flag=False,
     type=str,
     show_default=True,
@@ -148,8 +148,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-nr",
     "--n_by_rank",
     help="Max number of genome by target rank (example: 1 per species)",
-    type=int,
-    default=1,
+    type=str,
+    default="none",
 )
 @click.option(
     "-nb",
@@ -159,16 +159,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default="all",
     show_default=True,
 )
-@click.option(
-    "-dl",
-    "--downloader",
-    help="Use wget or aspera to download genomes",
-    type=str,
-    default="aspera",
-)
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 @click.version_option(version, "-v", "--version")
-
 def cli(
     conda_prefix,
     input,
@@ -186,7 +178,6 @@ def cli(
     filter_rank,
     n_by_rank,
     n_by_entry,
-    downloader,
     snakemake_args,
 ):
     if not output:
@@ -218,7 +209,6 @@ def cli(
         f"Rank_to_filter_by={filter_rank} "
         f"n_by_rank={n_by_rank} "
         f"n_by_entry={n_by_entry} "
-        f"downloader={downloader} "
         f"{' '.join(snakemake_args)}"
     )
     logging.info(f"Executing: {cmd}")
