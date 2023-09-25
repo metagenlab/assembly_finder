@@ -62,12 +62,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option("-o", "--output", help="Output directory", type=str)
 @click.option(
-    "-p",
-    "--conda_prefix",
-    type=click.Path(exists=True, resolve_path=True),
-    help="path to conda environment",
-)
-@click.option(
     "-n",
     "--dryrun_status",
     is_flag=True,
@@ -162,7 +156,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 @click.version_option(version, "-v", "--version")
 def cli(
-    conda_prefix,
     input,
     output,
     dryrun_status,
@@ -187,13 +180,9 @@ def cli(
         dryrun = "-n"
     else:
         dryrun = ""
-    if conda_prefix is None:
-        conda_prefix = os.environ["CONDA_PREFIX"]
-    if not os.path.exists(conda_prefix):
-        logging.critical(f"conda env path not found: {conda_prefix}")
-        sys.exit(1)
+
     cmd = (
-        f"snakemake --snakefile {get_snakefile()} --use-conda --conda-prefix {conda_prefix} "
+        f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
         f"all_download {dryrun} "
         f"--config input={input} "
