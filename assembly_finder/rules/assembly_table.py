@@ -28,6 +28,7 @@ class AssemblyFinder:
         self.name = name.replace("_", " ")
         self.uid = uid
         self.db = db
+        self.nb = nb
 
         if self.db == "refseq":
             self.dbuid = "RsUid"
@@ -73,13 +74,16 @@ class AssemblyFinder:
         ]
         self.nchunks = 10000
         self.rank_to_select = rank_to_select
+
         try:
             self.nb = int(nb)
+            self.n_by_rank = int(n_by_rank)
         except ValueError:
             self.nb = nb
+            self.n_by_rank = n_by_rank
         self.outf = outf
         self.outnf = outnf
-        self.n_by_rank = n_by_rank
+
         logging.basicConfig(
             format="%(asctime)s %(levelname)s %(message)s",
             datefmt="%d %b %Y %H:%M:%S",
@@ -298,14 +302,7 @@ class AssemblyFinder:
                 },
             }
         )
-        if (
-            (self.nb == "all")
-            and (self.rank_to_select in self.target_ranks)
-            and (isinstance(self.n_by_rank, int))
-        ):
-            logging.info(
-                f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}"
-            )
+        if (self.rank_to_select != "none") and (self.n_by_rank != "none"):
             uniq_rank = set(sorted_table[f"{self.rank_to_select}"])
             sorted_table = pd.concat(
                 [
@@ -315,7 +312,17 @@ class AssemblyFinder:
                     for ranks in uniq_rank
                 ]
             )
-        else:
+            if self.nb == "all":
+                logging.info(
+                    f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}"
+                )
+
+            else:
+                logging.info(
+                    f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select} per entry"
+                )
+                sorted_table = sorted_table.iloc[: self.nb]
+        elif self.nb != "all":
             if len(sorted_table) >= int(self.nb):
                 logging.info(
                     f"Selecting {self.nb} out of {len(sorted_table)} assemblies"
@@ -325,6 +332,9 @@ class AssemblyFinder:
                 logging.info(
                     f"Found less than {self.nb} assemblies in total, returning {len(sorted_table)} instead"
                 )
+        else:
+            logging.info(f"Returning all assemblies found")
+
         sel_cols = self.columns + self.target_ranks[::-1]
         subset = sorted_table[sel_cols]
         renamed_cols = [

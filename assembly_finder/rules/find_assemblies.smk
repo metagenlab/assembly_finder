@@ -14,12 +14,13 @@ annot = config["annotation"]
 rank = config["Rank_to_filter_by"]
 nrank = config["n_by_rank"]
 nb = config["n_by_entry"]
-dl = config["downloader"]
 
 if os.path.isfile(inp):
     entries = list(pd.read_csv(inp, sep="\t", header=None)[0])
+    entry_to_nb = pd.read_csv(inp, sep="\t", names=["entry", "nb"], index_col="entry")
 else:
     entries = inp.split(",")
+    entry_to_nb = None
 
 
 rule check_for_update_ete3:
@@ -31,11 +32,10 @@ rule check_for_update_ete3:
         "update-ete3.py"
 
 
-def get_nb(entry, tb, nb):
-    if os.path.isfile(tb):
-        df = pd.read_csv(tb, sep="\t", names=["entry", "nb"], index_col="entry")
-        return int(df.loc[int(entry)]["nb"])
-    else:
+def get_nb(wildcards, df, nb):
+    try:
+        return int(df.loc[wildcards.entry])
+    except AttributeError:
         return nb
 
 
@@ -56,7 +56,7 @@ rule get_assembly_tables:
         annot=annot,
         rank=rank,
         n_by_rank=nrank,
-        nb=lambda wildcards: get_nb(wildcards.entry, inp, config["n_by_entry"]),
+        nb=lambda wildcards: get_nb(wildcards.entry, entry_to_nb, nb),
     resources:
         ncbi_requests=1,
     log:
@@ -85,15 +85,13 @@ rule get_ftp_links_list:
         temp(f"{outdir}/assemblies/ftp-links.txt"),
     params:
         db=db,
-        dl=dl,
     run:
         ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         links = []
         with open(output[0], "w") as ftp_links:
             for link in ftplinks:
                 src_dir = link.split("/")[-1]
-                if params.dl == "aspera":
-                    link = link.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
+                link = link.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
                 ftp_links.write(link + "/" + src_dir + "_genomic.fna.gz\n")
 
 
@@ -107,24 +105,14 @@ checkpoint download_assemblies:
     benchmark:
         f"{outdir}/benchmark/downloads.txt"
     params:
-        dl=dl,
         asmdir=f"{outdir}/assemblies",
-    run:
-        if dl == "aspera":
-            shell(
-                """
-                ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
-                --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
-                --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
-                mv {params.asmdir}/*.manifest.txt {output}
-                """
-            )
-        elif dl == "wget":
-            shell(
-                """
-                wget -i {input} -P {params.asmdir} &> {log}
-                """
-            )
+    shell:
+        """
+        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
+        --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
+        --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
+        mv {params.asmdir}/*.manifest.txt {output}
+        """
 
 
 rule format_checksum:
