@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import glob
 
 inp = str(config["input"])
 outdir = config["outdir"]
@@ -71,7 +72,7 @@ rule combine_assembly_tables:
     input:
         expand(f"{outdir}/tables/{{entry}}-filtered.tsv", entry=entries),
     output:
-        f"{outdir}/summary.tsv",
+        temp(f"{outdir}/assembly_summary.tsv"),
     run:
         pd.concat([pd.read_csv(tb, sep="\t") for tb in list(input)]).to_csv(
             output[0], sep="\t", index=None
@@ -80,7 +81,7 @@ rule combine_assembly_tables:
 
 rule get_ftp_links_list:
     input:
-        f"{outdir}/summary.tsv",
+        f"{outdir}/assembly_summary.tsv",
     output:
         temp(f"{outdir}/assemblies/ftp-links.txt"),
     params:
@@ -113,6 +114,24 @@ checkpoint download_assemblies:
         --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
         mv {params.asmdir}/*.manifest.txt {output}
         """
+
+
+rule get_download_paths:
+    input:
+        f"{outdir}/assembly_summary.tsv",
+        f"{outdir}/assemblies/checksums.txt",
+    output:
+        f"{outdir}/summary.tsv",
+    params:
+        asmdir=f"{outdir}/assemblies",
+    run:
+        df = pd.read_csv(input[0], sep="\t")
+        df.ftp_path = [
+            os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
+            for acc in df["asm_accession"]
+        ]
+        df.rename(columns={"ftp_path": "path"}, inplace=True)
+        df.to_csv(output[0], sep="\t", index=None)
 
 
 rule format_checksum:
