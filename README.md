@@ -99,58 +99,58 @@ or
 assembly_finder -i 1290,1813735,114185 -o test -nb 1
 ```
 
-## Download the top 1 assemblies for each bacterial species
+### Download the top 1 assemblies for each bacterial species
 
 ```sh
 assembly_finder -i bacteria -o <outdir> -ne <ncbi_email> -nk <ncbi_key> -r species -nr 1
 ```
 
-## Donwload all refseq bacteria viruses and archaea complete genomes (exclude metagenome and anomalous)
+### Donwload all refseq bacteria viruses and archaea complete genomes (exclude metagenome and anomalous)
 
 ```sh
 assembly_finder -i bacteria,viruses,archaea -o <outdir> -ne <ncbi_email> -nk <ncbi_key> -al complete_genome -ex metagenome,anomalous -t 3
 ```
 
-## Download specific assemblies from genbank
+### Download specific assemblies from genbank
 
 ```sh
 assembly_finder -i <UID1,UID2,UID3> -o <outdir> -db genbank -uid
 ```
 
-## Output
+### Output
 
 Compressed fasta files are saved in the assemblies directory, and a summary.tsv report file is generated
 
 ```sh
-📂test
- ┣ 📂assemblies
+📂 test
+ ┣ 📂 assemblies
  ┃ ┣ 📜GCF_001274515.1_ASM127451v1_genomic.fna.gz
  ┃ ┣ 📜GCF_001618865.1_ASM161886v1_genomic.fna.gz
  ┃ ┗ 📜GCF_003812505.1_ASM381250v1_genomic.fna.gz
- ┣ 📂benchmark
+ ┣ 📂 benchmark
  ┃ ┣ 📜downloads.txt
  ┃ ┣ 📜find-assemblies-114185.txt
  ┃ ┣ 📜find-assemblies-1290.txt
  ┃ ┗ 📜find-assemblies-1813735.txt
- ┣ 📂logs
+ ┣ 📂 logs
  ┃ ┣ 📜download.log
  ┃ ┣ 📜ete3-update.log
  ┃ ┣ 📜find-assemblies-114185.log
  ┃ ┣ 📜find-assemblies-1290.log
  ┃ ┗ 📜find-assemblies-1813735.log
- ┣ 📂tables
+ ┣ 📂 tables
  ┃ ┣ 📜114185-all.tsv
  ┃ ┣ 📜114185-filtered.tsv
  ┃ ┣ 📜1290-all.tsv
  ┃ ┣ 📜1290-filtered.tsv
  ┃ ┣ 📜1813735-all.tsv
  ┃ ┗ 📜1813735-filtered.tsv
- ┗ 📜summary.tsv
- ```
+ ┗ 📜 summary.tsv
+```
 
 summary.tsv :
-| entry   | database | uid      | asm_accession   | asm_name    | path                                                                                                     | asm_status      | refseq_category       | contig_count | contig_l50 | contig_n50 | coverage | genome_size | taxid   | organism                                        | sub_type | sub_value    | superkingdom | phylum          | class               | order              | family              | genus                 | species                      |
+| entry | database | uid | asm_accession | asm_name | path | asm_status | refseq_category | contig_count | contig_l50 | contig_n50 | coverage | genome_size | taxid | organism | sub_type | sub_value | superkingdom | phylum | class | order | family | genus | species |
 | :------ | :------- | :------- | :-------------- | :---------- | :------------------------------------------------------------------------------------------------------- | :-------------- | :-------------------- | :----------- | :--------- | :--------- | :------- | :---------- | :------ | :---------------------------------------------- | :------- | :----------- | :----------- | :-------------- | :------------------ | :----------------- | :------------------ | :-------------------- | :--------------------------- |
-| 1290    | refseq   | 7934998  | GCF_003812505.1 | ASM381250v1 | absolute/path/to/assemblies/GCF_003812505.1_ASM381250v1_genomic.fna.gz | Complete Genome | representative genome | 3            | 1          | 2220494    | 19.64    | 2257431     | 1290    | Staphylococcus hominis (firmicutes)             | strain   | FDAARGOS_575 | Bacteria     | Bacillota       | Bacilli             | Bacillales         | Staphylococcaceae   | Staphylococcus        | Staphylococcus hominis       |
-| 1813735 | refseq   | 6612678  | GCF_001618865.1 | ASM161886v1 | absolute/path/to/assemblies/GCF_001618865.1_ASM161886v1_genomic.fna.gz | Complete Genome | representative genome | 1            | 1          | 7480314    | 112.0    | 7480314     | 1855912 | Luteitalea pratensis (bacteria)                 | strain   | DSM 100886   | Bacteria     | Acidobacteriota | Vicinamibacteria    | Vicinamibacterales | Vicinamibacteraceae | Luteitalea            | Luteitalea pratensis         |
-| 114185  | refseq   | 15546308 | GCF_001274515.1 | ASM127451v1 | absolute/path/to/assemblies/GCF_001274515.1_ASM127451v1_genomic.fna.gz | Complete Genome | na                    | 1            | 1          | 174018     | 85.24    | 174018      | 114186  | Candidatus Carsonella ruddii (g-proteobacteria) | strain   | YCCR         | Bacteria     | Pseudomonadota  | Gammaproteobacteria | Oceanospirillales  | Halomonadaceae      | Candidatus Carsonella | Candidatus Carsonella ruddii |
+| 1290 | refseq | 7934998 | GCF_003812505.1 | ASM381250v1 | absolute/path/to/assemblies/GCF_003812505.1_ASM381250v1_genomic.fna.gz | Complete Genome | representative genome | 3 | 1 | 2220494 | 19.64 | 2257431 | 1290 | Staphylococcus hominis (firmicutes) | strain | FDAARGOS_575 | Bacteria | Bacillota | Bacilli | Bacillales | Staphylococcaceae | Staphylococcus | Staphylococcus hominis |
+| 1813735 | refseq | 6612678 | GCF_001618865.1 | ASM161886v1 | absolute/path/to/assemblies/GCF_001618865.1_ASM161886v1_genomic.fna.gz | Complete Genome | representative genome | 1 | 1 | 7480314 | 112.0 | 7480314 | 1855912 | Luteitalea pratensis (bacteria) | strain | DSM 100886 | Bacteria | Acidobacteriota | Vicinamibacteria | Vicinamibacterales | Vicinamibacteraceae | Luteitalea | Luteitalea pratensis |
+| 114185 | refseq | 15546308 | GCF_001274515.1 | ASM127451v1 | absolute/path/to/assemblies/GCF_001274515.1_ASM127451v1_genomic.fna.gz | Complete Genome | na | 1 | 1 | 174018 | 85.24 | 174018 | 114186 | Candidatus Carsonella ruddii (g-proteobacteria) | strain | YCCR | Bacteria | Pseudomonadota | Gammaproteobacteria | Oceanospirillales | Halomonadaceae | Candidatus Carsonella | Candidatus Carsonella ruddii |
