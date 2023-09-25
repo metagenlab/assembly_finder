@@ -130,7 +130,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     show_default=True,
 )
 @click.option(
-    "-f",
+    "-r",
     "--filter_rank",
     help="Rank to filter by (example: species)",
     default="none",
