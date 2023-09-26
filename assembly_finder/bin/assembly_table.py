@@ -5,8 +5,6 @@ import numpy as np
 import logging
 from ete3 import NCBITaxa
 
-ncbi = NCBITaxa()
-
 
 class AssemblyFinder:
     def __init__(
@@ -389,6 +387,7 @@ class AssemblyFinder:
 """
 Main
 """
+ncbi = NCBITaxa(dbfile=snakemake.input[0])
 if snakemake.params["ncbi_email"] != "none":
     Entrez.email = snakemake.params["ncbi_email"]
 

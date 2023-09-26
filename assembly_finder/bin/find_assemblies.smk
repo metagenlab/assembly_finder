@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import glob
+import sys
+from ete3 import NCBITaxa
 
 inp = str(config["input"])
 outdir = config["outdir"]
@@ -19,30 +21,47 @@ nb = config["n_by_entry"]
 if os.path.isfile(inp):
     entries = list(pd.read_csv(inp, sep="\t", header=None)[0])
     entry_to_nb = pd.read_csv(inp, sep="\t", names=["entry", "nb"], index_col="entry")
+
 else:
     entries = inp.split(",")
-    entry_to_nb = None
+    entry_to_nb = pd.DataFrame()
 
 
-rule check_for_update_ete3:
+rule download_taxdump:
     output:
-        temp("ete3-update.txt"),
+        temp("taxdump.tar.gz"),
     log:
-        f"{outdir}/logs/ete3-update.log",
-    script:
-        "update-ete3.py"
+        f"{outdir}/logs/ete3.log",
+    shell:
+        """
+        wget https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
+        """
 
 
-def get_nb(wildcards, df, nb):
-    try:
-        return int(df.loc[wildcards.entry])
-    except AttributeError:
-        return nb
+rule generate_ete3_NCBItaxa:
+    input:
+        "taxdump.tar.gz",
+    output:
+        "taxa.sqlite",
+    log:
+        f"{outdir}/logs/ete3.log",
+    run:
+        with open(snakemake.log[0], "w") as f:
+            sys.stderr = sys.stdout = f
+            NCBITaxa(dbfile=output[0], taxdump_file=input[0])
+
+
+def get_nb(entry, df, default_nb):
+    if df.empty or df.dropna().nb.empty:
+        return default_nb
+    else:
+        entry = int(entry)
+        return int(df.loc[entry])
 
 
 rule get_assembly_tables:
     input:
-        "ete3-update.txt",
+        "taxa.sqlite",
     output:
         all=f"{outdir}/tables/{{entry}}-all.tsv",
         filtered=f"{outdir}/tables/{{entry}}-filtered.tsv",
