@@ -1,4 +1,5 @@
 import pandas as pd
+import itertools
 import os
 import re
 import glob
@@ -22,11 +23,27 @@ nb = config["n_by_entry"]
 
 if os.path.isfile(inp):
     entries = list(pd.read_csv(inp, sep="\t", header=None)[0])
-    entry_to_nb = pd.read_csv(inp, sep="\t", names=["entry", "nb"], index_col="entry")
+    entry_to_nb = pd.read_csv(
+        inp,
+        sep="\t",
+        names=["entry", "nb"],
+        index_col="entry",
+        dtype={"entry": str},
+    )
 
 else:
     entries = inp.split(",")
-    entry_to_nb = pd.DataFrame()
+    nbs = nb.split(",")
+    if len(nbs) == 1:
+        nbs = nbs[0] * len(entries)
+    zipped = [
+        i for i in itertools.zip_longest(entries, nbs)
+    ]  # fill with None if lists with different lengths
+    entry_to_nb = pd.DataFrame(zipped, columns=["entry", "nb"])
+    entry_to_nb = entry_to_nb.astype(dtype={"entry": str})
+    entry_to_nb.set_index("entry", inplace=True)
+
+entry_to_nb.fillna("all", inplace=True)
 
 
 rule download_taxdump:
@@ -53,14 +70,6 @@ rule generate_ete3_NCBItaxa:
             NCBITaxa(dbfile=output[0], taxdump_file=input[0])
 
 
-def get_nb(entry, df, default_nb):
-    if df.empty or df.dropna().nb.empty:
-        return default_nb
-    else:
-        entry = int(entry)
-        return int(df.loc[entry].values)
-
-
 rule get_assembly_tables:
     input:
         "taxa.sqlite",
@@ -78,7 +87,7 @@ rule get_assembly_tables:
         annot=annot,
         rank=rank,
         n_by_rank=nrank,
-        nb=lambda wildcards: get_nb(wildcards.entry, entry_to_nb, nb),
+        nb=lambda wildcards: entry_to_nb.loc[str(wildcards.entry)].item(),
     resources:
         ncbi_requests=1,
     log:

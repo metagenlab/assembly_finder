@@ -74,10 +74,10 @@ class AssemblyFinder:
         self.rank_to_select = rank_to_select
 
         try:
-            self.nb = int(nb)
+            self.nb = int(self.nb)
             self.n_by_rank = int(n_by_rank)
         except ValueError:
-            self.nb = nb
+            self.nb = self.nb
             self.n_by_rank = n_by_rank
         self.outf = outf
         self.outnf = outnf
