@@ -337,7 +337,7 @@ class AssemblyFinder:
         subset = sorted_table[sel_cols]
         renamed_cols = [
             "entry",
-            "uid",
+            "db_uid",
             "asm_accession",
             "asm_name",
             "ftp_path",

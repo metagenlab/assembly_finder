@@ -4,4 +4,5 @@ include: "bin/find_assemblies.smk"
 rule all_download:
     input:
         f"{outdir}/assemblies/sha256.txt",
-        f"{outdir}/summary.tsv",
+        f"{outdir}/assembly_summary.tsv",
+        f"{outdir}/sequence_summary.tsv",
