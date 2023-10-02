@@ -21,27 +21,33 @@ class AssemblyFinder:
         rank_to_select=None,
         outf="f.tsv",
         outnf="nf.tsv",
-        n_by_rank=1,
+        n_by_rank="none",
+        release="AsmReleaseDate_RefSeq",
     ):
+        self.n_by_rank = n_by_rank
         self.name = name.replace("_", " ")
         self.uid = uid
         self.db = db
         self.nb = nb
+        self.release = release
 
         if self.db == "refseq":
             self.dbuid = "RsUid"
             self.ftp = "FtpPath_RefSeq"
+            self.release = "AsmReleaseDate_RefSeq"
 
         else:
             self.db = "genbank"
             self.dbuid = "GbUid"
             self.ftp = "FtpPath_GenBank"
+            self.release = "AsmReleaseDate_GenBank"
 
         self.columns = [
             "entry",
             self.dbuid,
             "AssemblyAccession",
             "AssemblyName",
+            self.release,
             self.ftp,
             "AssemblyStatus",
             "RefSeq_category",
@@ -58,7 +64,13 @@ class AssemblyFinder:
 
         self.source = source
         self.rcat = category.split(",")
-        self.alvl = [a.replace("_", " ") for a in assembly_level.split(",")]
+        self.alvl = []
+        for level in assembly_level.split(","):
+            if level == "complete":
+                self.alvl.append(f"{level} genome")
+            else:
+                self.alvl.append(f"{level} level")
+
         self.excl = [e.replace("_", " ") for e in exclude.split(",")]
         self.annot = annotation
         self.target_ranks = [
@@ -75,10 +87,10 @@ class AssemblyFinder:
 
         try:
             self.nb = int(self.nb)
-            self.n_by_rank = int(n_by_rank)
+            self.n_by_rank = int(self.n_by_rank)
         except ValueError:
             self.nb = self.nb
-            self.n_by_rank = n_by_rank
+            self.n_by_rank = self.n_by_rank
         self.outf = outf
         self.outnf = outnf
 
@@ -255,44 +267,37 @@ class AssemblyFinder:
     def select_assemblies(self, table):
         table.drop("Meta", axis=1, inplace=True)
         table.insert(loc=0, value=[self.name] * len(table), column="entry")
-        fact_table = table.replace(
-            {
-                "RefSeq_category": {
-                    "reference genome": 1,
-                    "representative genome": 2,
-                    "na": 6,
-                },
-                "AssemblyStatus": {
-                    "Complete Genome": 0,
-                    "Chromosome": 3,
-                    "Scaffold": 4,
-                    "Contig": 5,
-                    "na": 6,
-                },
-            }
+        table["Coverage"] = pd.to_numeric(
+            "Coverage", errors="coerce"
+        )  # replace any non numeric values with NaN
+        table["RefSeq_category"] = pd.Categorical(
+            table["RefSeq_category"],
+            ["reference genome", "representative genome", "na"],
         )
-        sorted_table = fact_table.sort_values(
+        table["AssemblyStatus"] = pd.Categorical(
+            table["AssemblyStatus"],
+            ["Complete Genome", "Chromosome", "Scaffold", "Contig", "na"],
+        )
+        sorted_table = table.sort_values(
             [
-                "entry",
-                "Taxid",
-                "AssemblyStatus",
                 "RefSeq_category",
-                "ContigCount",
-                "ContigL50",
+                "AssemblyStatus",
                 "Coverage",
                 "ContigN50",
+                "ContigL50",
+                "ContigCount",
                 "LastUpdateDate",
             ],
-            ascending=[True, True, True, True, True, True, False, False, False],
+            ascending=[True, True, False, False, True, True, False],
         ).replace(
             {
                 "RefSeq_category": {
-                    1: "reference genome",
-                    2: "representative genome",
+                    0: "reference genome",
+                    1: "representative genome",
                     6: "na",
                 },
                 "AssemblyStatus": {
-                    0: "Complete Genome",
+                    2: "Complete Genome",
                     3: "Chromosome",
                     4: "Scaffold",
                     5: "Contig",
@@ -305,21 +310,14 @@ class AssemblyFinder:
             sorted_table = pd.concat(
                 [
                     sorted_table[sorted_table[f"{self.rank_to_select}"] == ranks].iloc[
-                        : self.n_by_rank
+                        : int(self.n_by_rank)
                     ]
                     for ranks in uniq_rank
                 ]
             )
-            if self.nb == "all":
-                logging.info(
-                    f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select}"
-                )
-
-            else:
-                logging.info(
-                    f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select} per entry"
-                )
-                sorted_table = sorted_table.iloc[: self.nb]
+            logging.info(
+                f"Selecting the top {self.nb} assemblies per {self.rank_to_select} per entry"
+            )
         elif self.nb != "all":
             if len(sorted_table) >= int(self.nb):
                 logging.info(
@@ -340,6 +338,7 @@ class AssemblyFinder:
             "db_uid",
             "asm_accession",
             "asm_name",
+            "asm_release_date",
             "ftp_path",
             "asm_status",
             "refseq_category",
@@ -355,7 +354,7 @@ class AssemblyFinder:
         ] + self.target_ranks[::-1]
         subset.columns = renamed_cols
         subset.insert(loc=1, value=[self.db] * len(subset), column="database")
-        return subset
+        return subset.sort_values(by=["entry", "refseq_category"])
 
     def run(self):
         assemblies_found = self.search_assemblies()

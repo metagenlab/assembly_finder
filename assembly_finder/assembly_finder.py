@@ -109,8 +109,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-al",
     "--assembly_level",
     type=str,
-    help="select complete_genome, chromosome, scaffold or contig level assemblies",
-    default="complete_genome",
+    help="select complete, chromosome, scaffold or contig level assemblies",
+    default="complete",
     show_default=True,
 )
 @click.option(

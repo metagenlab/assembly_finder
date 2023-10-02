@@ -7,44 +7,80 @@ import sys
 from io import StringIO
 from ete3 import NCBITaxa
 
-inp = str(config["input"])
+
 outdir = config["outdir"]
 ete_db = config["ete_db"]
 ncbi_key = config["NCBI_key"]
 ncbi_email = config["NCBI_email"]
+
+inp = config["input"]
+nb = config["n_by_entry"]
+db = config["db"]
 uid = config["uid"]
 alvl = config["assembly_level"]
-db = config["db"]
 rcat = config["refseq_category"]
 excl = config["exclude"]
 annot = config["annotation"]
 rank = config["Rank_to_filter_by"]
 nrank = config["n_by_rank"]
-nb = config["n_by_entry"]
+
 
 if os.path.isfile(inp):
-    entries = list(pd.read_csv(inp, sep="\t", header=None)[0])
-    entry_to_nb = pd.read_csv(
+    entry_df = pd.read_csv(
         inp,
         sep="\t",
-        names=["entry", "nb"],
+        names=[
+            "entry",
+            "nb",
+            "db",
+            "uid",
+            "alvl",
+            "rcat",
+            "excl",
+            "annot",
+            "rank",
+            "nrank",
+        ],
         index_col="entry",
         dtype={"entry": str},
     )
 
 else:
-    entries = inp.split(",")
-    nbs = nb.split(",")
-    if len(nbs) == 1:
-        nbs = nbs[0] * len(entries)
-    zipped = [
-        i for i in itertools.zip_longest(entries, nbs)
-    ]  # fill with None if lists with different lengths
-    entry_to_nb = pd.DataFrame(zipped, columns=["entry", "nb"])
-    entry_to_nb = entry_to_nb.astype(dtype={"entry": str})
-    entry_to_nb.set_index("entry", inplace=True)
+    values = [inp, nb, db, uid, alvl, rcat, excl, annot, rank, nrank]
+    values = [str(val) for val in values]
+    keys = [
+        "entry",
+        "nb",
+        "db",
+        "uid",
+        "alvl",
+        "rcat",
+        "excl",
+        "annot",
+        "rank",
+        "nrank",
+    ]
+    dic = {key: values[n].split(",") for n, key in enumerate(keys)}
+    entry_df = pd.DataFrame(
+        dict([(k, pd.Series(v)) for k, v in dic.items()])
+    ).set_index("entry")
 
-entry_to_nb.fillna("all", inplace=True)
+entry_df.replace(
+    {
+        "nb": {None: dic["nb"][0]},
+        "db": {None: dic["db"][0]},
+        "uid": {None: dic["uid"][0]},
+        "alvl": {None: dic["alvl"][0]},
+        "rcat": {None: dic["rcat"][0]},
+        "excl": {None: dic["excl"][0]},
+        "annot": {None: dic["annot"][0]},
+        "rank": {None: dic["rank"][0]},
+        "nrank": {None: dic["nrank"][0]},
+    },
+    inplace=True,
+)
+
+entries = list(entry_df.index)
 
 
 rule download_taxdump:
@@ -80,15 +116,15 @@ rule get_assembly_tables:
     params:
         ncbi_key=ncbi_key,
         ncbi_email=ncbi_email,
-        alvl=alvl,
-        db=db,
-        uid=uid,
-        rcat=rcat,
-        excl=excl,
-        annot=annot,
-        rank=rank,
-        n_by_rank=nrank,
-        nb=lambda wildcards: entry_to_nb.loc[str(wildcards.entry)].item(),
+        alvl=lambda wildcards: entry_df.loc[str(wildcards.entry)]["alvl"],
+        db=lambda wildcards: entry_df.loc[str(wildcards.entry)]["db"],
+        uid=lambda wildcards: entry_df.loc[str(wildcards.entry)]["uid"],
+        rcat=lambda wildcards: entry_df.loc[str(wildcards.entry)]["rcat"],
+        excl=lambda wildcards: entry_df.loc[str(wildcards.entry)]["excl"],
+        annot=lambda wildcards: entry_df.loc[str(wildcards.entry)]["annot"],
+        rank=lambda wildcards: entry_df.loc[str(wildcards.entry)]["rank"],
+        n_by_rank=lambda wildcards: entry_df.loc[str(wildcards.entry)]["nrank"],
+        nb=lambda wildcards: entry_df.loc[str(wildcards.entry)]["nb"],
     resources:
         ncbi_requests=1,
     log:
@@ -209,6 +245,7 @@ rule get_summaries:
     output:
         f"{outdir}/assembly_summary.tsv",
         f"{outdir}/sequence_summary.tsv",
+        f"{outdir}/taxonomy_summary.tsv",
     params:
         asmdir=f"{outdir}/assemblies",
     run:
@@ -221,14 +258,15 @@ rule get_summaries:
             for acc in df["asm_accession"]
         ]
         df.rename(columns={"ftp_path": "path"}, inplace=True)
-        asm_df = df.merge(asm_report, on="asm_name")
-        asm_df = asm_df[
+        df = df.merge(asm_report, on="asm_name")
+        asm_df = df[
             [
                 "entry",
                 "database",
                 "db_uid",
-                "asm_accession",
                 "asm_name",
+                "organism",
+                "asm_release_date",
                 "asm_status",
                 "refseq_category",
                 "contig_count",
@@ -237,6 +275,12 @@ rule get_summaries:
                 "coverage",
                 "asm_method",
                 "seq_tech",
+                "path",
+            ]
+        ]
+        tax_df = df[
+            [
+                "asm_name",
                 "organism",
                 "sub_type",
                 "sub_value",
@@ -248,24 +292,24 @@ rule get_summaries:
                 "family",
                 "genus",
                 "species",
-                "path",
             ]
         ]
         seq_df = seq_report.merge(df, on="asm_name")
+        seq_df.sort_values(by="asm_name", inplace=True)
         seq_df = seq_df[
             [
                 "asm_name",
-                "asm_accession",
+                "organism",
+                "taxid",
                 "genbank_accn",
                 "refseq_accn",
-                "sequence_name",
                 "assigned_molecule_location/type",
                 "sequence_length",
-                "taxid",
             ]
         ]
         asm_df.to_csv(output[0], sep="\t", index=None)
         seq_df.to_csv(output[1], sep="\t", index=None)
+        tax_df.to_csv(output[2], sep="\t", index=None)
 
 
 rule format_checksum:
