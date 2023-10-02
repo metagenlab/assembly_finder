@@ -9,6 +9,7 @@ from ete3 import NCBITaxa
 
 inp = str(config["input"])
 outdir = config["outdir"]
+ete_db = config["ete_db"]
 ncbi_key = config["NCBI_key"]
 ncbi_email = config["NCBI_email"]
 uid = config["uid"]
@@ -48,31 +49,31 @@ entry_to_nb.fillna("all", inplace=True)
 
 rule download_taxdump:
     output:
-        temp("taxdump.tar.gz"),
+        temp(f"{ete_db}/taxdump.tar.gz"),
     log:
-        f"{outdir}/logs/ete3.log",
+        f"{outdir}/logs/ete.log",
     shell:
         """
-        wget https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
+        curl -o {output} https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
         """
 
 
 rule generate_ete3_NCBItaxa:
     input:
-        "taxdump.tar.gz",
+        f"{ete_db}/taxdump.tar.gz",
     output:
-        "taxa.sqlite",
+        f"{ete_db}/taxa.sqlite",
     log:
-        f"{outdir}/logs/ete3.log",
+        f"{outdir}/logs/ete.log",
     run:
-        with open(snakemake.log[0], "w") as f:
+        with open(log[0], "w") as f:
             sys.stderr = sys.stdout = f
             NCBITaxa(dbfile=output[0], taxdump_file=input[0])
 
 
 rule get_assembly_tables:
     input:
-        "taxa.sqlite",
+        f"{ete_db}/taxa.sqlite",
     output:
         all=f"{outdir}/tables/{{entry}}-all.tsv",
         filtered=f"{outdir}/tables/{{entry}}-filtered.tsv",

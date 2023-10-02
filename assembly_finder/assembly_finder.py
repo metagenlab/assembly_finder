@@ -144,6 +144,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Max number of genome by target rank (example: 1 per species)",
     type=str,
     default="none",
+    show_default=True,
 )
 @click.option(
     "-nb",
@@ -152,6 +153,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=str,
     default="all",
     show_default=True,
+)
+@click.option(
+    "-et",
+    "--ete_db",
+    type=str,
+    default=os.path.join(os.environ["HOME"], ".etetoolkit"),
+    help="path where to save/find ete taxa.sqlite file",
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 @click.version_option(version, "-v", "--version")
@@ -171,6 +179,7 @@ def cli(
     filter_rank,
     n_by_rank,
     n_by_entry,
+    ete_db,
     snakemake_args,
 ):
     if not output:
@@ -198,6 +207,7 @@ def cli(
         f"Rank_to_filter_by={filter_rank} "
         f"n_by_rank={n_by_rank} "
         f"n_by_entry={n_by_entry} "
+        f"ete_db={ete_db} "
         f"{' '.join(snakemake_args)}"
     )
     logging.info(f"Executing: {cmd}")
