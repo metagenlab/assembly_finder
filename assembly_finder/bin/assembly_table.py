@@ -268,7 +268,7 @@ class AssemblyFinder:
         table.drop("Meta", axis=1, inplace=True)
         table.insert(loc=0, value=[self.name] * len(table), column="entry")
         table["Coverage"] = pd.to_numeric(
-            "Coverage", errors="coerce"
+            table["Coverage"], errors="coerce"
         )  # replace any non numeric values with NaN
         table["RefSeq_category"] = pd.Categorical(
             table["RefSeq_category"],
