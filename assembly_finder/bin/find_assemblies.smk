@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import itertools
 import os
 import re
@@ -7,12 +8,15 @@ import sys
 from io import StringIO
 from ete3 import NCBITaxa
 
-
+# Path params
 outdir = config["outdir"]
 ete_db = config["ete_db"]
+
+# NCBI params
 ncbi_key = config["NCBI_key"]
 ncbi_email = config["NCBI_email"]
 
+# Assemblies params
 inp = config["input"]
 nb = config["n_by_entry"]
 db = config["db"]
@@ -24,62 +28,71 @@ annot = config["annotation"]
 rank = config["Rank_to_filter_by"]
 nrank = config["n_by_rank"]
 
+# Entry table colnames
+colnames = [
+    "entry",
+    "nb",
+    "db",
+    "uid",
+    "alvl",
+    "rcat",
+    "excl",
+    "annot",
+    "rank",
+    "nrank",
+]
 
+# Entry table values
+values = [inp, nb, db, uid, alvl, rcat, excl, annot, rank, nrank]
+values = [str(value).split(",") for value in values]
+
+# Get parameters keys and values
+param_keys = colnames[1:]
+param_values = values[1:]
+
+# default param values
+default_params = {
+    "nb": "all",
+    "db": "refseq",
+    "uid": False,
+    "alvl": "complete",
+    "rcat": "all",
+    "excl": "metagenome",
+    "annot": False,
+    "rank": "none",
+    "nrank": "none",
+}
+# Default param value is either the first entry param or the default one
+# example: if nb=['1'], then 1 is the value for all entries
+
+empty_to_val = {}
+for key, val in zip(param_keys, param_values):
+    if len(val) == 1:
+        empty_to_val.update({key: {np.nan: val[0]}})
+    else:
+        empty_to_val.update({key: {np.nan: default_params[key]}})
+
+
+# Check if input is file
 if os.path.isfile(inp):
-    entry_df = pd.read_csv(
-        inp,
-        sep="\t",
-        names=[
-            "entry",
-            "nb",
-            "db",
-            "uid",
-            "alvl",
-            "rcat",
-            "excl",
-            "annot",
-            "rank",
-            "nrank",
-        ],
-        index_col="entry",
-        dtype={"entry": str},
-    )
+    entry_df = pd.read_csv(inp, sep="\t", names=colnames)
 
+# If not create the dataframe
 else:
-    values = [inp, nb, db, uid, alvl, rcat, excl, annot, rank, nrank]
-    values = [str(val) for val in values]
-    keys = [
-        "entry",
-        "nb",
-        "db",
-        "uid",
-        "alvl",
-        "rcat",
-        "excl",
-        "annot",
-        "rank",
-        "nrank",
-    ]
-    dic = {key: values[n].split(",") for n, key in enumerate(keys)}
-    entry_df = pd.DataFrame(
-        dict([(k, pd.Series(v)) for k, v in dic.items()])
-    ).set_index("entry")
+    val_dic = dict(zip(colnames, values))
+    entry_df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in val_dic.items()]))
 
-entry_df.replace(
-    {
-        "nb": {None: dic["nb"][0]},
-        "db": {None: dic["db"][0]},
-        "uid": {None: dic["uid"][0]},
-        "alvl": {None: dic["alvl"][0]},
-        "rcat": {None: dic["rcat"][0]},
-        "excl": {None: dic["excl"][0]},
-        "annot": {None: dic["annot"][0]},
-        "rank": {None: dic["rank"][0]},
-        "nrank": {None: dic["nrank"][0]},
-    },
-    inplace=True,
+# Replace empty values with default params
+# Drop empty entries
+# Set entry as index
+entry_df = (
+    entry_df.replace(
+        empty_to_val,
+    )
+    .dropna()
+    .set_index("entry")
 )
-
+# Get entry list
 entries = list(entry_df.index)
 
 
