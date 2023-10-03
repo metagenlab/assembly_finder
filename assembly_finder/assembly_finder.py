@@ -190,6 +190,11 @@ def cli(
     else:
         dryrun = ""
 
+    if snakemake_args:
+        args = " ".join(["--" + arg for arg in snakemake_args])
+    else:
+        args = ""
+
     cmd = (
         f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
@@ -208,7 +213,7 @@ def cli(
         f"n_by_rank={n_by_rank} "
         f"n_by_entry={n_by_entry} "
         f"ete_db={ete_db} "
-        f"{' '.join(snakemake_args)}"
+        f"{args}"
     )
     logging.info(f"Executing: {cmd}")
     try:
