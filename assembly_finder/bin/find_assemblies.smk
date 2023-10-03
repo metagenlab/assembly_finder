@@ -85,13 +85,10 @@ else:
 # Replace empty values with default params
 # Drop empty entries
 # Set entry as index
-entry_df = (
-    entry_df.replace(
-        empty_to_val,
-    )
-    .dropna()
-    .set_index("entry")
-)
+entry_df = entry_df.replace(
+    empty_to_val,
+).dropna()
+entry_df = entry_df.astype({"entry": str}).set_index("entry")
 # Get entry list
 entries = list(entry_df.index)
 
@@ -325,6 +322,23 @@ rule get_summaries:
         tax_df.to_csv(output[2], sep="\t", index=None)
 
 
+rule clean_reports:
+    input:
+        f"{outdir}/assembly_summary.tsv",
+        f"{outdir}/sequence_summary.tsv",
+        f"{outdir}/taxonomy_summary.tsv",
+        reports=lambda wildcards: downloads(wildcards, "_assembly_report.txt"),
+    output:
+        temp(f"{outdir}/clean.txt"),
+    params:
+        asmdir=f"{outdir}/assemblies",
+    shell:
+        """
+        rm {input.reports}
+        touch {output}
+        """
+
+
 rule format_checksum:
     input:
         f"{outdir}/assemblies/checksums.txt",
@@ -351,7 +365,7 @@ rule verify_checksums:
         f"{outdir}/assemblies/aspera-checks.txt",
         lambda wildcards: downloads(wildcards, ".fna.gz"),
     output:
-        f"{outdir}/assemblies/sha256.txt",
+        temp(f"{outdir}/assemblies/sha256.txt"),
     params:
         asmdir=f"{outdir}/assemblies",
     shell:
