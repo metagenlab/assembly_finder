@@ -7,6 +7,7 @@ import glob
 import sys
 from io import StringIO
 from ete3 import NCBITaxa
+from functools import reduce
 
 # Path params
 outdir = config["outdir"]
@@ -268,8 +269,10 @@ rule get_summaries:
             for acc in df["asm_accession"]
         ]
         df.rename(columns={"ftp_path": "path"}, inplace=True)
-        df = df.merge(asm_report, on="asm_name")
-        asm_df = df[
+        dfs = [df, asm_report, seq_report]
+        merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
+        merge_df.sort_values(by=["entry", "asm_name"], inplace=True)
+        asm_df = merge_df[
             [
                 "entry",
                 "database",
@@ -287,8 +290,8 @@ rule get_summaries:
                 "seq_tech",
                 "path",
             ]
-        ]
-        tax_df = df[
+        ].drop_duplicates()
+        tax_df = merge_df[
             [
                 "asm_name",
                 "organism",
@@ -303,10 +306,8 @@ rule get_summaries:
                 "genus",
                 "species",
             ]
-        ]
-        seq_df = seq_report.merge(df, on="asm_name")
-        seq_df.sort_values(by="asm_name", inplace=True)
-        seq_df = seq_df[
+        ].drop_duplicates()
+        seq_df = merge_df[
             [
                 "asm_name",
                 "organism",
