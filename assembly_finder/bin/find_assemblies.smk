@@ -188,7 +188,7 @@ checkpoint download_assemblies:
         asmdir=f"{outdir}/assemblies",
     shell:
         """
-        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/asperaweb_id_dsa.openssh --mode=recv --user=anonftp \
+        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
         --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
         --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
         mv {params.asmdir}/*.manifest.txt {output}
