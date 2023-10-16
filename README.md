@@ -2,7 +2,7 @@
 
 Assembly finder is a snakemake workflow for downloading genomes from [NCBI assembly](https://www.ncbi.nlm.nih.gov/assembly).
 
-## Table of content
+## Table of contents
 
 - [Install](#installation)
 - [Usage](#quick-usage)
