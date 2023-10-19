@@ -1,10 +1,13 @@
 # Assembly Finder
 
+[![version](https://img.shields.io/conda/v/bioconda/assembly_finder?label=bioconda)](http://bioconda.github.io/recipes/assembly_finder/README.html)
+[![Downloads](https://img.shields.io/conda/dn/bioconda/assembly_finder)](https://anaconda.org/bioconda/assembly_finder)
+
 Assembly finder is a snakemake workflow for downloading genomes from [NCBI assembly](https://www.ncbi.nlm.nih.gov/assembly).
 
 ## Table of contents
 
-- [Install](#installation)
+- [Installation](#installation)
 - [Usage](#quick-usage)
 - [Output](#output)
 - [Examples](#examples)
@@ -12,10 +15,10 @@ Assembly finder is a snakemake workflow for downloading genomes from [NCBI assem
 
 ## Installation
 
-Install with [mamba](https://github.com/mamba-org/mamba)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/assembly_finder/README.html)
 
 ```sh
-mamba create -c bioconda -n assembly_finder assembly_finder
+mamba create -n assembly_finder assembly_finder
 ```
 
 ## Usage
@@ -36,7 +39,7 @@ or
 assembly_finder -i 1290,1813735,114185 -nb 3,2,1 -o test
 ```
 
-### Output
+## Output
 
 Compressed fasta files are saved in the assemblies directory with assembly, sequence and taxonomy summary tables in assemblies' parent directory:
 
@@ -71,7 +74,7 @@ Compressed fasta files are saved in the assemblies directory with assembly, sequ
  ┗ 📜taxonomy_summary.tsv
 ```
 
-#### Assembly summary
+### Assembly summary
 
 | entry   | database | db_uid   | asm_name     | organism                                                            | asm_release_date | asm_status      | refseq_category       | contig_count | contig_n50 | genome_size | coverage | asm_method                 | seq_tech                                             | path                                                            |
 | :------ | :------- | :------- | :----------- | :------------------------------------------------------------------ | :--------------- | :-------------- | :-------------------- | :----------- | :--------- | :---------- | :------- | :------------------------- | :--------------------------------------------------- | :-------------------------------------------------------------- |
@@ -82,7 +85,7 @@ Compressed fasta files are saved in the assemblies directory with assembly, sequ
 | 1813735 | refseq   | 6612678  | ASM161886v1  | Luteitalea pratensis (bacteria)                                     | 2018/06/07 00:00 | Complete Genome | representative genome | 1            | 7480314    | 7480314     | 112.0    | HGAP SMRTPortal v. 2.3.0   | PacBio; Illumina HiSeq 2500                          | /path/to/assemblies/GCF_001618865.1_ASM161886v1_genomic.fna.gz  |
 | 1813735 | refseq   | 31969758 | ASM1686548v2 | Luteitalea sp. TBR-22 (bacteria)                                    | 2022/02/22 00:00 | Complete Genome | na                    | 1            | 6468984    | 6468984     | 54.0     | HybridSPAdes v. 3.13.0     | Illumina Miseq system; Oxford Nanopore MinION system | /path/to/assemblies/GCF_016865485.1_ASM1686548v2_genomic.fna.gz |
 
-#### Taxonomy summary
+### Taxonomy summary
 
 | asm_name     | organism                                                            | sub_type | sub_value    | taxid   | superkingdom | phylum          | class               | order              | family              | genus                 | species                      |
 | :----------- | :------------------------------------------------------------------ | :------- | :----------- | :------ | :----------- | :-------------- | :------------------ | :----------------- | :------------------ | :-------------------- | :--------------------------- |
@@ -93,7 +96,7 @@ Compressed fasta files are saved in the assemblies directory with assembly, sequ
 | ASM161886v1  | Luteitalea pratensis (bacteria)                                     | strain   | DSM 100886   | 1855912 | Bacteria     | Acidobacteriota | Vicinamibacteria    | Vicinamibacterales | Vicinamibacteraceae | Luteitalea            | Luteitalea pratensis         |
 | ASM1686548v2 | Luteitalea sp. TBR-22 (bacteria)                                    | strain   | TBR-22       | 2802971 | Bacteria     | Acidobacteriota | Vicinamibacteria    | Vicinamibacterales | Vicinamibacteraceae | Luteitalea            | Luteitalea sp. TBR-22        |
 
-#### Sequence summary
+### Sequence summary
 
 | asm_name     | organism                                                            | taxid   | genbank_accn | refseq_accn   | assigned_molecule_location/type | sequence_length |
 | :----------- | :------------------------------------------------------------------ | :------ | :----------- | :------------ | :------------------------------ | :-------------- |
