@@ -208,7 +208,11 @@ def get_reports(file):
     keys = ("# Assembly name", "# Assembly method", "# Sequencing technology")
     always_print = False
     seq_lines = ""
-    asm_dic = {}
+    asm_dic = {
+        "Assembly name": np.nan,
+        "Assembly method": np.nan,
+        "Sequencing technology": np.nan,
+    }
     for line in open(file):
         if line.startswith(keys):
             d = {
@@ -238,14 +242,14 @@ rule get_assembly_reports:
         temp(f"{outdir}/assemblies/sequence_reports.tsv"),
     run:
         all_reports = [get_reports(report) for report in input]
+
         asm_rep = pd.concat([report[0] for report in all_reports]).reset_index(
             drop=True
         )
         asm_rep.columns = ["asm_name", "asm_method", "seq_tech"]
+        seq_rep = pd.concat([report[1] for report in all_reports])
         asm_rep.to_csv(output[0], sep="\t", index=None)
-        pd.concat([report[1] for report in all_reports]).to_csv(
-            output[1], sep="\t", index=None
-        )
+        seq_rep.to_csv(output[1], sep="\t", index=None)
 
 
 rule get_summaries:
