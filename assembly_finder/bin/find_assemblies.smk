@@ -13,21 +13,17 @@ from functools import reduce
 outdir = config["outdir"]
 ete_db = config["ete_db"]
 
-# NCBI params
-ncbi_key = config["NCBI_key"]
-ncbi_email = config["NCBI_email"]
-
 # Assemblies params
 inp = config["input"]
-nb = config["n_by_entry"]
+nb = config["nb"]
 db = config["db"]
 uid = config["uid"]
-alvl = config["assembly_level"]
-rcat = config["refseq_category"]
-excl = config["exclude"]
-annot = config["annotation"]
-rank = config["Rank_to_filter_by"]
-nrank = config["n_by_rank"]
+alvl = config["alvl"]
+rcat = config["rcat"]
+excl = config["excl"]
+annot = config["annot"]
+rank = config["rank"]
+nrank = config["nrank"]
 
 # Entry table colnames
 colnames = [
@@ -51,18 +47,6 @@ values = [str(value).split(",") for value in values]
 param_keys = colnames[1:]
 param_values = values[1:]
 
-# default param values
-default_params = {
-    "nb": "all",
-    "db": "refseq",
-    "uid": False,
-    "alvl": "complete",
-    "rcat": "all",
-    "excl": "metagenome",
-    "annot": False,
-    "rank": "none",
-    "nrank": "none",
-}
 # Default param value is either the first entry param or the default one
 # example: if nb=['1'], then 1 is the value for all entries
 
@@ -71,8 +55,7 @@ for key, val in zip(param_keys, param_values):
     if len(val) == 1:
         empty_to_val.update({key: {np.nan: val[0]}})
     else:
-        empty_to_val.update({key: {np.nan: default_params[key]}})
-
+        empty_to_val.update({key: {np.nan: config[key]}})
 
 # Check if input is file
 if os.path.isfile(inp):
@@ -91,6 +74,7 @@ entry_df = entry_df.replace(
 ).dropna()
 entry_df = entry_df.astype({"entry": str}).set_index("entry")
 # Get entry list
+print(entry_df)
 entries = list(entry_df.index)
 
 
@@ -125,8 +109,8 @@ rule get_assembly_tables:
         all=f"{outdir}/tables/{{entry}}-all.tsv",
         filtered=f"{outdir}/tables/{{entry}}-filtered.tsv",
     params:
-        ncbi_key=ncbi_key,
-        ncbi_email=ncbi_email,
+        ncbi_key=config["ncbi_key"],
+        ncbi_email=config["ncbi_email"],
         alvl=lambda wildcards: entry_df.loc[str(wildcards.entry)]["alvl"],
         db=lambda wildcards: entry_df.loc[str(wildcards.entry)]["db"],
         uid=lambda wildcards: entry_df.loc[str(wildcards.entry)]["uid"],
@@ -275,7 +259,6 @@ rule get_summaries:
         df.rename(columns={"ftp_path": "path"}, inplace=True)
         dfs = [df, asm_report, seq_report]
         merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
-        merge_df.sort_values(by=["entry", "asm_name"], inplace=True)
         asm_df = merge_df[
             [
                 "entry",
@@ -283,11 +266,13 @@ rule get_summaries:
                 "db_uid",
                 "asm_name",
                 "organism",
+                "taxid",
                 "asm_release_date",
                 "asm_status",
                 "refseq_category",
                 "contig_count",
                 "contig_n50",
+                "contig_l50",
                 "genome_size",
                 "coverage",
                 "asm_method",
