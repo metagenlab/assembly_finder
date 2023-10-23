@@ -14,7 +14,7 @@ class AssemblyFinder:
         db="refseq",
         source="latest[filter]",
         category="",
-        assembly_level="all",
+        assembly_level=[],
         exclude="",
         annotation=False,
         nb="all",
@@ -63,15 +63,18 @@ class AssemblyFinder:
         ]
 
         self.source = source
-        self.rcat = category.split(",")
-        self.alvl = []
-        for level in assembly_level.split(","):
-            if level == "complete":
-                self.alvl.append(f"{level} genome")
-            else:
-                self.alvl.append(f"{level} level")
+        self.rcat = category.split("_")
+        if assembly_level == "all":
+            self.alvl = "all"
+        else:
+            self.alvl = []
+            for level in assembly_level.split("_"):
+                if level == "complete":
+                    self.alvl.append(f"{level} genome")
+                else:
+                    self.alvl.append(f"{level} level")
 
-        self.excl = [e.replace("_", " ") for e in exclude.split(",")]
+        self.excl = [e.replace("-", " ") for e in exclude.split("_")]
         self.annot = annotation
         self.target_ranks = [
             "species",
@@ -166,7 +169,6 @@ class AssemblyFinder:
             taxid = self.taxid_find()
             annotation = ""
             refseq_category = ""
-            assembly_level = ""
             exclude = ""
             assembly_level = ""
             if len(self.db) != "all":
@@ -184,7 +186,7 @@ class AssemblyFinder:
             elif len(self.rcat) == 1 and (self.rcat[0] != "all"):
                 refseq_category = f' AND "{self.rcat[0]} genome"[filter]'
 
-            if len(self.alvl) > 1:
+            if len(self.alvl) > 1 and (self.alvl != "all"):
                 assembly_level = " AND ("
                 for n, a in enumerate(self.alvl):
                     if n + 1 == len(self.alvl):
@@ -192,7 +194,7 @@ class AssemblyFinder:
                     else:
                         assembly_level += f'"{a}"[filter] OR '
                 assembly_level += ")"
-            elif len(self.alvl) == 1 and (self.alvl[0] != "all"):
+            elif len(self.alvl) == 1 and (self.alvl != "all"):
                 assembly_level = f' AND "{self.alvl[0]}"[filter]'
 
             if len(self.excl) > 0:
@@ -273,37 +275,24 @@ class AssemblyFinder:
         table["RefSeq_category"] = pd.Categorical(
             table["RefSeq_category"],
             ["reference genome", "representative genome", "na"],
+            ordered=True,
         )
         table["AssemblyStatus"] = pd.Categorical(
             table["AssemblyStatus"],
             ["Complete Genome", "Chromosome", "Scaffold", "Contig", "na"],
+            ordered=True,
         )
         sorted_table = table.sort_values(
             [
                 "RefSeq_category",
                 "AssemblyStatus",
-                "Coverage",
                 "ContigN50",
                 "ContigL50",
+                "Coverage",
                 "ContigCount",
                 "LastUpdateDate",
             ],
-            ascending=[True, True, False, False, True, True, False],
-        ).replace(
-            {
-                "RefSeq_category": {
-                    0: "reference genome",
-                    1: "representative genome",
-                    6: "na",
-                },
-                "AssemblyStatus": {
-                    2: "Complete Genome",
-                    3: "Chromosome",
-                    4: "Scaffold",
-                    5: "Contig",
-                    6: "na",
-                },
-            }
+            ascending=[True, True, False, True, False, True, False],
         )
         if (self.rank_to_select != "none") and (self.n_by_rank != "none"):
             uniq_rank = set(sorted_table[f"{self.rank_to_select}"])
