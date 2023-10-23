@@ -93,7 +93,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-id",
     "--uid",
     help="are inputs UIDs",
-    is_flag=True,
     default=False,
     show_default=True,
 )
@@ -101,7 +100,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-rc",
     "--refseq_category",
     type=str,
-    help="select reference and/or representative genomes",
+    help="select reference, representative or all",
     default="all",
     show_default=True,
 )
@@ -109,7 +108,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-al",
     "--assembly_level",
     type=str,
-    help="select complete, chromosome, scaffold or contig level assemblies",
+    help="select complete, chromosome, scaffold, contig or all",
     default="complete",
     show_default=True,
 )
@@ -117,7 +116,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-an",
     "--annotation",
     help="select assemblies with annotation",
-    is_flag=True,
     default=False,
     show_default=True,
 )
@@ -125,7 +123,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-ex",
     "--exclude",
     type=str,
-    help="exclude genomes",
+    help="filter to exclude assemblies",
     default="metagenome",
     show_default=True,
 )
@@ -134,7 +132,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--filter_rank",
     help="Rank to filter by (example: species)",
     default="none",
-    is_flag=False,
     type=str,
     show_default=True,
 )
