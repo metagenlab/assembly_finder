@@ -93,6 +93,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-id",
     "--uid",
     help="are inputs UIDs",
+    type=str,
     default=False,
     show_default=True,
 )
@@ -115,6 +116,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-an",
     "--annotation",
+    type=str,
     help="select assemblies with annotation",
     default=False,
     show_default=True,
@@ -130,7 +132,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-r",
     "--filter_rank",
-    help="Rank to filter by (example: species)",
+    help="rank to filter by (example: species)",
     default="none",
     type=str,
     show_default=True,

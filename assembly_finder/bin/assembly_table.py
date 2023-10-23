@@ -10,13 +10,13 @@ class AssemblyFinder:
     def __init__(
         self,
         name,
-        uid=False,
+        uid="False",
         db="refseq",
         source="latest[filter]",
         category="",
         assembly_level=[],
         exclude="",
-        annotation=False,
+        annotation="False",
         nb="all",
         rank_to_select=None,
         outf="f.tsv",
@@ -26,7 +26,7 @@ class AssemblyFinder:
     ):
         self.n_by_rank = n_by_rank
         self.name = name.replace("_", " ")
-        self.uid = uid
+        self.uid = eval(uid)
         self.db = db
         self.nb = nb
         self.release = release
@@ -75,7 +75,7 @@ class AssemblyFinder:
                     self.alvl.append(f"{level} level")
 
         self.excl = [e.replace("-", " ") for e in exclude.split("_")]
-        self.annot = annotation
+        self.annot = eval(annotation)
         self.target_ranks = [
             "species",
             "genus",
