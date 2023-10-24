@@ -60,6 +60,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="path to assembly_finder input table or list of entries",
     required=True,
 )
+@click.option(
+    "-e",
+    "--extensions",
+    type=str,
+    help="suffix of files to download from NCBI's ftp",
+    default="assembly_report.txt,genomic.fna.gz",
+    show_default=True,
+)
 @click.option("-o", "--output", help="Output directory", type=str)
 @click.option(
     "-n",
@@ -93,7 +101,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-id",
     "--uid",
     help="are inputs UIDs",
-    is_flag=True,
+    type=str,
     default=False,
     show_default=True,
 )
@@ -101,7 +109,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-rc",
     "--refseq_category",
     type=str,
-    help="select reference and/or representative genomes",
+    help="select reference, representative or all",
     default="all",
     show_default=True,
 )
@@ -109,15 +117,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-al",
     "--assembly_level",
     type=str,
-    help="select complete, chromosome, scaffold or contig level assemblies",
+    help="select complete, chromosome, scaffold, contig or all",
     default="complete",
     show_default=True,
 )
 @click.option(
     "-an",
     "--annotation",
+    type=str,
     help="select assemblies with annotation",
-    is_flag=True,
     default=False,
     show_default=True,
 )
@@ -125,16 +133,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-ex",
     "--exclude",
     type=str,
-    help="exclude genomes",
+    help="filter to exclude assemblies (example: exclude from metagenomes)",
     default="metagenome",
     show_default=True,
 )
 @click.option(
     "-r",
     "--filter_rank",
-    help="Rank to filter by (example: species)",
+    help="rank to filter by (example: species)",
     default="none",
-    is_flag=False,
     type=str,
     show_default=True,
 )
@@ -166,6 +173,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def cli(
     input,
     output,
+    extensions,
     dryrun_status,
     threads,
     ncbi_key,
@@ -199,20 +207,21 @@ def cli(
         f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
         f"all_download {dryrun} "
-        f"--config input={input} "
-        f"NCBI_key={ncbi_key} "
-        f"NCBI_email={ncbi_email} "
-        f"outdir={output} "
+        f"--config ete_db={ete_db} "
+        f"ncbi_key={ncbi_key} "
+        f"ncbi_email={ncbi_email} "
+        f"input={input} "
+        f"exts={extensions} "
+        f"nb={n_by_entry} "
         f"db={database} "
         f"uid={uid} "
-        f"refseq_category={refseq_category} "
-        f"assembly_level={assembly_level} "
-        f"annotation={annotation} "
-        f"exclude={exclude} "
-        f"Rank_to_filter_by={filter_rank} "
-        f"n_by_rank={n_by_rank} "
-        f"n_by_entry={n_by_entry} "
-        f"ete_db={ete_db} "
+        f"alvl={assembly_level} "
+        f"excl={exclude} "
+        f"rcat={refseq_category} "
+        f"annot={annotation} "
+        f"rank={filter_rank} "
+        f"nrank={n_by_rank} "
+        f"outdir={output} "
         f"{args}"
     )
     logging.info(f"Executing: {cmd}")
