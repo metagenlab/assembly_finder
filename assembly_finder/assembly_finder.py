@@ -60,6 +60,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="path to assembly_finder input table or list of entries",
     required=True,
 )
+@click.option(
+    "-e",
+    "--extensions",
+    type=str,
+    help="suffix of files to download from NCBI's ftp",
+    default="assembly_report.txt,genomic.fna.gz",
+    show_default=True,
+)
 @click.option("-o", "--output", help="Output directory", type=str)
 @click.option(
     "-n",
@@ -125,7 +133,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "-ex",
     "--exclude",
     type=str,
-    help="filter to exclude assemblies",
+    help="filter to exclude assemblies (example: exclude from metagenomes)",
     default="metagenome",
     show_default=True,
 )
@@ -165,6 +173,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def cli(
     input,
     output,
+    extensions,
     dryrun_status,
     threads,
     ncbi_key,
@@ -202,6 +211,7 @@ def cli(
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
         f"input={input} "
+        f"exts={extensions} "
         f"nb={n_by_entry} "
         f"db={database} "
         f"uid={uid} "
