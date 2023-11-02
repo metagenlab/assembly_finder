@@ -63,7 +63,13 @@ for key, val in zip(param_keys, param_values):
 
 # Check if input is file
 if os.path.isfile(inp):
-    entry_df = pd.read_csv(inp, sep="\t", names=colnames)
+    entry_dic = pd.read_csv(inp, sep="\t").to_dict()
+    # replace empty values with default ones or first entry for the param
+    entry_dic = empty_to_val | entry_dic
+    entry_df = pd.DataFrame.from_dict(entry_dic).dropna(subset="entry")
+    entry_df["entry"] = [int(entry) for entry in entry_df["entry"]]
+    entry_df["nb"] = [int(nb) for nb in entry_df["nb"]]
+
 
 # If not create the dataframe
 else:
@@ -72,10 +78,12 @@ else:
 
 # Replace empty values with default params
 # Drop empty entries
-# Set entry as index
 entry_df = entry_df.replace(
     empty_to_val,
 ).dropna()
+
+# entry_df.to_csv("entry.tsv", sep="\t")
+# Set entry as index
 entry_df = entry_df.astype({"entry": str}).set_index("entry")
 
 # Get entry list
