@@ -61,6 +61,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     required=True,
 )
 @click.option(
+    "-nb",
+    "--n_by_entry",
+    help="number of assemblies per entry",
+    type=str,
+    default="all",
+    show_default=True,
+)
+@click.option(
     "-s",
     "--suffixes",
     type=str,
@@ -154,14 +162,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     show_default=True,
 )
 @click.option(
-    "-nb",
-    "--n_by_entry",
-    help="number of assemblies per entry",
-    type=str,
-    default="all",
-    show_default=True,
-)
-@click.option(
     "-et",
     "--ete_db",
     type=str,
@@ -211,8 +211,8 @@ def cli(
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
         f"input={input} "
-        f"sfxs={suffixes} "
         f"nb={n_by_entry} "
+        f"sfxs={suffixes} "
         f"db={database} "
         f"uid={uid} "
         f"alvl={assembly_level} "
