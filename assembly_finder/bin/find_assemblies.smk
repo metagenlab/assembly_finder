@@ -252,11 +252,14 @@ rule get_summaries:
         asm_report = pd.read_csv(input.asm_report, sep="\t")
         seq_report = pd.read_csv(input.seq_report, sep="\t")
         # replace ftp paths with absolute paths
-        # TODO fix fna.gz extension in next line
-        df.ftp_path = [
-            os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
-            for acc in df["asm_accession"]
-        ]
+        try:
+            df.ftp_path = [
+                os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
+                for acc in df["asm_accession"]
+            ]
+        except IndexError:
+            df.ftp_path = df.ftp_path
+
         df.rename(columns={"ftp_path": "path"}, inplace=True)
         dfs = [df, asm_report, seq_report]
         merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
