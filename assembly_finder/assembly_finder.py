@@ -61,21 +61,21 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     required=True,
 )
 @click.option(
-    "-e",
-    "--extensions",
+    "-s",
+    "--suffixes",
     type=str,
     help="suffix of files to download from NCBI's ftp",
     default="assembly_report.txt,genomic.fna.gz",
     show_default=True,
 )
-@click.option("-o", "--output", help="Output directory", type=str)
+@click.option("-o", "--outdir", help="output directory", type=str)
 @click.option(
     "-n",
     "--dryrun_status",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Snakemake dryrun to see the scheduling plan",
+    help="snakemake dryrun to see the scheduling plan",
 )
 @click.option(
     "-t",
@@ -92,7 +92,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-db",
     "--database",
-    type=str,
+    type=click.Choice(["refseq", "genbank"], case_sensitive=False),
     help="download from refseq or genbank",
     default="refseq",
     show_default=True,
@@ -100,7 +100,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-id",
     "--uid",
-    help="are inputs UIDs",
+    help="are inputs UIDs or assembly names",
     type=str,
     default=False,
     show_default=True,
@@ -139,7 +139,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "-r",
-    "--filter_rank",
+    "--rank",
     help="rank to filter by (example: species)",
     default="none",
     type=str,
@@ -148,7 +148,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-nr",
     "--n_by_rank",
-    help="Max number of genome by target rank (example: 1 per species)",
+    help="max number of genome by target rank (example: 1 per species)",
     type=str,
     default="none",
     show_default=True,
@@ -156,7 +156,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-nb",
     "--n_by_entry",
-    help="Number of genomes per entry",
+    help="number of assemblies per entry",
     type=str,
     default="all",
     show_default=True,
@@ -172,8 +172,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.version_option(version, "-v", "--version")
 def cli(
     input,
-    output,
-    extensions,
+    outdir,
+    suffixes,
     dryrun_status,
     threads,
     ncbi_key,
@@ -184,14 +184,14 @@ def cli(
     assembly_level,
     annotation,
     exclude,
-    filter_rank,
+    rank,
     n_by_rank,
     n_by_entry,
     ete_db,
     snakemake_args,
 ):
-    if not output:
-        output = datetime.datetime.today().strftime("%Y-%m-%d")
+    if not outdir:
+        outdir = datetime.datetime.today().strftime("%Y-%m-%d")
 
     if dryrun_status:
         dryrun = "-n"
@@ -211,7 +211,7 @@ def cli(
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
         f"input={input} "
-        f"exts={extensions} "
+        f"sfxs={suffixes} "
         f"nb={n_by_entry} "
         f"db={database} "
         f"uid={uid} "
@@ -219,9 +219,9 @@ def cli(
         f"excl={exclude} "
         f"rcat={refseq_category} "
         f"annot={annotation} "
-        f"rank={filter_rank} "
+        f"rank={rank} "
         f"nrank={n_by_rank} "
-        f"outdir={output} "
+        f"outdir={outdir} "
         f"{args}"
     )
     logging.info(f"Executing: {cmd}")
