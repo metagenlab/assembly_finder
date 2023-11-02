@@ -27,7 +27,7 @@ rank = config["rank"]
 nrank = config["nrank"]
 
 # File extensions to download
-exts = config["exts"]
+sfxs = config["sfxs"]
 
 # Entry table colnames
 colnames = [
@@ -154,7 +154,7 @@ rule get_ftp_links_list:
         ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         ftplinks = ftplinks.str.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
         ftplinks = ftplinks + "/" + ftplinks.str.split("/", expand=True)[7]
-        links = [link + "_" + ext for ext in exts.split(",") for link in ftplinks]
+        links = [link + "_" + sfx for sfx in sfxs.split(",") for link in ftplinks]
         with open(output[0], "w") as ftp_links:
             ftp_links.write("\n".join(str(link) for link in links))
 
@@ -252,6 +252,7 @@ rule get_summaries:
         asm_report = pd.read_csv(input.asm_report, sep="\t")
         seq_report = pd.read_csv(input.seq_report, sep="\t")
         # replace ftp paths with absolute paths
+        # TODO fix fna.gz extension in next line
         df.ftp_path = [
             os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
             for acc in df["asm_accession"]
@@ -352,22 +353,22 @@ rule format_checksum:
 
 def get_ext(wildcards, exts):
     if len(exts.split(",")) > 1:
-        return "{{{exts}}}"
-    else:
+        return f"{{{exts}}}"
+    elif len(exts.split(",")) == 1:
         return exts
 
 
 rule verify_checksums:
     input:
         f"{outdir}/assemblies/aspera-checks.txt",
-        lambda wildcards: downloads(wildcards, exts),
+        lambda wildcards: downloads(wildcards, sfxs),
     output:
         temp(f"{outdir}/assemblies/sha256.txt"),
     params:
         asmdir=f"{outdir}/assemblies",
-        exts=lambda wildcards: get_ext(wildcards, exts),
+        suffix=lambda wildcards: get_ext(wildcards, sfxs),
     shell:
         """
-        sha256sum {params.asmdir}/*{params.exts} | sed 's/ \+ /\t/g' > {output} 
+        sha256sum {params.asmdir}/*{params.suffix} | sed 's/ \+ /\t/g' > {output} 
         diff <(sort {output}) <(sort {input[0]})
         """
