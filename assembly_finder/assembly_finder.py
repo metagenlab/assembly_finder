@@ -49,7 +49,10 @@ desc = f"""
 
       github: https://github.com/metagenlab/assembly_finder
       """
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS = {
+    "help_option_names": ["-h", "--help"],
+    "ignore_unknown_options": True,
+}
 
 
 @click.command(help=desc, context_settings=CONTEXT_SETTINGS)
@@ -61,21 +64,29 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     required=True,
 )
 @click.option(
-    "-e",
-    "--extensions",
+    "-nb",
+    "--n_by_entry",
+    help="number of assemblies per entry",
+    type=str,
+    default="all",
+    show_default=True,
+)
+@click.option(
+    "-s",
+    "--suffixes",
     type=str,
     help="suffix of files to download from NCBI's ftp",
     default="assembly_report.txt,genomic.fna.gz",
     show_default=True,
 )
-@click.option("-o", "--output", help="Output directory", type=str)
+@click.option("-o", "--outdir", help="output directory", type=str)
 @click.option(
     "-n",
     "--dryrun_status",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Snakemake dryrun to see the scheduling plan",
+    help="snakemake dryrun to see the scheduling plan",
 )
 @click.option(
     "-t",
@@ -92,7 +103,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-db",
     "--database",
-    type=str,
+    type=click.Choice(["refseq", "genbank"], case_sensitive=False),
     help="download from refseq or genbank",
     default="refseq",
     show_default=True,
@@ -100,7 +111,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-id",
     "--uid",
-    help="are inputs UIDs",
+    help="are inputs UIDs or assembly names",
     type=str,
     default=False,
     show_default=True,
@@ -124,9 +135,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-an",
     "--annotation",
-    type=str,
+    type=click.Choice(["False", "True"]),
     help="select assemblies with annotation",
-    default=False,
+    default="False",
     show_default=True,
 )
 @click.option(
@@ -139,26 +150,30 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "-r",
-    "--filter_rank",
-    help="rank to filter by (example: species)",
+    "--rank",
+    help="taxonomic rank to filter by assemblies ",
     default="none",
-    type=str,
+    type=click.Choice(
+        [
+            "superkingdom",
+            "phylum",
+            "class",
+            "order",
+            "family",
+            "genus",
+            "species",
+            "none",
+        ],
+        case_sensitive=False,
+    ),
     show_default=True,
 )
 @click.option(
     "-nr",
     "--n_by_rank",
-    help="Max number of genome by target rank (example: 1 per species)",
+    help="max number of genome by target rank (example: 1 per species)",
     type=str,
     default="none",
-    show_default=True,
-)
-@click.option(
-    "-nb",
-    "--n_by_entry",
-    help="Number of genomes per entry",
-    type=str,
-    default="all",
     show_default=True,
 )
 @click.option(
@@ -167,13 +182,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=str,
     default=os.path.join(os.environ["HOME"], ".etetoolkit"),
     help="path where to save/find ete taxa.sqlite file",
+    show_default=True,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 @click.version_option(version, "-v", "--version")
 def cli(
     input,
-    output,
-    extensions,
+    outdir,
+    suffixes,
     dryrun_status,
     threads,
     ncbi_key,
@@ -184,14 +200,14 @@ def cli(
     assembly_level,
     annotation,
     exclude,
-    filter_rank,
+    rank,
     n_by_rank,
     n_by_entry,
     ete_db,
     snakemake_args,
 ):
-    if not output:
-        output = datetime.datetime.today().strftime("%Y-%m-%d")
+    if not outdir:
+        outdir = datetime.datetime.today().strftime("%Y-%m-%d")
 
     if dryrun_status:
         dryrun = "-n"
@@ -199,7 +215,7 @@ def cli(
         dryrun = ""
 
     if snakemake_args:
-        args = " ".join(["--" + arg for arg in snakemake_args])
+        args = " ".join([arg for arg in snakemake_args])
     else:
         args = ""
 
@@ -211,17 +227,17 @@ def cli(
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
         f"input={input} "
-        f"exts={extensions} "
         f"nb={n_by_entry} "
+        f"sfxs={suffixes} "
         f"db={database} "
         f"uid={uid} "
         f"alvl={assembly_level} "
         f"excl={exclude} "
         f"rcat={refseq_category} "
         f"annot={annotation} "
-        f"rank={filter_rank} "
+        f"rank={rank} "
         f"nrank={n_by_rank} "
-        f"outdir={output} "
+        f"outdir={outdir} "
         f"{args}"
     )
     logging.info(f"Executing: {cmd}")

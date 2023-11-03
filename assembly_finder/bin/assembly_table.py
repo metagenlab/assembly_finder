@@ -25,10 +25,10 @@ class AssemblyFinder:
         release="AsmReleaseDate_RefSeq",
     ):
         self.n_by_rank = n_by_rank
-        self.name = name.replace("_", " ")
-        self.uid = eval(uid)
+        self.name = name.replace("-", " ")
         self.db = db
         self.nb = nb
+        self.uid = eval(uid)
         self.release = release
 
         if self.db == "refseq":
@@ -141,32 +141,85 @@ class AssemblyFinder:
         """
         return [ls[i : i + n] for i in range(0, len(ls), n)]
 
-    def taxid_find(self):
-        """
-        Function to convert an entry to a taxid
-        """
-        logging.info(f"> Converting {self.name} to taxid ...")
-        try:
-            translate = ncbi.get_taxid_translator([self.name])
-            if not translate:
-                logging.info(
-                    f"{self.name} is a an ID but not a taxid, assuming it is UID"
-                )
-                taxid = None
-            else:
-                logging.info("found a name, entry is a taxid")
-                taxid = self.name
-        except ValueError:
-            logging.info(f"{self.name} is a name, translating to taxid")
-            taxid = list(ncbi.get_name_translator([self.name]).values())[0][0]
-        return taxid
-
     def search_assemblies(self):
-        # If the entry is an assembly name or Gbuid use it as a search term
-        if self.uid:
-            assembly_ids = [self.name]
+        taxid = None
+        assembly_ids = []
+
+        if self.name.isnumeric():
+            logging.info(
+                f"{self.name} is numeric, checking if it is a taxid or assembly uid"
+            )
+            if self.uid:
+                logging.info(f"Checking if {self.name} is a uid")
+                assembly_ids = Entrez.read(
+                    Entrez.esearch(
+                        db="assembly", term=f"{self.name}[uid]", retmax=2000000
+                    )
+                )["IdList"]
+                if assembly_ids:
+                    if len(assembly_ids) == 1:
+                        logging.info(f"{self.name} is an assembly uid ")
+                    elif len(assembly_ids) > 1:
+                        raise Warning(
+                            f"Found more than 1 uid with {self.name}, use a correct uid as input"
+                        )
+                    else:
+                        raise Warning(f"{self.name} is not a uid")
+
+            else:
+                try:
+                    taxid = list(ncbi.get_taxid_translator([self.name]).keys())[0]
+                    logging.info(f"{self.name} is a taxid")
+                except IndexError:
+                    logging.error(f"{self.name} not a taxid, give a correct taxid !")
+
+        elif self.name.isalpha():
+            logging.info(f"{self.name} is alpha, trying to find a taxid")
+            try:
+                taxid = list(ncbi.get_name_translator([self.name]).values())[0][0]
+                logging.info(f"found taxid {taxid} for {self.name}")
+            except IndexError:
+                logging.error(f"{self.name} not a correct taxonomic name !")
+
+        elif (not self.name.isalpha()) and (
+            self.name.isalnum() or "GCF" in self.name or "ASM" in self.name
+        ):
+            logging.info(
+                f"trying to match {self.name} it to assembly name or accession"
+            )
+            assembly_ids = Entrez.read(
+                Entrez.esearch(db="assembly", term=self.name, retmax=2000000)
+            )["IdList"]
+            if assembly_ids:
+                if len(assembly_ids) == 1:
+                    logging.info(f"{self.name} is an assembly name, found its uid")
+                elif len(assembly_ids) > 1:
+                    assembly_ids = []
+                    raise Warning(
+                        f"Found more than 1 uid with {self.name} in NCBI assembly, use a more specific name"
+                    )
+                else:
+                    raise Warning(
+                        f"{self.name} is alphanumeric but did not correspond to an assembly name, change it !"
+                    )
         else:
-            taxid = self.taxid_find()
+            logging.info(
+                f"{self.name} neither taxid, taxonomic name, uid or accession. Trying to find it in NCBI taxonomy"
+            )
+            taxid = Entrez.read(
+                Entrez.esearch(db="taxonomy", term=self.name, retmax=2000000)
+            )["IdList"]
+            if len(taxid) == 1:
+                taxid = taxid[0]
+                logging.info(f"Found unique taxid: {taxid} for {self.name}")
+            elif len(taxid) > 1:
+                raise Warning(
+                    f"Found more than 1 taxid for {self.name}, change it to a more precies entry"
+                )
+            else:
+                raise Warning(f"Did not find a taxid for {self.name}")
+
+        if taxid:
             annotation = ""
             refseq_category = ""
             exclude = ""
@@ -207,10 +260,10 @@ class AssemblyFinder:
                 annotation = f' AND "has annotation"[Properties]'
 
             search_term = f"txid{taxid}[Organism:exp] AND ({self.source}{refseq_category}{assembly_level}{exclude}{annotation})"
+            logging.info(f"> Search term: {search_term}")
             assembly_ids = Entrez.read(
                 Entrez.esearch(db="assembly", term=search_term, retmax=2000000)
             )["IdList"]
-        logging.info(f"> Search term: {search_term}")
         logging.info(f"found {len(assembly_ids)} assemblies")
         if not assembly_ids:
             raise Warning("No assemblies found ! Change search term!")
@@ -305,7 +358,7 @@ class AssemblyFinder:
                 ]
             )
             logging.info(
-                f"Selecting the top {self.nb} assemblies per {self.rank_to_select} per entry"
+                f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select} per entry"
             )
         elif self.nb != "all":
             if len(sorted_table) >= int(self.nb):
@@ -383,8 +436,8 @@ if snakemake.params["ncbi_key"] != "none":
     Entrez.api_key = snakemake.params["ncbi_key"]
 
 entry = snakemake.wildcards.entry
-uid = snakemake.params["uid"]
 db = snakemake.params["db"]
+uid = snakemake.params["uid"]
 cat = snakemake.params["rcat"]
 alvl = snakemake.params["alvl"]
 excl = snakemake.params["excl"]
@@ -396,12 +449,13 @@ nb = snakemake.params["nb"]
 find_assemblies = AssemblyFinder(
     name=entry,
     db=db,
+    uid=uid,
     category=cat,
     assembly_level=alvl,
     exclude=excl,
+    annotation=annot,
     nb=nb,
     rank_to_select=rank,
-    annotation=annot,
     n_by_rank=n_by_rank,
     outnf=snakemake.output.all,
     outf=snakemake.output.filtered,

@@ -27,7 +27,7 @@ rank = config["rank"]
 nrank = config["nrank"]
 
 # File extensions to download
-exts = config["exts"]
+sfxs = config["sfxs"]
 
 # Entry table colnames
 colnames = [
@@ -63,7 +63,13 @@ for key, val in zip(param_keys, param_values):
 
 # Check if input is file
 if os.path.isfile(inp):
-    entry_df = pd.read_csv(inp, sep="\t", names=colnames)
+    entry_dic = pd.read_csv(inp, sep="\t").to_dict()
+    # replace empty values with default ones or first entry for the param
+    entry_dic = empty_to_val | entry_dic
+    entry_df = pd.DataFrame.from_dict(entry_dic).dropna(subset="entry")
+    entry_df["entry"] = [int(entry) for entry in entry_df["entry"]]
+    entry_df["nb"] = [int(nb) for nb in entry_df["nb"]]
+
 
 # If not create the dataframe
 else:
@@ -72,10 +78,12 @@ else:
 
 # Replace empty values with default params
 # Drop empty entries
-# Set entry as index
 entry_df = entry_df.replace(
     empty_to_val,
 ).dropna()
+
+# entry_df.to_csv("entry.tsv", sep="\t")
+# Set entry as index
 entry_df = entry_df.astype({"entry": str}).set_index("entry")
 
 # Get entry list
@@ -87,6 +95,7 @@ rule download_taxdump:
         temp(f"{ete_db}/taxdump.tar.gz"),
     log:
         f"{outdir}/logs/ete.log",
+    retries: 2
     shell:
         """
         curl -o {output} https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
@@ -154,7 +163,7 @@ rule get_ftp_links_list:
         ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         ftplinks = ftplinks.str.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
         ftplinks = ftplinks + "/" + ftplinks.str.split("/", expand=True)[7]
-        links = [link + "_" + ext for ext in exts.split(",") for link in ftplinks]
+        links = [link + "_" + sfx for sfx in sfxs.split(",") for link in ftplinks]
         with open(output[0], "w") as ftp_links:
             ftp_links.write("\n".join(str(link) for link in links))
 
@@ -170,6 +179,7 @@ checkpoint download_assemblies:
         f"{outdir}/benchmark/downloads.txt"
     params:
         asmdir=f"{outdir}/assemblies",
+    retries: 2
     shell:
         """
         ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
@@ -252,10 +262,14 @@ rule get_summaries:
         asm_report = pd.read_csv(input.asm_report, sep="\t")
         seq_report = pd.read_csv(input.seq_report, sep="\t")
         # replace ftp paths with absolute paths
-        df.ftp_path = [
-            os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
-            for acc in df["asm_accession"]
-        ]
+        try:
+            df.ftp_path = [
+                os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
+                for acc in df["asm_accession"]
+            ]
+        except IndexError:
+            df.ftp_path = df.ftp_path
+
         df.rename(columns={"ftp_path": "path"}, inplace=True)
         dfs = [df, asm_report, seq_report]
         merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
@@ -352,22 +366,22 @@ rule format_checksum:
 
 def get_ext(wildcards, exts):
     if len(exts.split(",")) > 1:
-        return "{{{exts}}}"
-    else:
+        return f"{{{exts}}}"
+    elif len(exts.split(",")) == 1:
         return exts
 
 
 rule verify_checksums:
     input:
         f"{outdir}/assemblies/aspera-checks.txt",
-        lambda wildcards: downloads(wildcards, exts),
+        lambda wildcards: downloads(wildcards, sfxs),
     output:
         temp(f"{outdir}/assemblies/sha256.txt"),
     params:
         asmdir=f"{outdir}/assemblies",
-        exts=lambda wildcards: get_ext(wildcards, exts),
+        suffix=lambda wildcards: get_ext(wildcards, sfxs),
     shell:
         """
-        sha256sum {params.asmdir}/*{params.exts} | sed 's/ \+ /\t/g' > {output} 
+        sha256sum {params.asmdir}/*{params.suffix} | sed 's/ \+ /\t/g' > {output} 
         diff <(sort {output}) <(sort {input[0]})
         """
