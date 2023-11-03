@@ -24,7 +24,7 @@ mamba create -n assembly_finder assembly_finder
 ## Usage
 
 ```sh
-assembly_finder -i <input> -o <outdir> -ne <ncbi_email>
+assembly_finder -i <input> -o <outdir> -ne <ncbi_email> -nk <ncbi_key>
 ```
 
 ### Quick usage
@@ -125,13 +125,13 @@ assembly_finder -i bacteria -o bacteria -ne <ncbi_email> -nk <ncbi_key> -r speci
 ### Donwload all refseq bacteria viruses and archaea complete genomes (exclude metagenome and anomalous)
 
 ```sh
-assembly_finder -i bacteria,viruses,archaea -o bacteria_viruses_archaea -ne <ncbi_email> -nk <ncbi_key> -al complete -ex metagenome,anomalous -t 3
+assembly_finder -i bacteria,viruses,archaea -o outdir -ne <ncbi_email> -nk <ncbi_key> -al complete -ex metagenome_anomalous -t 3
 ```
 
 ### Download specific assemblies from genbank
 
 ```sh
-assembly_finder -i <UID1,UID2,UID3> -o <outdir> -db genbank -uid
+assembly_finder -i <UID1,UID2,UID3> -o <outdir> -db genbank -uid True
 ```
 
 ## Parameters
@@ -142,60 +142,192 @@ Usage: assembly_finder.py [OPTIONS] [SNAKEMAKE_ARGS]...
          ░█▀█░█▀▀░█▀▀░█▀▀░█▄█░█▀▄░█░░░█░█░░░█▀▀░▀█▀░█▀█░█▀▄░█▀▀░█▀▄
          ░█▀█░▀▀█░▀▀█░█▀▀░█░█░█▀▄░█░░░░█░░░░█▀▀░░█░░█░█░█░█░█▀▀░█▀▄
          ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀░░▀▀▀░░▀░░░░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
-         v0.3.0
+         v0.4.0
 
         Snakemake pipeline to download genome assemblies from NCBI
 
         github: https://github.com/metagenlab/assembly_finder
 
 Options:
-  -i, --input TEXT             path to assembly_finder input table or list of
-                               entries  [required]
-  -o, --output TEXT            Output directory
-  -n, --dryrun_status          Snakemake dryrun to see the scheduling plan
-  -t, --threads INTEGER        number of threads to allow for the workflow
-                               [default: 2]
-  -nk, --ncbi_key TEXT         ncbi key for Entrez
-  -ne, --ncbi_email TEXT       ncbi email for Entrez
-  -db, --database TEXT         download from refseq or genbank  [default:
-                               refseq]
-  -id, --uid                   are inputs UIDs
-  -rc, --refseq_category TEXT  select reference and/or representative genomes
-                               [default: all]
-  -al, --assembly_level TEXT   select complete, chromosome, scaffold or contig
-                               level assemblies  [default: complete]
-  -an, --annotation            select assemblies with annotation
-  -ex, --exclude TEXT          exclude genomes  [default: metagenome]
-  -r, --filter_rank TEXT       Rank to filter by (example: species)  [default:
-                               none]
-  -nr, --n_by_rank TEXT        Max number of genome by target rank (example: 1
-                               per species)  [default: none]
-  -nb, --n_by_entry TEXT       Number of genomes per entry  [default: all]
-  -et, --ete_db TEXT           path where to save/find ete taxa.sqlite file
-  -v, --version                Show the version and exit.
-  -h, --help                   Show this message and exit.
-
+  -i, --input TEXT                path to assembly_finder input table or list
+                                  of entries  [required]
+  -nb, --n_by_entry TEXT          number of assemblies per entry  [default:
+                                  all]
+  -s, --suffixes TEXT             suffix of files to download from NCBI's ftp
+                                  [default:
+                                  assembly_report.txt,genomic.fna.gz]
+  -o, --outdir TEXT               output directory
+  -n, --dryrun_status             snakemake dryrun to see the scheduling plan
+  -t, --threads INTEGER           number of threads to allow for the workflow
+                                  [default: 2]
+  -nk, --ncbi_key TEXT            ncbi key for Entrez
+  -ne, --ncbi_email TEXT          ncbi email for Entrez
+  -db, --database [refseq|genbank]
+                                  download from refseq or genbank  [default:
+                                  refseq]
+  -id, --uid TEXT                 are inputs UIDs or assembly names  [default:
+                                  False]
+  -rc, --refseq_category TEXT     select reference, representative or all
+                                  [default: all]
+  -al, --assembly_level TEXT      select complete, chromosome, scaffold,
+                                  contig or all  [default: complete]
+  -an, --annotation [False|True]  select assemblies with annotation  [default:
+                                  False]
+  -ex, --exclude TEXT             filter to exclude assemblies (example:
+                                  exclude from metagenomes)  [default:
+                                  metagenome]
+  -r, --rank [superkingdom|phylum|class|order|family|genus|species|none]
+                                  taxonomic rank to filter by assemblies
+                                  [default: none]
+  -nr, --n_by_rank TEXT           max number of genome by target rank
+                                  (example: 1 per species)  [default: none]
+  -et, --ete_db TEXT              path where to save/find ete taxa.sqlite file
+                                  [default: /home/fchaaban/.etetoolkit]
+  -v, --version                   Show the version and exit.
+  -h, --help                      Show this message and exit.
 ```
 
-#### Input type
+### Input
 
-assembly_finder assumes that inputs are either scientific names or taxids. If you want to download specific assemblies, you have to provide their UID and the -id flag.
+Input can be a table with entries and their respective parametes as columns (nb, rank, refseq category ...). See [minimal](minimal.tsv) and [full](full.tsv) table examples.
 
-#### Number of genomes per entry
+Additionally, the input can be a string of entries (taxids, taxonomic names or other).
 
-assembly_finder downloads all assemblies per entries. less can be selected by modifying the -nb flag.
-(-nb 1 to select only one genome per entry)
+#### Entry examples
 
-#### NCBI filters
-
-By default assembly_finder downloads from the refseq database: reference, representative (and na) complete, annotated genomes, excluding genomes from metagenomes.
-assembly_finder does not select assemblies with annotations, to do so add the -an flag.
-
-#### Taxonomy filters
-
-To filter n assemblies from taxonomic rank (species, genus, etc...).
-Example: filter the best 10 assemblies from a species:
+taxid
 
 ```sh
--r species -nr 10
+assembly_finder -i 114185
+```
+
+species name
+
+```sh
+assembly_finder -i candidatus-carsonella
+```
+
+assembly accession
+
+```sh
+assembly_finder -i GCF_000287275.1
+```
+
+assembly name
+
+```sh
+assembly_finder -i ASM28727v1
+```
+
+assembly uid
+
+```sh
+assembly_finder -i 421728 -id True
+```
+
+:warning: Make sure to add the id flag, because 421728 is also a taxid !
+
+ATCC number
+
+```sh
+assembly_finder -i ATCC_13985
+```
+
+:warning: Using entries such as ATCC strain number is not as precise as using taxids, taxonomic names or assembly accessions/names and can give unexpected results.
+
+### Suffixes
+
+Option to set which files to download from NCBI's ftp.
+
+#### Suffix examples
+
+Download assembly reports only
+
+```sh
+assembly_finder -i 114185 -s assembly_report.txt
+```
+
+Download reports, fasta and gff files
+
+```sh
+assembly_finder -i 114185 -s genomic.fna.gz,genomic.gff.gz,assembly_report.txt
+```
+
+### Assembly parameters
+
+#### Assembly level
+
+Select genomes assembled at the chromsome level only
+
+```sh
+assembly_finder -i 114185 -al chromosome
+```
+
+You can combine multiple levels using underscores
+
+```sh
+assembly_finder -i 114185 -al chromosome_scaffold_contig
+```
+
+For more information on [assembly levels](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/glossary/)
+
+> - Complete genome: All chromosomes are gapless and contain runs of nine or less ambiguous bases (Ns), there are no unplaced or unlocalized scaffolds, and all the expected chromosomes are present (i.e., the assembly is not noted as having partial genome representation). Plasmids and organelles may or may not be included in the assembly, but if they are present, the sequences are gapless.
+
+> - Chromosome: There is a sequence for one or more chromosomes. This may be a completely sequenced chromosome without gaps or a chromosome containing scaffolds or contigs with gaps between them. There may also be unplaced or unlocalized scaffolds.\*
+
+> - Contig: Nothing is assembled beyond the level of sequence contigs.
+
+> - Scaffold: Some sequence contigs have been connected across gaps to create scaffolds, but the scaffolds are all unplaced or unlocalized.
+
+#### Refseq Category
+
+Select reference genomes only
+
+```sh
+assembly_finder -i 114185 -rc reference
+```
+
+Select reference and representative genomes only
+
+```sh
+assembly_finder -i 114185 -al reference_representative
+```
+
+No refseq category selection
+
+```sh
+assembly_finder -i 114185 -al all
+```
+
+More on [refseq categories](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/glossary/) :
+
+> - Reference genome: a manually selected high quality genome assembly that NCBI and the community have identified as being important as a standard against which other data are compared
+> - Representative genome: a genome computationally or manually selected as a representative from among the best genomes available for a species or clade that does not have a designated reference genome
+
+#### Exclude
+
+Option to use exclude filters.
+
+Exclude anomalous, metagenome and low gene count assemblies
+
+```sh
+assembly_finder -i 114185 -ex metagenome_anomalous_low-gene-count
+```
+
+### Taxonomy parameters
+
+#### rank and number of assemblies per rank
+
+Options to select n assemblies at a specific taxonomic rank
+
+Download all complete assemblies for each chlamydia sepcies
+
+```sh
+assembly_finder -i chlamydia -r species
+```
+
+Download the top 1 assemby per chlamydia species
+
+```sh
+assembly_finder -i chlamydia -r species -nr 1
 ```
