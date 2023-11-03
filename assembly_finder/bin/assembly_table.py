@@ -25,7 +25,7 @@ class AssemblyFinder:
         release="AsmReleaseDate_RefSeq",
     ):
         self.n_by_rank = n_by_rank
-        self.name = name.replace("_", " ").replace("-", "_")
+        self.name = name.replace("-", " ")
         self.db = db
         self.nb = nb
         self.uid = eval(uid)
@@ -173,13 +173,22 @@ class AssemblyFinder:
                 except IndexError:
                     logging.error(f"{self.name} not a taxid, give a correct taxid !")
 
-        elif self.name.isalnum():
-            logging.info(
-                f"{self.name} is alpha numeric, trying to match it to assembly name"
-            )
+        elif self.name.isalpha():
+            logging.info(f"{self.name} is alpha, trying to find a taxid")
+            try:
+                taxid = list(ncbi.get_name_translator([self.name]).values())[0][0]
+                logging.info(f"found taxid {taxid} for {self.name}")
+            except IndexError:
+                logging.error(f"{self.name} not a correct taxonomic name !")
 
+        elif (not self.name.isalpha()) and (
+            self.name.isalnum() or "GCF" in self.name or "ASM" in self.name
+        ):
+            logging.info(
+                f"trying to match {self.name} it to assembly name or accession"
+            )
             assembly_ids = Entrez.read(
-                Entrez.esearch(db="assembly", term=f"{self.name}", retmax=2000000)
+                Entrez.esearch(db="assembly", term=self.name, retmax=2000000)
             )["IdList"]
             if assembly_ids:
                 if len(assembly_ids) == 1:
@@ -195,7 +204,7 @@ class AssemblyFinder:
                     )
         else:
             logging.info(
-                f"{self.name} neither numeric or alphanumeric, trying to find it in NCBI taxonomy"
+                f"{self.name} neither taxid, taxonomic name, uid or accession. Trying to find it in NCBI taxonomy"
             )
             taxid = Entrez.read(
                 Entrez.esearch(db="taxonomy", term=self.name, retmax=2000000)
@@ -349,7 +358,7 @@ class AssemblyFinder:
                 ]
             )
             logging.info(
-                f"Selecting the top {self.nb} assemblies per {self.rank_to_select} per entry"
+                f"Selecting the top {self.n_by_rank} assemblies per {self.rank_to_select} per entry"
             )
         elif self.nb != "all":
             if len(sorted_table) >= int(self.nb):
