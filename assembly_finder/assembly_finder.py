@@ -132,9 +132,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-an",
     "--annotation",
-    type=str,
+    type=click.Choice(["False", "True"]),
     help="select assemblies with annotation",
-    default=False,
+    default="False",
     show_default=True,
 )
 @click.option(
@@ -148,9 +148,21 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option(
     "-r",
     "--rank",
-    help="rank to filter by (example: species)",
+    help="taxonomic rank to filter by assemblies ",
     default="none",
-    type=str,
+    type=click.Choice(
+        [
+            "superkingdom",
+            "phylum",
+            "class",
+            "order",
+            "family",
+            "genus",
+            "species",
+            "none",
+        ],
+        case_sensitive=False,
+    ),
     show_default=True,
 )
 @click.option(
@@ -167,6 +179,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=str,
     default=os.path.join(os.environ["HOME"], ".etetoolkit"),
     help="path where to save/find ete taxa.sqlite file",
+    show_default=True,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
 @click.version_option(version, "-v", "--version")
