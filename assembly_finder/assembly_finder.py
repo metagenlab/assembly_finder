@@ -49,7 +49,10 @@ desc = f"""
 
       github: https://github.com/metagenlab/assembly_finder
       """
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS = {
+    "help_option_names": ["-h", "--help"],
+    "ignore_unknown_options": True,
+}
 
 
 @click.command(help=desc, context_settings=CONTEXT_SETTINGS)
@@ -212,7 +215,7 @@ def cli(
         dryrun = ""
 
     if snakemake_args:
-        args = " ".join(["--" + arg for arg in snakemake_args])
+        args = " ".join([arg for arg in snakemake_args])
     else:
         args = ""
 
