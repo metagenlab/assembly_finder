@@ -95,6 +95,7 @@ rule download_taxdump:
         temp(f"{ete_db}/taxdump.tar.gz"),
     log:
         f"{outdir}/logs/ete.log",
+    retries: 2
     shell:
         """
         curl -o {output} https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
@@ -178,6 +179,7 @@ checkpoint download_assemblies:
         f"{outdir}/benchmark/downloads.txt"
     params:
         asmdir=f"{outdir}/assemblies",
+    retries: 2
     shell:
         """
         ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
