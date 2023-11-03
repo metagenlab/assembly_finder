@@ -28,13 +28,6 @@ assembly_finder -i <input> -o <outdir> -ne <ncbi_email> -nk <ncbi_key>
 ```
 
 ### Quick usage
-
-```sh
-assembly_finder -i test.tsv -o test
-```
-
-or
-
 ```sh
 assembly_finder -i 1290,1813735,114185 -nb 3,2,1 -o test
 ```
