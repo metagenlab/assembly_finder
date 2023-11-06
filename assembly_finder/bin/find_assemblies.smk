@@ -63,12 +63,10 @@ for key, val in zip(param_keys, param_values):
 
 # Check if input is file
 if os.path.isfile(inp):
-    entry_dic = pd.read_csv(inp, sep="\t").to_dict()
+    entry_dt = pd.read_csv(inp, sep="\t").to_dict()
     # replace empty values with default ones or first entry for the param
-    entry_dic = empty_to_val | entry_dic
-    entry_df = pd.DataFrame.from_dict(entry_dic).dropna(subset="entry")
-    entry_df["entry"] = [int(entry) for entry in entry_df["entry"]]
-    entry_df["nb"] = [int(nb) for nb in entry_df["nb"]]
+    entry_dt = empty_to_val | entry_dt
+    entry_df = pd.DataFrame.from_dict(entry_dt).dropna(subset="entry")
 
 
 # If not create the dataframe
@@ -81,7 +79,10 @@ else:
 entry_df = entry_df.replace(
     empty_to_val,
 ).dropna()
-
+entry_df["nb"] = [int(nb) if isinstance(nb, int) else nb for nb in entry_df["nb"]]
+entry_df["entry"] = [
+    int(entry) if isinstance(entry, float) else entry for entry in entry_df["entry"]
+]
 # entry_df.to_csv("entry.tsv", sep="\t")
 # Set entry as index
 entry_df = entry_df.astype({"entry": str}).set_index("entry")
