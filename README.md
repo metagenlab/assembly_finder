@@ -283,13 +283,13 @@ assembly_finder -i 114185 -rc reference
 Select reference and representative genomes only
 
 ```sh
-assembly_finder -i 114185 -al reference_representative
+assembly_finder -i 114185 -rc reference_representative
 ```
 
 No refseq category selection
 
 ```sh
-assembly_finder -i 114185 -al all
+assembly_finder -i 114185 -rc all
 ```
 
 More on [refseq categories](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/glossary/) :
