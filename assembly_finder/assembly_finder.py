@@ -145,7 +145,7 @@ CONTEXT_SETTINGS = {
     "--exclude",
     type=str,
     help="filter to exclude assemblies (example: exclude from metagenomes)",
-    default="metagenome",
+    default="anomalous",
     show_default=True,
 )
 @click.option(
