@@ -264,12 +264,15 @@ rule get_summaries:
         seq_report = pd.read_csv(input.seq_report, sep="\t")
         # replace ftp paths with absolute paths
         try:
-            df.ftp_path = [
-                os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
-                for acc in df["asm_accession"]
-            ]
+            paths = []
+            for ftp in df["ftp_path"]:
+                acc = ftp.split("/")[-1]
+                path = os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
+                paths.append(path)
+            df["path"] = paths
+
         except IndexError:
-            df.ftp_path = df.ftp_path
+            df["path"] = df.ftp_path
 
         df.rename(columns={"ftp_path": "path"}, inplace=True)
         dfs = [df, asm_report, seq_report]
