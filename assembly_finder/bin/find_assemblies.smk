@@ -172,7 +172,7 @@ checkpoint download_assemblies:
     input:
         os.path.join(outdir, "assemblies", "ftp-links.txt"),
     output:
-        os.path.join(outdir, "assemblies", "checksums.txt"),
+        temp(os.path.join(outdir, "assemblies", "checksums.txt")),
     log:
         os.path.join(outdir, "logs", "download.log"),
     params:
@@ -347,7 +347,7 @@ rule format_checksum:
     input:
         os.path.join(outdir, "assemblies", "checksums.txt"),
     output:
-        os.path.join(outdir, "assemblies", "aspera-checks.txt"),
+        temp(os.path.join(outdir, "assemblies", "aspera-checks.txt")),
     run:
         d = {
             line.replace('"', "")
@@ -377,7 +377,7 @@ rule verify_checksums:
         os.path.join(outdir, "assemblies", "aspera-checks.txt"),
         lambda wildcards: downloads(wildcards, sfxs),
     output:
-        os.path.join(outdir, "assemblies", "sha256.txt"),
+        temp(os.path.join(outdir, "assemblies", "sha256.txt")),
     params:
         lambda wildcards: get_ext(wildcards, asmdir, sfxs),
     shell:
