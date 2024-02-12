@@ -13,6 +13,7 @@ from functools import reduce
 # Path params
 outdir = config["outdir"]
 ete_db = config["ete_db"]
+asmdir = os.path.join(outdir, "assemblies")
 
 # Assemblies params
 inp = config["input"]
@@ -93,9 +94,9 @@ entries = list(entry_df.index)
 
 rule download_taxdump:
     output:
-        temp(f"{ete_db}/taxdump.tar.gz"),
+        temp(os.path.join(ete_db, "taxdump.tar.gz")),
     log:
-        f"{outdir}/logs/ete.log",
+        os.path.join(outdir, "logs", "ete.log"),
     retries: 2
     shell:
         """
@@ -105,11 +106,11 @@ rule download_taxdump:
 
 rule generate_ete3_NCBItaxa:
     input:
-        f"{ete_db}/taxdump.tar.gz",
+        os.path.join(ete_db, "taxdump.tar.gz"),
     output:
-        f"{ete_db}/taxa.sqlite",
+        os.path.join(ete_db, "taxa.sqlite"),
     log:
-        f"{outdir}/logs/ete.log",
+        os.path.join(outdir, "logs", "ete.log"),
     run:
         with open(log[0], "w") as f:
             sys.stderr = sys.stdout = f
@@ -118,10 +119,10 @@ rule generate_ete3_NCBItaxa:
 
 rule get_assembly_tables:
     input:
-        f"{ete_db}/taxa.sqlite",
+        os.path.join(ete_db, "taxa.sqlite"),
     output:
-        all=f"{outdir}/tables/{{entry}}-all.tsv",
-        filtered=f"{outdir}/tables/{{entry}}-filtered.tsv",
+        all=os.path.join(outdir, "tables", "{entry}-all.tsv"),
+        filtered=os.path.join(outdir, "tables", "{entry}-filtered.tsv"),
     params:
         ncbi_key=config["ncbi_key"],
         ncbi_email=config["ncbi_email"],
@@ -137,18 +138,16 @@ rule get_assembly_tables:
     resources:
         ncbi_requests=1,
     log:
-        f"{outdir}/logs/find-assemblies-{{entry}}.log",
-    benchmark:
-        f"{outdir}/benchmark/find-assemblies-{{entry}}.txt"
+        os.path.join(outdir, "logs", "{entry}.log"),
     script:
         "assembly_table.py"
 
 
 rule combine_assembly_tables:
     input:
-        expand(f"{outdir}/tables/{{entry}}-filtered.tsv", entry=entries),
+        expand(os.path.join(outdir, "tables", "{entry}-filtered.tsv"), entry=entries),
     output:
-        temp(f"{outdir}/assemblies/assembly_summary.tsv"),
+        temp(os.path.join(outdir, "assemblies", "assembly_summary.tsv")),
     run:
         pd.concat([pd.read_csv(tb, sep="\t") for tb in list(input)]).to_csv(
             output[0], sep="\t", index=None
@@ -157,9 +156,9 @@ rule combine_assembly_tables:
 
 rule get_ftp_links_list:
     input:
-        f"{outdir}/assemblies/assembly_summary.tsv",
+        os.path.join(outdir, "assemblies", "assembly_summary.tsv"),
     output:
-        temp(f"{outdir}/assemblies/ftp-links.txt"),
+        temp(os.path.join(outdir, "assemblies", "ftp-links.txt")),
     run:
         ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
         ftplinks = ftplinks.str.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
@@ -171,15 +170,13 @@ rule get_ftp_links_list:
 
 checkpoint download_assemblies:
     input:
-        f"{outdir}/assemblies/ftp-links.txt",
+        os.path.join(outdir, "assemblies", "ftp-links.txt"),
     output:
-        temp(f"{outdir}/assemblies/checksums.txt"),
+        os.path.join(outdir, "assemblies", "checksums.txt"),
     log:
-        f"{outdir}/logs/download.log",
-    benchmark:
-        f"{outdir}/benchmark/downloads.txt"
+        os.path.join(outdir, "logs", "download.log"),
     params:
-        asmdir=f"{outdir}/assemblies",
+        asmdir=asmdir,
     retries: 2
     shell:
         """
@@ -233,8 +230,8 @@ rule get_assembly_reports:
     input:
         lambda wildcards: downloads(wildcards, "assembly_report.txt"),
     output:
-        temp(f"{outdir}/assemblies/assembly_reports.tsv"),
-        temp(f"{outdir}/assemblies/sequence_reports.tsv"),
+        temp(os.path.join(outdir, "assemblies", "assembly_reports.tsv")),
+        temp(os.path.join(outdir, "assemblies", "sequence_reports.tsv")),
     run:
         all_reports = [get_reports(report) for report in input]
 
@@ -249,15 +246,15 @@ rule get_assembly_reports:
 
 rule get_summaries:
     input:
-        summary=f"{outdir}/assemblies/assembly_summary.tsv",
-        asm_report=f"{outdir}/assemblies/assembly_reports.tsv",
-        seq_report=f"{outdir}/assemblies/sequence_reports.tsv",
+        summary=os.path.join(outdir, "assemblies", "assembly_summary.tsv"),
+        asm_report=os.path.join(outdir, "assemblies", "assembly_reports.tsv"),
+        seq_report=os.path.join(outdir, "assemblies", "sequence_reports.tsv"),
     output:
-        f"{outdir}/assembly_summary.tsv",
-        f"{outdir}/sequence_summary.tsv",
-        f"{outdir}/taxonomy_summary.tsv",
+        os.path.join(outdir, "assembly_summary.tsv"),
+        os.path.join(outdir, "sequence_summary.tsv"),
+        os.path.join(outdir, "taxonomy_summary.tsv"),
     params:
-        asmdir=f"{outdir}/assemblies",
+        asmdir=asmdir,
     run:
         df = pd.read_csv(input.summary, sep="\t")
         asm_report = pd.read_csv(input.asm_report, sep="\t")
@@ -273,8 +270,7 @@ rule get_summaries:
 
         except IndexError:
             df["path"] = df.ftp_path
-
-        df.rename(columns={"ftp_path": "path"}, inplace=True)
+            df.rename(columns={"ftp_path": "path"}, inplace=True)
         dfs = [df, asm_report, seq_report]
         merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
         asm_df = merge_df[
@@ -332,14 +328,14 @@ rule get_summaries:
 
 rule clean_reports:
     input:
-        f"{outdir}/assembly_summary.tsv",
-        f"{outdir}/sequence_summary.tsv",
-        f"{outdir}/taxonomy_summary.tsv",
+        os.path.join(outdir, "assembly_summary.tsv"),
+        os.path.join(outdir, "sequence_summary.tsv"),
+        os.path.join(outdir, "taxonomy_summary.tsv"),
         reports=lambda wildcards: downloads(wildcards, "assembly_report.txt"),
     output:
-        temp(f"{outdir}/clean.txt"),
+        temp(os.path.join(outdir, "clean.txt")),
     params:
-        asmdir=f"{outdir}/assemblies",
+        asmdir=asmdir,
     shell:
         """
         rm {input.reports}
@@ -349,9 +345,9 @@ rule clean_reports:
 
 rule format_checksum:
     input:
-        f"{outdir}/assemblies/checksums.txt",
+        os.path.join(outdir, "assemblies", "checksums.txt"),
     output:
-        temp(f"{outdir}/assemblies/aspera-checks.txt"),
+        os.path.join(outdir, "assemblies", "aspera-checks.txt"),
     run:
         d = {
             line.replace('"', "")
@@ -368,24 +364,24 @@ rule format_checksum:
         )
 
 
-def get_ext(wildcards, exts):
+def get_ext(wildcards, asm_dir, exts):
+    asm_dir = os.path.relpath(asm_dir)
     if len(exts.split(",")) > 1:
-        return f"{{{exts}}}"
-    elif len(exts.split(",")) == 1:
-        return exts
+        return os.path.join(asm_dir, "*" + "{" + exts + "}")
+    else:
+        return os.path.join(asm_dir, "*" + exts)
 
 
 rule verify_checksums:
     input:
-        f"{outdir}/assemblies/aspera-checks.txt",
+        os.path.join(outdir, "assemblies", "aspera-checks.txt"),
         lambda wildcards: downloads(wildcards, sfxs),
     output:
-        temp(f"{outdir}/assemblies/sha256.txt"),
+        os.path.join(outdir, "assemblies", "sha256.txt"),
     params:
-        asmdir=f"{outdir}/assemblies",
-        suffix=lambda wildcards: get_ext(wildcards, sfxs),
+        lambda wildcards: get_ext(wildcards, asmdir, sfxs),
     shell:
         """
-        sha256sum {params.asmdir}/*{params.suffix} | sed 's/ \+ /\t/g' > {output} 
+        sha256sum {params} | sed 's/ \+ /\t/g' > {output} 
         diff <(sort {output}) <(sort {input[0]})
         """
