@@ -5,7 +5,6 @@ import os
 import sys
 import click
 import subprocess
-import datetime
 
 
 logging.basicConfig(
@@ -79,7 +78,7 @@ CONTEXT_SETTINGS = {
     default="assembly_report.txt,genomic.fna.gz",
     show_default=True,
 )
-@click.option("-o", "--outdir", help="output directory", type=str)
+@click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-n",
     "--dryrun_status",
@@ -145,7 +144,7 @@ CONTEXT_SETTINGS = {
     "--exclude",
     type=str,
     help="filter to exclude assemblies (example: exclude from metagenomes)",
-    default="metagenome",
+    default="anomalous",
     show_default=True,
 )
 @click.option(
@@ -206,8 +205,10 @@ def cli(
     ete_db,
     snakemake_args,
 ):
-    if not outdir:
-        outdir = datetime.datetime.today().strftime("%Y-%m-%d")
+    if outdir:
+        outdir = os.path.abspath(outdir)
+    else:
+        outdir = os.path.abspath(os.path.basename(input).split(".")[0])
 
     if dryrun_status:
         dryrun = "-n"
