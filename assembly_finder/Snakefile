@@ -3,8 +3,8 @@ include: "bin/find_assemblies.smk"
 
 rule all_download:
     input:
-        f"{outdir}/assemblies/sha256.txt",
-        f"{outdir}/assembly_summary.tsv",
-        f"{outdir}/sequence_summary.tsv",
-        f"{outdir}/taxonomy_summary.tsv",
-        f"{outdir}/clean.txt",
+        downloads,
+        os.path.join(outdir, "assembly_summary.tsv"),
+        os.path.join(outdir, "sequence_summary.tsv"),
+        os.path.join(outdir, "taxonomy_summary.tsv"),
+        os.path.join(outdir, "clean.txt"),
