@@ -10,6 +10,8 @@ from io import StringIO
 from ete3 import NCBITaxa
 from functools import reduce
 
+# Download params
+download = config["download"]
 # Path params
 outdir = config["outdir"]
 ete_db = config["ete_db"]
@@ -158,42 +160,97 @@ rule get_ftp_links_list:
     input:
         os.path.join(outdir, "assemblies", "assembly_summary.tsv"),
     output:
-        temp(os.path.join(outdir, "assemblies", "ftp-links.txt")),
+        os.path.join(outdir, "links", "ftp-links.txt"),
+    params:
+        download,
     run:
-        ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
-        ftplinks = ftplinks.str.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
-        ftplinks = ftplinks + "/" + ftplinks.str.split("/", expand=True)[7]
+        ftplinks = list(pd.read_csv(input[0], sep="\t")["ftp_path"])
+        if params[0] == "aspera":
+            ftplinks = [
+                link.replace("ftp://ftp.ncbi.nlm.nih.gov", "") for link in ftplinks
+            ]
+        ftplinks = [os.path.join(link, os.path.basename(link)) for link in ftplinks]
         links = [link + "_" + sfx for sfx in sfxs.split(",") for link in ftplinks]
         with open(output[0], "w") as ftp_links:
             ftp_links.write("\n".join(str(link) for link in links))
 
 
-checkpoint download_assemblies:
-    input:
-        os.path.join(outdir, "assemblies", "ftp-links.txt"),
-    output:
-        temp(os.path.join(outdir, "assemblies", "checksums.txt")),
-    log:
-        os.path.join(outdir, "logs", "download.log"),
-    params:
-        asmdir=asmdir,
-    retries: 2
-    shell:
-        """
-        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
-        --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
-        --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
-        mv {params.asmdir}/*.manifest.txt {output}
-        """
+if download == "aspera":
+
+    checkpoint download:
+        input:
+            os.path.join(outdir, "links", "ftp-links.txt"),
+        output:
+            temp(os.path.join(outdir, "assemblies", "checksums.txt")),
+        log:
+            os.path.join(outdir, "logs", "download.log"),
+        params:
+            asmdir=asmdir,
+        shell:
+            """
+            ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
+            --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
+            --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
+            mv {params.asmdir}/*.manifest.txt {output}
+            """
+
+elif download == "ftp":
+
+    checkpoint split_links:
+        input:
+            os.path.join(outdir, "links", "ftp-links.txt"),
+        output:
+            temp(os.path.join(outdir, "links", "split.txt")),
+        params:
+            os.path.join(outdir, "links"),
+        run:
+            with open(input[0], "r") as file:
+                lines = file.readlines()
+                for line in lines:
+                    line = line.strip("\n")
+                    file = os.path.basename(line)
+                    with open(output[0], "w") as out:
+                        with open(
+                            os.path.join(params[0], f"{file}.link"), "w"
+                        ) as link:
+                            out.write(line)
+                            link.write(line)
+
+    def get_query(file):
+        with open(file, "r") as file:
+            return file.readlines()
+
+    checkpoint download:
+        input:
+            txt=os.path.join(outdir, "links", "split.txt"),
+            query=lambda wildcards: storage.ftp(
+                get_query(os.path.join(outdir, "links", f"{wildcards.ftp}.link"))
+            ),
+        output:
+            os.path.join(outdir, "assemblies", "{ftp}"),
+        log:
+            os.path.join(outdir, "logs", "download", "{ftp}.log"),
+        shell:
+            """
+            cp {input.query} {output} &> {log}
+            """
 
 
-def downloads(wildcards, extensions):
-    extensions = extensions.split(",")
-    checkpoint_directory = os.path.dirname(
-        checkpoints.download_assemblies.get(**wildcards).output[0]
-    )
-    files = [glob.glob(f"{checkpoint_directory}/*_{e}") for e in extensions]
-    return list(chain.from_iterable(files))
+def downloads(wildcards):
+    if config["download"] == "aspera":
+        extensions = config["sfxs"].split(",")
+        checkpoint_directory = os.path.dirname(
+            checkpoints.download.get(**wildcards).output[0]
+        )
+        files = [glob.glob(f"{checkpoint_directory}/*_{e}") for e in extensions]
+        return list(chain.from_iterable(files))
+
+    elif config["download"] == "ftp":
+        checkdir = os.path.dirname(checkpoints.split_links.get(**wildcards).output[0])
+        return expand(
+            os.path.join(outdir, "assemblies", "{ftp}"),
+            ftp=glob_wildcards(os.path.join(checkdir, "{i}.link")).i,
+        )
 
 
 def get_reports(file):
@@ -213,7 +270,6 @@ def get_reports(file):
                 .replace("\n", "")
             }
             asm_dic.update(d)
-
         elif always_print or line.startswith("# Sequence-Name"):
             seq_lines += line.replace("# ", "")
             always_print = True
@@ -228,13 +284,13 @@ def get_reports(file):
 
 rule get_assembly_reports:
     input:
-        lambda wildcards: downloads(wildcards, "assembly_report.txt"),
+        dl=downloads,
     output:
         temp(os.path.join(outdir, "assemblies", "assembly_reports.tsv")),
         temp(os.path.join(outdir, "assemblies", "sequence_reports.tsv")),
     run:
-        all_reports = [get_reports(report) for report in input]
-
+        reports = [f for f in input.dl if "assembly_report" in f]
+        all_reports = [get_reports(report) for report in reports]
         asm_rep = pd.concat([report[0] for report in all_reports]).reset_index(
             drop=True
         )
@@ -260,17 +316,14 @@ rule get_summaries:
         asm_report = pd.read_csv(input.asm_report, sep="\t")
         seq_report = pd.read_csv(input.seq_report, sep="\t")
         # replace ftp paths with absolute paths
-        try:
-            paths = []
-            for ftp in df["ftp_path"]:
-                acc = ftp.split("/")[-1]
-                path = os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
-                paths.append(path)
-            df["path"] = paths
-
-        except IndexError:
-            df["path"] = df.ftp_path
-            df.rename(columns={"ftp_path": "path"}, inplace=True)
+        df["path"] = [
+            os.path.abspath(
+                glob.glob(
+                    os.path.join(params.asmdir, f"{os.path.basename(ftp)}*.fna.gz")
+                )[0]
+            )
+            for ftp in df["ftp_path"]
+        ]
         dfs = [df, asm_report, seq_report]
         merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
         asm_df = merge_df[
@@ -326,62 +379,64 @@ rule get_summaries:
         tax_df.to_csv(output[2], sep="\t", index=None)
 
 
-rule clean_reports:
+rule clean_files:
     input:
         os.path.join(outdir, "assembly_summary.tsv"),
         os.path.join(outdir, "sequence_summary.tsv"),
         os.path.join(outdir, "taxonomy_summary.tsv"),
-        reports=lambda wildcards: downloads(wildcards, "assembly_report.txt"),
     output:
         temp(os.path.join(outdir, "clean.txt")),
     params:
-        asmdir=asmdir,
+        links=os.path.join(outdir, "links"),
     shell:
         """
-        rm {input.reports}
+        rm -r {params.links}
         touch {output}
         """
 
 
-rule format_checksum:
-    input:
-        os.path.join(outdir, "assemblies", "checksums.txt"),
-    output:
-        temp(os.path.join(outdir, "assemblies", "aspera-checks.txt")),
-    run:
-        d = {
-            line.replace('"', "")
-            .replace("\n", "")
-            .split(", ")[1]
-            .split(":")[1]: os.path.relpath(
-                line.replace('"', "").replace("\n", "").split(", ")[0].split(" ")[0]
+if download == "aspera":
+
+    rule format_checksum:
+        input:
+            os.path.join(outdir, "assemblies", "checksums.txt"),
+        output:
+            temp(os.path.join(outdir, "assemblies", "aspera-checks.txt")),
+        run:
+            d = {
+                line.replace('"', "")
+                .replace("\n", "")
+                .split(", ")[1]
+                .split(":")[1]: os.path.relpath(
+                    line.replace('"', "")
+                    .replace("\n", "")
+                    .split(", ")[0]
+                    .split(" ")[0]
+                )
+                for line in open(input[0])
+                if line.startswith('"')
+            }
+            pd.DataFrame.from_dict([d]).transpose().reset_index().to_csv(
+                output[0], sep="\t", index=None, header=None
             )
-            for line in open(input[0])
-            if line.startswith('"')
-        }
-        pd.DataFrame.from_dict([d]).transpose().reset_index().to_csv(
-            output[0], sep="\t", index=None, header=None
-        )
 
+    def get_ext(wildcards, asm_dir, exts):
+        asm_dir = os.path.relpath(asm_dir)
+        if len(exts.split(",")) > 1:
+            return os.path.join(asm_dir, "*" + "{" + exts + "}")
+        else:
+            return os.path.join(asm_dir, "*" + exts)
 
-def get_ext(wildcards, asm_dir, exts):
-    asm_dir = os.path.relpath(asm_dir)
-    if len(exts.split(",")) > 1:
-        return os.path.join(asm_dir, "*" + "{" + exts + "}")
-    else:
-        return os.path.join(asm_dir, "*" + exts)
-
-
-rule verify_checksums:
-    input:
-        os.path.join(outdir, "assemblies", "aspera-checks.txt"),
-        lambda wildcards: downloads(wildcards, sfxs),
-    output:
-        temp(os.path.join(outdir, "assemblies", "sha256.txt")),
-    params:
-        lambda wildcards: get_ext(wildcards, asmdir, sfxs),
-    shell:
-        """
-        sha256sum {params} | sed 's/ \+ /\t/g' > {output} 
-        diff <(sort {output}) <(sort {input[0]})
-        """
+    rule verify_checksums:
+        input:
+            os.path.join(outdir, "assemblies", "aspera-checks.txt"),
+            lambda wildcards: downloads(wildcards, download, sfxs),
+        output:
+            temp(os.path.join(outdir, "assemblies", "sha256.txt")),
+        params:
+            lambda wildcards: get_ext(wildcards, asmdir, sfxs),
+        shell:
+            """
+            sha256sum {params} | sed 's/ \+ /\t/g' > {output}
+            diff <(sort {output}) <(sort {input[0]})
+            """
