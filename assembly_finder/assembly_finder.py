@@ -184,11 +184,11 @@ CONTEXT_SETTINGS = {
     show_default=True,
 )
 @click.option(
-    "-et",
-    "--ete_db",
+    "-td",
+    "--taxdump",
     type=str,
-    default=os.path.join(os.environ["HOME"], ".etetoolkit"),
-    help="path where to save/find ete taxa.sqlite file",
+    default=os.path.join(os.environ["HOME"], ".taxonkit"),
+    help="path where to save taxdump for taxonkit",
     show_default=True,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
@@ -211,7 +211,7 @@ def cli(
     rank,
     n_by_rank,
     n_by_entry,
-    ete_db,
+    taxdump,
     snakemake_args,
 ):
     if outdir:
@@ -233,7 +233,7 @@ def cli(
         f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
         f"all_download {dryrun} "
-        f"--config ete_db={ete_db} "
+        f"--config taxdump={taxdump} "
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
         f"download={download} "
