@@ -4,10 +4,10 @@ channels:
   - defaults
 
 dependencies:
-  - python >=3.9, <3.12
-  - snakemake-minimal =7.32.4
+  - python >=3.9
+  - snakemake-minimal >= 7.32.4
   - click >=7
-  - biopython >=1.78
   - pandas >=2.0.3
-  - ete3 >=3.1.3
-  - aspera-cli >=4.14.0
+  - taxonkit >=0.15.1
+  - csvtk >= 0.29.0
+  - ncbi-datasets-cli >= 16.4.7
