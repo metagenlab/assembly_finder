@@ -63,19 +63,11 @@ CONTEXT_SETTINGS = {
     required=True,
 )
 @click.option(
-    "-d",
-    "--download",
-    type=click.Choice(["ftp", "aspera"], case_sensitive=False),
-    help="download using ftp or aspera",
-    default="aspera",
-    show_default=True,
-)
-@click.option(
     "-nb",
     "--n_by_entry",
     help="number of assemblies per entry",
-    type=str,
-    default="all",
+    type=int,
+    default=None,
     show_default=True,
 )
 @click.option(
@@ -195,7 +187,6 @@ CONTEXT_SETTINGS = {
 @click.version_option(version, "-v", "--version")
 def cli(
     input,
-    download,
     outdir,
     suffixes,
     dryrun_status,
@@ -236,7 +227,6 @@ def cli(
         f"--config taxdump={taxdump} "
         f"ncbi_key={ncbi_key} "
         f"ncbi_email={ncbi_email} "
-        f"download={download} "
         f"input={input} "
         f"nb={n_by_entry} "
         f"sfxs={suffixes} "
