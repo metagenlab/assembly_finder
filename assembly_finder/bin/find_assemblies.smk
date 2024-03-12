@@ -6,8 +6,7 @@ import sys
 from ete3 import NCBITaxa
 import json
 
-# Download params
-download = config["download"]
+
 # Path params
 outdir = config["outdir"]
 taxdump = config["taxdump"]
@@ -135,6 +134,7 @@ rule get_assembly_summaries:
         key=config["ncbi_key"],
     resources:
         ncbi_requests=1,
+    retries: 2
     shell:
         """
         datasets summary genome taxon {wildcards.entry} --api-key {params.key} > {output}
@@ -142,38 +142,17 @@ rule get_assembly_summaries:
         """
 
 
-rule json_to_tsv:
+rule select_assemblies:
     input:
         os.path.join(outdir, "json", "{entry}.json"),
     output:
         temp(os.path.join(outdir, "json", "{entry}.tsv")),
-    run:
-        with open(input[0]) as file:
-            data = json.load(file)
-        df = pd.json_normalize(data, record_path=["reports"])
-        df = df.replace(np.nan, "na")
-        df["entry"] = [wildcards.entry] * len(df)
-        sort = []
-        try:
-            df["assembly_info.refseq_category"] = pd.Categorical(
-                df["assembly_info.refseq_category"],
-                ["reference genome", "representative genome", "na"],
-                ordered=True,
-            )
-            sort.append("assembly_info.refseq_category")
-        except KeyError:
-            df["assembly_info.assembly_level"] = pd.Categorical(
-                df["assembly_info.assembly_level"],
-                ["Complete Genome", "Chromosome", "Scaffold", "Contig", "na"],
-                ordered=True,
-            )
-            sort.append("assembly_info.assembly_level")
-
-        df.sort_values(
-            sort,
-            inplace=True,
-        )
-        df.iloc[[0]].to_csv(output[0], sep="\t", index=None)
+    params:
+        nb=nb,
+        rank=rank,
+        nrank=nrank,
+    script:
+        "select_assemblies.py"
 
 
 rule collect_summaries:
