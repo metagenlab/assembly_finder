@@ -59,26 +59,26 @@ CONTEXT_SETTINGS = {
     "-i",
     "--input",
     type=str,
-    help="path to assembly_finder input table or list of entries",
+    help="path to assembly_finder input table or list of queries",
     required=True,
 )
+@click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-nb",
-    "--n_by_entry",
-    help="number of assemblies per entry",
+    "--n_query",
+    help="number of assemblies per query",
     type=int,
     default=None,
     show_default=True,
 )
 @click.option(
-    "-s",
-    "--suffixes",
+    "-f",
+    "--files",
     type=str,
-    help="suffix of files to download from NCBI's ftp",
-    default="assembly_report.txt,genomic.fna.gz",
+    help="data files to include",
+    default="genome,seq-report",
     show_default=True,
 )
-@click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-n",
     "--dryrun_status",
@@ -95,63 +95,63 @@ CONTEXT_SETTINGS = {
     default=2,
     show_default=True,
 )
-@click.option("-nk", "--ncbi_key", type=str, help="ncbi key for Entrez", default="none")
-@click.option(
-    "-ne", "--ncbi_email", type=str, help="ncbi email for Entrez", default="none"
-)
+@click.option("-nk", "--ncbi_key", type=str, help="ncbi key for Entrez", default=None)
 @click.option(
     "-db",
     "--database",
-    type=click.Choice(["refseq", "genbank"], case_sensitive=False),
+    type=click.Choice(["refseq", "genbank", "all"], case_sensitive=False),
     help="download from refseq or genbank",
     default="refseq",
     show_default=True,
 )
 @click.option(
-    "-id",
-    "--uid",
-    help="are inputs UIDs or assembly names",
-    type=str,
-    default=False,
+    "--taxon",
+    help="are inputs taxon names or ids",
+    type=bool,
+    default=True,
     show_default=True,
 )
 @click.option(
-    "-rc",
-    "--refseq_category",
-    type=str,
-    help="select reference, representative or all",
-    default="all",
+    "--reference",
+    type=bool,
+    help="limit to reference and representative genomes",
+    default=False,
     show_default=True,
 )
 @click.option(
     "-al",
     "--assembly_level",
-    type=str,
-    help="select complete, chromosome, scaffold, contig or all",
-    default="complete",
+    help="select complete, chromosome, scaffold, contig",
+    default=None,
     show_default=True,
 )
 @click.option(
     "-an",
     "--annotation",
-    type=click.Choice(["False", "True"]),
+    type=bool,
     help="select assemblies with annotation",
-    default="False",
+    default=False,
     show_default=True,
 )
 @click.option(
-    "-ex",
-    "--exclude",
-    type=str,
-    help="filter to exclude assemblies (example: exclude from metagenomes)",
-    default="anomalous",
+    "--atypical",
+    type=bool,
+    help="exclude atypical genomes",
+    default=True,
+    show_default=True,
+)
+@click.option(
+    "--mag",
+    type=click.Choice(["only", "exclude", "all"], case_sensitive=False),
+    help="exclude or add MAGs to the dwnloaded genomes ",
+    default="all",
     show_default=True,
 )
 @click.option(
     "-r",
     "--rank",
     help="taxonomic rank to filter by assemblies ",
-    default="none",
+    default=None,
     type=click.Choice(
         [
             "superkingdom",
@@ -161,7 +161,6 @@ CONTEXT_SETTINGS = {
             "family",
             "genus",
             "species",
-            "none",
         ],
         case_sensitive=False,
     ),
@@ -169,18 +168,10 @@ CONTEXT_SETTINGS = {
 )
 @click.option(
     "-nr",
-    "--n_by_rank",
-    help="max number of genome by target rank (example: 1 per species)",
-    type=str,
-    default="none",
-    show_default=True,
-)
-@click.option(
-    "-td",
-    "--taxdump",
-    type=str,
-    default=os.path.join(os.environ["HOME"], ".taxonkit"),
-    help="path where to save taxdump for taxonkit",
+    "--n_rank",
+    help="number of genomes per taxonomic rank",
+    type=int,
+    default=None,
     show_default=True,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
@@ -188,21 +179,20 @@ CONTEXT_SETTINGS = {
 def cli(
     input,
     outdir,
-    suffixes,
+    files,
     dryrun_status,
     threads,
     ncbi_key,
-    ncbi_email,
     database,
-    uid,
-    refseq_category,
+    taxon,
     assembly_level,
     annotation,
-    exclude,
+    atypical,
+    mag,
+    reference,
     rank,
-    n_by_rank,
-    n_by_entry,
-    taxdump,
+    n_rank,
+    n_query,
     snakemake_args,
 ):
     if outdir:
@@ -224,20 +214,19 @@ def cli(
         f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
         f"all_download {dryrun} "
-        f"--config taxdump={taxdump} "
-        f"ncbi_key={ncbi_key} "
-        f"ncbi_email={ncbi_email} "
+        f"--config ncbi_key={ncbi_key} "
         f"input={input} "
-        f"nb={n_by_entry} "
-        f"sfxs={suffixes} "
+        f"nb={n_query} "
+        f"files={files} "
         f"db={database} "
-        f"uid={uid} "
+        f"taxon={taxon} "
         f"alvl={assembly_level} "
-        f"excl={exclude} "
-        f"rcat={refseq_category} "
+        f"atypical={atypical} "
+        f"mag={mag} "
+        f"reference={reference} "
         f"annot={annotation} "
         f"rank={rank} "
-        f"nrank={n_by_rank} "
+        f"nrank={n_rank} "
         f"outdir={outdir} "
         f"{args}"
     )
