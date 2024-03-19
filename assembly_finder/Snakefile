@@ -5,4 +5,4 @@ rule all_download:
     input:
         os.path.join(outdir, "assembly_summary.tsv"),
         os.path.join(outdir, "sequence_report.tsv"),
-        os.path.join(outdir, "sequence_taxonomy.tsv"),
+        os.path.join(outdir, "taxonomy.tsv"),
