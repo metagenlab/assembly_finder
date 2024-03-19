@@ -8,6 +8,4 @@ dependencies:
   - snakemake-minimal >= 7.32.4
   - click >=7
   - pandas >=2.0.3
-  - taxonkit >=0.15.1
-  - csvtk >= 0.29.0
-  - ncbi-datasets-cli >= 16.4.7
+  - ncbi-datasets-cli >= 16.8.1
