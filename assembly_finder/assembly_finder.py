@@ -38,23 +38,13 @@ Main
 
 version = get_version()
 
-desc = f"""
-       ░█▀█░█▀▀░█▀▀░█▀▀░█▄█░█▀▄░█░░░█░█░░░█▀▀░▀█▀░█▀█░█▀▄░█▀▀░█▀▄
-       ░█▀█░▀▀█░▀▀█░█▀▀░█░█░█▀▄░█░░░░█░░░░█▀▀░░█░░█░█░█░█░█▀▀░█▀▄
-       ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀░░▀▀▀░░▀░░░░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
-       \nv{version}
-
-      Snakemake pipeline to download genome assemblies from NCBI
-
-      github: https://github.com/metagenlab/assembly_finder
-      """
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
     "ignore_unknown_options": True,
 }
 
 
-@click.command(help=desc, context_settings=CONTEXT_SETTINGS)
+@click.command(context_settings=CONTEXT_SETTINGS)
 @click.option(
     "-i",
     "--input",
@@ -195,6 +185,14 @@ def cli(
     n_query,
     snakemake_args,
 ):
+    """
+    \b
+     ░█▀█░█▀▀░█▀▀░█▀▀░█▄█░█▀▄░█░░░█░█░░░█▀▀░▀█▀░█▀█░█▀▄░█▀▀░█▀▄
+     ░█▀█░▀▀█░▀▀█░█▀▀░█░█░█▀▄░█░░░░█░░░░█▀▀░░█░░█░█░█░█░█▀▀░█▀▄
+     ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀░░▀▀▀░░▀░░░░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
+    \b
+    Snakemake pipeline to download genome assemblies from NCBI refseq/genbank
+    """
     if outdir:
         outdir = os.path.abspath(outdir)
     else:
