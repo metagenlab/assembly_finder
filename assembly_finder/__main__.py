@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-import click
+import rich_click as click
 import subprocess
 
 
@@ -36,6 +36,45 @@ def get_snakefile():
 Main
 """
 
+click.rich_click.OPTION_GROUPS = {
+    "assembly_finder": [
+        {
+            "name": "Options",
+            "options": [
+                "--input",
+                "--outdir",
+                "--number",
+                "--threads",
+                "--taxon",
+                "--rank",
+                "--nrank",
+                "--dryrun",
+            ],
+        },
+        {
+            "name": "NCBI datasets options",
+            "options": [
+                "--api-key",
+                "--compressed",
+                "--source",
+                "--include",
+                "--reference",
+                "--assembly-level",
+                "--annotated",
+                "--atypical",
+                "--mag",
+            ],
+        },
+        {
+            "name": "Help",
+            "options": [
+                "--help",
+                "--version",
+            ],
+        },
+    ]
+}
+
 version = get_version()
 
 CONTEXT_SETTINGS = {
@@ -55,23 +94,14 @@ CONTEXT_SETTINGS = {
 @click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-nb",
-    "--n_query",
+    "--number",
     help="number of assemblies per query",
     type=int,
     default=None,
     show_default=True,
 )
 @click.option(
-    "-f",
-    "--files",
-    type=str,
-    help="data files to include",
-    default="genome,seq-report",
-    show_default=True,
-)
-@click.option(
-    "-n",
-    "--dryrun_status",
+    "--dryrun",
     is_flag=True,
     default=False,
     show_default=True,
@@ -85,18 +115,31 @@ CONTEXT_SETTINGS = {
     default=2,
     show_default=True,
 )
-@click.option("-nk", "--ncbi_key", type=str, help="ncbi key for Entrez", default=None)
+@click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
-    "-db",
-    "--database",
+    "--compressed",
+    type=bool,
+    help="Download compressed files",
+    default=True,
+    show_default=True,
+)
+@click.option(
+    "--include",
+    type=str,
+    help="Comma seperated files to download : genome,rna,protein,cds,gff3,gtf,gbff,seq-report,none",
+    default="genome,seq-report",
+    show_default=True,
+)
+@click.option(
+    "--source",
     type=click.Choice(["refseq", "genbank", "all"], case_sensitive=False),
-    help="download from refseq or genbank",
-    default="refseq",
+    help="Download from refseq or genbank",
+    default="all",
     show_default=True,
 )
 @click.option(
     "--taxon",
-    help="are inputs taxon names or ids",
+    help="Are inputs taxa names or ids",
     type=bool,
     default=True,
     show_default=True,
@@ -104,29 +147,27 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--reference",
     type=bool,
-    help="limit to reference and representative genomes",
+    help="Limit to reference and representative genomes",
     default=False,
     show_default=True,
 )
 @click.option(
-    "-al",
-    "--assembly_level",
-    help="select complete, chromosome, scaffold, contig",
+    "--assembly-level",
+    help="Comma seperated list of assembly level: complete,chromosome,scaffold,contig",
     default=None,
     show_default=True,
 )
 @click.option(
-    "-an",
-    "--annotation",
+    "--annotated",
     type=bool,
-    help="select assemblies with annotation",
+    help="Select annotated genomes only",
     default=False,
     show_default=True,
 )
 @click.option(
     "--atypical",
     type=bool,
-    help="exclude atypical genomes",
+    help="Exclude atypical genomes",
     default=True,
     show_default=True,
 )
@@ -138,9 +179,8 @@ CONTEXT_SETTINGS = {
     show_default=True,
 )
 @click.option(
-    "-r",
     "--rank",
-    help="taxonomic rank to filter by assemblies ",
+    help="Select genomes at taxonomic rank",
     default=None,
     type=click.Choice(
         [
@@ -157,9 +197,8 @@ CONTEXT_SETTINGS = {
     show_default=True,
 )
 @click.option(
-    "-nr",
-    "--n_rank",
-    help="number of genomes per taxonomic rank",
+    "--nrank",
+    help="Number of genomes per taxonomic rank",
     type=int,
     default=None,
     show_default=True,
@@ -169,20 +208,21 @@ CONTEXT_SETTINGS = {
 def cli(
     input,
     outdir,
-    files,
-    dryrun_status,
+    include,
+    dryrun,
     threads,
-    ncbi_key,
-    database,
+    api_key,
+    compressed,
+    source,
     taxon,
     assembly_level,
-    annotation,
+    annotated,
     atypical,
     mag,
     reference,
     rank,
-    n_rank,
-    n_query,
+    nrank,
+    number,
     snakemake_args,
 ):
     """
@@ -191,14 +231,14 @@ def cli(
      ░█▀█░▀▀█░▀▀█░█▀▀░█░█░█▀▄░█░░░░█░░░░█▀▀░░█░░█░█░█░█░█▀▀░█▀▄
      ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀░░▀▀▀░░▀░░░░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
     \b
-    Snakemake pipeline to download genome assemblies from NCBI refseq/genbank
+    Snakemake-cli to download genomes with NCBI datasets
     """
     if outdir:
         outdir = os.path.abspath(outdir)
     else:
         outdir = os.path.abspath(os.path.basename(input).split(".")[0])
 
-    if dryrun_status:
+    if dryrun:
         dryrun = "-n"
     else:
         dryrun = ""
@@ -212,19 +252,20 @@ def cli(
         f"snakemake --snakefile {get_snakefile()} "
         f" --cores {threads} "
         f"all_download {dryrun} "
-        f"--config ncbi_key={ncbi_key} "
+        f"--config api_key={api_key} "
+        f"compressed={compressed} "
         f"input={input} "
-        f"nb={n_query} "
-        f"files={files} "
-        f"db={database} "
+        f"nb={number} "
+        f"include={include} "
+        f"source={source} "
         f"taxon={taxon} "
-        f"alvl={assembly_level} "
+        f"assembly_level={assembly_level} "
         f"atypical={atypical} "
         f"mag={mag} "
         f"reference={reference} "
-        f"annot={annotation} "
+        f"annotated={annotated} "
         f"rank={rank} "
-        f"nrank={n_rank} "
+        f"nrank={nrank} "
         f"outdir={outdir} "
         f"{args}"
     )
