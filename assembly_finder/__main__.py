@@ -45,6 +45,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--outdir",
                 "--number",
                 "--threads",
+                "--requests",
                 "--taxon",
                 "--rank",
                 "--nrank",
@@ -84,21 +85,21 @@ CONTEXT_SETTINGS = {
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.version_option(version, "-v", "--version")
 @click.option(
     "-i",
     "--input",
     type=str,
-    help="path to assembly_finder input table or list of queries",
+    help="Comma seperated queries or input file",
     required=True,
 )
 @click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-nb",
     "--number",
-    help="number of assemblies per query",
+    help="Number of assemblies per query",
     type=int,
     default=None,
-    show_default=True,
 )
 @click.option(
     "--dryrun",
@@ -117,6 +118,13 @@ CONTEXT_SETTINGS = {
 )
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
+    "--requests",
+    type=int,
+    help="Number of NCBI datasets commands to run in parallel",
+    default=3,
+    show_default=True,
+)
+@click.option(
     "--compressed",
     type=bool,
     help="Download compressed files",
@@ -134,7 +142,7 @@ CONTEXT_SETTINGS = {
     "--source",
     type=click.Choice(["refseq", "genbank", "all"], case_sensitive=False),
     help="Download from refseq or genbank",
-    default="all",
+    default="genbank",
     show_default=True,
 )
 @click.option(
@@ -204,13 +212,13 @@ CONTEXT_SETTINGS = {
     show_default=True,
 )
 @click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
-@click.version_option(version, "-v", "--version")
 def cli(
     input,
     outdir,
     include,
     dryrun,
     threads,
+    requests,
     api_key,
     compressed,
     source,
@@ -250,7 +258,7 @@ def cli(
 
     cmd = (
         f"snakemake --snakefile {get_snakefile()} "
-        f" --cores {threads} "
+        f"--cores {threads} "
         f"all_download {dryrun} "
         f"--config api_key={api_key} "
         f"compressed={compressed} "
@@ -267,6 +275,7 @@ def cli(
         f"rank={rank} "
         f"nrank={nrank} "
         f"outdir={outdir} "
+        f"--resources ncbi_requests={requests} "
         f"{args}"
     )
     logging.info(f"Executing: {cmd}")
