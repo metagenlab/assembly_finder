@@ -1,2 +1,3 @@
 assembly_finder.egg-info/
 assembly_finder/__pycache__
+build/
