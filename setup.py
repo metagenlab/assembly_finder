@@ -12,6 +12,6 @@ setup(
     package_data={"assembly_finder": ["Snakefile", "bin/*"]},
     data_files=[(".", ["LICENSE", "README.md"])],
     entry_points={
-        "console_scripts": ["assembly_finder = assembly_finder.assembly_finder:cli"]
+        "console_scripts": ["assembly_finder = assembly_finder.__main__:cli"]
     },
 )
