@@ -16,7 +16,6 @@ lineage_df = read_json(snakemake.input.lineage)
 # Params
 rank = snakemake.params.rank
 nrank = snakemake.params.nrank
-nb = snakemake.params.nb
 
 # format column names
 lineage_df.columns = (
@@ -77,9 +76,6 @@ df.sort_values(
 
 if rank != "None" and nrank != "None":
     df = df.groupby(rank).head(nrank)
-
-if nb != "None":
-    df = df.iloc[0:nb]
 
 tax_cols = [
     "accession",
