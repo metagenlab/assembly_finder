@@ -49,7 +49,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--taxon",
                 "--rank",
                 "--nrank",
-                "--dryrun",
             ],
         },
         {
@@ -97,16 +96,9 @@ CONTEXT_SETTINGS = {
 @click.option(
     "-nb",
     "--number",
-    help="Number of assemblies per query",
-    type=int,
+    help="Number of genomes per query",
+    type=str,
     default=None,
-)
-@click.option(
-    "--dryrun",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="snakemake dryrun to see the scheduling plan",
 )
 @click.option(
     "-t",
@@ -142,7 +134,7 @@ CONTEXT_SETTINGS = {
     "--source",
     type=click.Choice(["refseq", "genbank", "all"], case_sensitive=False),
     help="Download from refseq or genbank",
-    default="genbank",
+    default="all",
     show_default=True,
 )
 @click.option(
@@ -216,7 +208,6 @@ def cli(
     input,
     outdir,
     include,
-    dryrun,
     threads,
     requests,
     api_key,
@@ -239,17 +230,12 @@ def cli(
      ░█▀█░▀▀█░▀▀█░█▀▀░█░█░█▀▄░█░░░░█░░░░█▀▀░░█░░█░█░█░█░█▀▀░█▀▄
      ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀░░▀▀▀░░▀░░░░▀░░░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀
     \b
-    Snakemake-cli to download genomes with NCBI datasets
+    Snakemake-powered cli to download genomes with NCBI datasets
     """
     if outdir:
         outdir = os.path.abspath(outdir)
     else:
         outdir = os.path.abspath(os.path.basename(input).split(".")[0])
-
-    if dryrun:
-        dryrun = "-n"
-    else:
-        dryrun = ""
 
     if snakemake_args:
         args = " ".join([arg for arg in snakemake_args])
@@ -259,7 +245,7 @@ def cli(
     cmd = (
         f"snakemake --snakefile {get_snakefile()} "
         f"--cores {threads} "
-        f"all_download {dryrun} "
+        f"all_download "
         f"--config api_key={api_key} "
         f"compressed={compressed} "
         f"input={input} "
