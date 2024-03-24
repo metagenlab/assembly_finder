@@ -1,19 +1,18 @@
+from pathlib import Path
 import json
 import pandas as pd
+import numpy as np
 import glob
 import os
 
 outdir = config["outdir"]
-accession = "refseq_seq_accession"
-if config["source"] == "genbank":
-    accession = "refseq_seq_accession"
 
-
+key=""
+if config["api_key"] != "None":
+    key += f"--api-key {config['api_key']} "
 args = ""
 if config["annotated"]:
     args += "--annotated "
-if config["api_key"] != "None":
-    args += f"--api-key {config['api_key']} "
 if config["assembly_level"] != "None":
     args += f"--assembly-level {config['assembly_level']} "
 if config["source"]:
@@ -24,8 +23,6 @@ if config["mag"]:
     args += f"--mag {config['mag']} "
 if config["reference"]:
     args += "--reference "
-if config["nb"] != "None":
-    args += f"--limit {config['nb']} "
 
 
 def read_json(file):
@@ -42,20 +39,36 @@ def convert_query(wildcards):
     return query
 
 
-try:
-    df = pd.read_csv(os.path.abspath(config["input"]), sep="\t", header=None)
-    if config["taxon"]:
-        queries = list(df[0])
+def get_limit(wildcards, dic):
+    if config["nb"] != "None":
+        return dic[wildcards.query]
     else:
-        queries = config["input"]
+        return ""
 
-except FileNotFoundError:
-    queries = config["input"].split(",")
-    if config["taxon"] == False:
-        pd.DataFrame.from_dict({"queries": queries}).to_csv(
-            os.path.join("queries.txt"), sep="\t", header=None, index=None
-        )
-        queries = os.path.join("queries.txt")
+if config["taxon"]:
+    try:
+        df = pd.read_csv(os.path.abspath(config["input"]), sep="\t", header=None)
+        queries = list(df[0])
+        try:
+            nbs = list(df[1])
+        except KeyError:
+            nbs = config["nb"]
+    except FileNotFoundError:
+        queries = config["input"].split(",")
+
+    queries = [str(query) for query in queries]
+    nbs = str(nbs)
+    if nbs != "None":
+        if type(nbs) is not list:
+            nbs = nbs.split(",")
+        nbs = [f"--limit {nb}" for nb in nbs]
+        if len(nbs)==1:
+            nbs = nbs * len(queries)
+        query2nb = dict(zip(queries, nbs))
+else:
+    queries = config["input"]
+
+
 
 
 if config["taxon"]:
@@ -65,7 +78,9 @@ if config["taxon"]:
             temp(os.path.join(outdir, "json", "{query}.json")),
         params:
             query=lambda wildcards: convert_query(wildcards),
+            limit=lambda wildcards: get_limit(wildcards, query2nb),
             args=args,
+            key=key,
         resources:
             ncbi_requests=1,
         retries: 2
@@ -76,7 +91,9 @@ if config["taxon"]:
               genome \\
               taxon \\
               {params.query} \\
+              {params.limit} \\
               {params.args} \\
+              {params.key} \\
               > {output}
             """
 
@@ -94,11 +111,12 @@ else:
 
     rule accessions_genome_summary:
         input:
-            queries,
+            queries
         output:
             temp(os.path.join(outdir, "genome_summaries.json")),
         params:
             args=args,
+            key=key,
         resources:
             ncbi_requests=1,
         shell:
@@ -109,6 +127,7 @@ else:
               accession \\
               --inputfile {input} \\
               {params.args} \\
+              {params.key} \\
               > {output}
             """
 
@@ -132,7 +151,7 @@ rule get_lineage:
     output:
         temp(os.path.join(outdir, "lineage.json")),
     params:
-        config["api_key"],
+        key=key,
     resources:
         ncbi_requests=1,
     shell:
@@ -142,7 +161,7 @@ rule get_lineage:
           taxonomy \\
           taxon \\
           --inputfile {input} \\
-          --api-key {params[0]} \\
+          {params.key} \\
           > {output}
         """
 
@@ -168,7 +187,7 @@ rule archive_download:
     output:
         os.path.join(outdir, "archive.zip"),
     params:
-        key=config["api_key"],
+        key=key,
         include=config["include"],
     shell:
         """
@@ -178,8 +197,8 @@ rule archive_download:
           accession \\
           --inputfile {input} \\
           --include {params.include} \\
-          --api-key {params.key} \\
-          --dehydrated --filename {output} 
+          {params.key} --dehydrated \\
+          --filename {output} 
         """
 
 
