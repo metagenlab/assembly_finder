@@ -5,9 +5,11 @@ import numpy as np
 import glob
 import os
 
+# read config
 outdir = config["outdir"]
 
-key=""
+# get ncbi-datasets-cli args
+key = ""
 if config["api_key"] != "None":
     key += f"--api-key {config['api_key']} "
 args = ""
@@ -23,8 +25,12 @@ if config["mag"]:
     args += f"--mag {config['mag']} "
 if config["reference"]:
     args += "--reference "
+gzip = ""
+if config["compressed"]:
+    gzip = "--gzip"
 
 
+# functions
 def read_json(file):
     try:
         return pd.json_normalize(json.load(open(file)), record_path=["reports"])
@@ -39,12 +45,14 @@ def convert_query(wildcards):
     return query
 
 
-def get_limit(wildcards, dic):
-    if config["nb"] != "None":
+def get_limit(wildcards, nbs, dic):
+    if nbs != "None":
         return dic[wildcards.query]
     else:
         return ""
 
+
+# get taxa queries and genome numbers
 if config["taxon"]:
     try:
         df = pd.read_csv(os.path.abspath(config["input"]), sep="\t", header=None)
@@ -57,18 +65,15 @@ if config["taxon"]:
         queries = config["input"].split(",")
 
     queries = [str(query) for query in queries]
-    nbs = str(nbs)
     if nbs != "None":
         if type(nbs) is not list:
-            nbs = nbs.split(",")
+            nbs = str(nbs).split(",")
         nbs = [f"--limit {nb}" for nb in nbs]
-        if len(nbs)==1:
+        if len(nbs) == 1:
             nbs = nbs * len(queries)
         query2nb = dict(zip(queries, nbs))
 else:
     queries = config["input"]
-
-
 
 
 if config["taxon"]:
@@ -78,7 +83,7 @@ if config["taxon"]:
             temp(os.path.join(outdir, "json", "{query}.json")),
         params:
             query=lambda wildcards: convert_query(wildcards),
-            limit=lambda wildcards: get_limit(wildcards, query2nb),
+            limit=lambda wildcards: get_limit(wildcards, nbs, query2nb),
             args=args,
             key=key,
         resources:
@@ -111,7 +116,7 @@ else:
 
     rule accessions_genome_summary:
         input:
-            queries
+            queries,
         output:
             temp(os.path.join(outdir, "genome_summaries.json")),
         params:
@@ -213,26 +218,20 @@ rule unzip_archive:
         """
 
 
-gzip = ""
-if config["compressed"]:
-    gzip = "--gzip"
-
-
 rule rehydrate_archive:
     input:
         os.path.join(outdir, "archive"),
     output:
         temp(os.path.join(outdir, "rehydrate.flag")),
     params:
-        key=config["api_key"],
+        key=key,
         gzip=gzip,
     shell:
         """
         datasets \\
           rehydrate \\
           --directory {input} \\
-          --api-key {params.key} \\
-          {params.gzip}
+          {params.key} {params.gzip}
         touch {output}
         """
 
@@ -257,10 +256,10 @@ rule cat_sequence_reports:
     output:
         os.path.join(outdir, "sequence_report.tsv"),
     params:
-        dir=os.path.join(outdir, "download", "*", "sequence_report.jsonl"),
+        jsonl=os.path.join(outdir, "download", "*", "sequence_report.jsonl"),
     shell:
         """
-        cat {params.dir} | dataformat tsv genome-seq > {output}
+        cat {params.jsonl} | dataformat tsv genome-seq > {output}
         """
 
 
