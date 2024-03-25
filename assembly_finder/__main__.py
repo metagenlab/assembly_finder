@@ -138,8 +138,8 @@ CONTEXT_SETTINGS = {
     show_default=True,
 )
 @click.option(
-    "--taxon",
-    help="Are inputs taxa names or ids",
+    "--taxon/--accession",
+    help="Are queries taxa names or accession",
     type=bool,
     default=True,
     show_default=True,
