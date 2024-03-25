@@ -54,13 +54,14 @@ def get_limit(wildcards, nbs, dic):
 
 
 # get taxa queries and genome numbers
+
 if config["taxon"]:
     try:
         df = pd.read_csv(os.path.abspath(inp), sep="\t")
         queries = list(df["taxon"])
         if "nb" in df.columns:
             nbs = list(df["nb"])
-    except (FileNotFoundError,IsADirectoryError):
+    except (FileNotFoundError, IsADirectoryError):
         queries = inp.split(",")
 
     queries = [str(query) for query in queries]
@@ -71,11 +72,6 @@ if config["taxon"]:
         if len(nbs) == 1:
             nbs = nbs * len(queries)
         query2nb = dict(zip(queries, nbs))
-else:
-    queries = inp
-
-
-if config["taxon"]:
 
     rule taxon_genome_summary:
         output:
@@ -112,6 +108,21 @@ if config["taxon"]:
             ).to_json(output[0])
 
 else:
+    if os.path.isfile(inp):
+        queries = inp
+    else:
+
+        rule get_accessions_file:
+            output:
+                temp(os.path.join(outdir, "queries.txt")),
+            params:
+                queries=inp.split(","),
+            run:
+                pd.DataFrame.from_dict({"queries": params.queries}).to_csv(
+                    output[0], sep="\t", index=None, header=False
+                )
+
+        queries = os.path.join(outdir, "queries.txt")
 
     rule accessions_genome_summary:
         input:
