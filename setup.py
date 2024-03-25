@@ -13,9 +13,6 @@ setup(
     package_data={"assembly_finder": ["Snakefile", "bin/*"]},
     py_modules=["assembly_finder"],
     install_requires=[
-        "snakemake>=7.32.4,<8",
-        "pandas>=2.0.2",
-        "pulp<2.8",
         "rich-click>=1.7.4",
     ],
     data_files=[(".", ["LICENSE", "README.md"])],
