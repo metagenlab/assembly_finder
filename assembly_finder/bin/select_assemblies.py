@@ -81,7 +81,6 @@ tax_cols = [
     "accession",
     "current_scientific_name",
     "tax_id",
-    "rank",
     "lineage_id",
     "superkingdom",
     "phylum",
@@ -91,6 +90,8 @@ tax_cols = [
     "genus",
     "species",
 ]
+if "rank" in df.columns:
+    tax_cols.append("rank")
 df[tax_cols].to_csv(snakemake.output.tax, sep="\t", index=None)
 df[summary_df.columns].to_csv(snakemake.output.gen, sep="\t", index=None)
 df[["accession"]].drop_duplicates().to_csv(
