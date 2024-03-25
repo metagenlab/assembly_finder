@@ -43,7 +43,6 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--input",
                 "--outdir",
-                "--number",
                 "--threads",
                 "--requests",
                 "--taxon",
@@ -55,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
             "name": "NCBI datasets options",
             "options": [
                 "--api-key",
+                "--limit",
                 "--compressed",
                 "--source",
                 "--include",
@@ -95,8 +95,8 @@ CONTEXT_SETTINGS = {
 @click.option("-o", "--outdir", help="output directory", type=click.Path())
 @click.option(
     "-nb",
-    "--number",
-    help="Number of genomes per query",
+    "--limit",
+    help="Limit number of genomes per query",
     type=str,
     default=None,
 )
@@ -104,7 +104,7 @@ CONTEXT_SETTINGS = {
     "-t",
     "--threads",
     type=int,
-    help="number of threads to allow for the workflow",
+    help="Number of threads to use",
     default=2,
     show_default=True,
 )
@@ -173,8 +173,8 @@ CONTEXT_SETTINGS = {
 )
 @click.option(
     "--mag",
-    type=click.Choice(["only", "exclude", "all"], case_sensitive=False),
-    help="exclude or add MAGs to the dwnloaded genomes ",
+    type=click.Choice(["exclude", "all", "only"], case_sensitive=False),
+    help="Exclude, include or limit to metagenome assembled genomes",
     default="all",
     show_default=True,
 )
@@ -221,7 +221,7 @@ def cli(
     reference,
     rank,
     nrank,
-    number,
+    limit,
     snakemake_args,
 ):
     """
@@ -235,7 +235,10 @@ def cli(
     if outdir:
         outdir = os.path.abspath(outdir)
     else:
-        outdir = os.path.abspath(os.path.basename(input).split(".")[0])
+        if os.path.isfile(input):
+            outdir = os.path.abspath(os.path.splitext(input)[0])
+        else:
+            outdir = os.path.abspath(input)
 
     if snakemake_args:
         args = " ".join([arg for arg in snakemake_args])
@@ -249,7 +252,7 @@ def cli(
         f"--config api_key={api_key} "
         f"compressed={compressed} "
         f"input={input} "
-        f"nb={number} "
+        f"nb={limit} "
         f"include={include} "
         f"source={source} "
         f"taxon={taxon} "
