@@ -1,7 +1,4 @@
-# Assembly Finder
-
-[![version](https://img.shields.io/conda/v/bioconda/assembly_finder?label=version)](http://bioconda.github.io/recipes/assembly_finder/README.html)
-[![downloads](https://img.shields.io/conda/dn/bioconda/assembly_finder)](https://anaconda.org/bioconda/assembly_finder)
+# Welcome to Assembly finder
 
 Assembly finder is a Snakemake-powered cli to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).
 
@@ -12,8 +9,6 @@ Assembly finder is a Snakemake-powered cli to download genomes with [NCBI datase
 ```sh
 mamba create -n assembly_finder assembly_finder
 ```
-
 ## Usage
-
 ![`assembly_finder -h`](images/af-help.svg)
 

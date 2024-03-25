@@ -1,4 +1,0 @@
-entry	nb	db	uid	alvl	rcat	excl	annot	rank	nrank
-1290	10	refseq	False	complete	all	metagenome	False	none	none
-1813735	3	refseq	False	complete	all	metagenome	False	none	none
-114185	4	refseq	False	complete	all	metagenome	False	none	none

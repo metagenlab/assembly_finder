@@ -1,387 +1,290 @@
+from pathlib import Path
+import json
 import pandas as pd
 import numpy as np
-import itertools
-import os
-import re
 import glob
-from itertools import chain
-import sys
-from io import StringIO
-from ete3 import NCBITaxa
-from functools import reduce
+import os
 
-# Path params
+# read config
 outdir = config["outdir"]
-ete_db = config["ete_db"]
-asmdir = os.path.join(outdir, "assemblies")
+inp = str(config["input"])
+nbs = str(config["nb"])
+# get ncbi-datasets-cli args
+key = ""
+if config["api_key"] != "None":
+    key += f"--api-key {config['api_key']} "
+args = ""
+if config["annotated"]:
+    args += "--annotated "
+if config["assembly_level"] != "None":
+    args += f"--assembly-level {config['assembly_level']} "
+if config["source"]:
+    args += f"--assembly-source {config['source']} "
+if config["atypical"]:
+    args += "--exclude-atypical "
+if config["mag"]:
+    args += f"--mag {config['mag']} "
+if config["reference"]:
+    args += "--reference "
+gzip = ""
+if config["compressed"]:
+    gzip = "--gzip"
 
-# Assemblies params
-inp = config["input"]
-nb = config["nb"]
-db = config["db"]
-uid = config["uid"]
-alvl = config["alvl"]
-rcat = config["rcat"]
-excl = config["excl"]
-annot = config["annot"]
-rank = config["rank"]
-nrank = config["nrank"]
 
-# File extensions to download
-sfxs = config["sfxs"]
+# functions
+def read_json(file):
+    try:
+        return pd.json_normalize(json.load(open(file)), record_path=["reports"])
+    except KeyError:
+        return pd.read_json(file)
 
-# Entry table colnames
-colnames = [
-    "entry",
-    "nb",
-    "db",
-    "uid",
-    "alvl",
-    "rcat",
-    "excl",
-    "annot",
-    "rank",
-    "nrank",
-]
 
-# Entry table values
-values = [inp, nb, db, uid, alvl, rcat, excl, annot, rank, nrank]
-values = [str(value).split(",") for value in values]
+def convert_query(wildcards):
+    query = wildcards.query
+    if ("_" in query) and (("GCF" not in query) and ("GCA" not in query)):
+        query = f'"{query.replace("_", " ")}"'
+    return query
 
-# Get parameters keys and values
-param_keys = colnames[1:]
-param_values = values[1:]
 
-# Default param value is either the first entry param or the default one
-# example: if nb=['1'], then 1 is the value for all entries
-
-empty_to_val = {}
-for key, val in zip(param_keys, param_values):
-    if len(val) == 1:
-        empty_to_val.update({key: {np.nan: val[0]}})
+def get_limit(wildcards, nbs, dic):
+    if nbs != "None":
+        return dic[wildcards.query]
     else:
-        empty_to_val.update({key: {np.nan: config[key]}})
-
-# Check if input is file
-if os.path.isfile(inp):
-    entry_dt = pd.read_csv(inp, sep="\t").to_dict()
-    # replace empty values with default ones or first entry for the param
-    entry_dt = empty_to_val | entry_dt
-    entry_df = pd.DataFrame.from_dict(entry_dt).dropna(subset="entry")
+        return ""
 
 
-# If not create the dataframe
+# get taxa queries and genome numbers
+
+if config["taxon"]:
+    try:
+        df = pd.read_csv(os.path.abspath(inp), sep="\t")
+        queries = list(df["taxon"])
+        if "nb" in df.columns:
+            nbs = list(df["nb"])
+    except (FileNotFoundError, IsADirectoryError):
+        queries = inp.split(",")
+
+    queries = [str(query) for query in queries]
+    if nbs != "None":
+        if type(nbs) is not list:
+            nbs = nbs.split(",")
+        nbs = [f"--limit {nb}" for nb in nbs]
+        if len(nbs) == 1:
+            nbs = nbs * len(queries)
+        query2nb = dict(zip(queries, nbs))
+
+    rule taxon_genome_summary:
+        output:
+            temp(os.path.join(outdir, "json", "{query}.json")),
+        params:
+            query=lambda wildcards: convert_query(wildcards),
+            limit=lambda wildcards: get_limit(wildcards, nbs, query2nb),
+            args=args,
+            key=key,
+        resources:
+            ncbi_requests=1,
+        retries: 2
+        shell:
+            """
+            datasets \\
+              summary \\
+              genome \\
+              taxon \\
+              {params.query} \\
+              {params.limit} \\
+              {params.args} \\
+              {params.key} \\
+              > {output}
+            """
+
+    rule collect_taxa_summaries:
+        input:
+            expand(os.path.join(outdir, "json", "{query}.json"), query=queries),
+        output:
+            temp(os.path.join(outdir, "genome_summaries.json")),
+        run:
+            pd.concat([read_json(file) for file in input]).reset_index(
+                drop=True
+            ).to_json(output[0])
+
 else:
-    val_dic = dict(zip(colnames, values))
-    entry_df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in val_dic.items()]))
+    if os.path.isfile(inp):
+        queries = inp
+    else:
 
-# Replace empty values with default params
-# Drop empty entries
-entry_df = entry_df.replace(
-    empty_to_val,
-).dropna()
-entry_df["nb"] = [int(nb) if isinstance(nb, int) else nb for nb in entry_df["nb"]]
-entry_df["entry"] = [
-    int(entry) if isinstance(entry, float) else entry for entry in entry_df["entry"]
-]
-# entry_df.to_csv("entry.tsv", sep="\t")
-# Set entry as index
-entry_df = entry_df.astype({"entry": str}).set_index("entry")
+        rule get_accessions_file:
+            output:
+                temp(os.path.join(outdir, "queries.txt")),
+            params:
+                queries=inp.split(","),
+            run:
+                pd.DataFrame.from_dict({"queries": params.queries}).to_csv(
+                    output[0], sep="\t", index=None, header=False
+                )
 
-# Get entry list
-entries = list(entry_df.index)
+        queries = os.path.join(outdir, "queries.txt")
+
+    rule accessions_genome_summary:
+        input:
+            queries,
+        output:
+            temp(os.path.join(outdir, "genome_summaries.json")),
+        params:
+            args=args,
+            key=key,
+        resources:
+            ncbi_requests=1,
+        shell:
+            """
+            datasets \\
+              summary \\
+              genome \\
+              accession \\
+              --inputfile {input} \\
+              {params.args} \\
+              {params.key} \\
+              > {output}
+            """
 
 
-rule download_taxdump:
-    output:
-        temp(os.path.join(ete_db, "taxdump.tar.gz")),
-    log:
-        os.path.join(outdir, "logs", "ete.log"),
-    retries: 2
-    shell:
-        """
-        curl -o {output} https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz &> {log} 
-        """
-
-
-rule generate_ete3_NCBItaxa:
+rule get_taxids:
     input:
-        os.path.join(ete_db, "taxdump.tar.gz"),
+        os.path.join(outdir, "genome_summaries.json"),
     output:
-        os.path.join(ete_db, "taxa.sqlite"),
-    log:
-        os.path.join(outdir, "logs", "ete.log"),
-    run:
-        with open(log[0], "w") as f:
-            sys.stderr = sys.stdout = f
-            NCBITaxa(dbfile=output[0], taxdump_file=input[0])
-
-
-rule get_assembly_tables:
-    input:
-        os.path.join(ete_db, "taxa.sqlite"),
-    output:
-        all=os.path.join(outdir, "tables", "{entry}-all.tsv"),
-        filtered=os.path.join(outdir, "tables", "{entry}-filtered.tsv"),
+        temp(os.path.join(outdir, "taxids.txt")),
     params:
-        ncbi_key=config["ncbi_key"],
-        ncbi_email=config["ncbi_email"],
-        alvl=lambda wildcards: entry_df.loc[str(wildcards.entry)]["alvl"],
-        db=lambda wildcards: entry_df.loc[str(wildcards.entry)]["db"],
-        uid=lambda wildcards: entry_df.loc[str(wildcards.entry)]["uid"],
-        rcat=lambda wildcards: entry_df.loc[str(wildcards.entry)]["rcat"],
-        excl=lambda wildcards: entry_df.loc[str(wildcards.entry)]["excl"],
-        annot=lambda wildcards: entry_df.loc[str(wildcards.entry)]["annot"],
-        rank=lambda wildcards: entry_df.loc[str(wildcards.entry)]["rank"],
-        n_by_rank=lambda wildcards: entry_df.loc[str(wildcards.entry)]["nrank"],
-        nb=lambda wildcards: entry_df.loc[str(wildcards.entry)]["nb"],
+        config["taxon"],
+    run:
+        read_json(input[0])["organism.tax_id"].drop_duplicates().to_csv(
+            output[0], sep="\t", index=None, header=False
+        )
+
+
+rule get_lineage:
+    input:
+        os.path.join(outdir, "taxids.txt"),
+    output:
+        temp(os.path.join(outdir, "lineage.json")),
+    params:
+        key=key,
     resources:
         ncbi_requests=1,
-    log:
-        os.path.join(outdir, "logs", "{entry}.log"),
+    shell:
+        """
+        datasets \\
+          summary \\
+          taxonomy \\
+          taxon \\
+          --inputfile {input} \\
+          {params.key} \\
+          > {output}
+        """
+
+
+rule filter_genome_summaries:
+    input:
+        summary=os.path.join(outdir, "genome_summaries.json"),
+        lineage=os.path.join(outdir, "lineage.json"),
+    output:
+        gen=temp(os.path.join(outdir, "assembly_summary.txt")),
+        tax=os.path.join(outdir, "taxonomy.tsv"),
+        acc=temp(os.path.join(outdir, "accessions.txt")),
+    params:
+        rank=config["rank"],
+        nrank=config["nrank"],
     script:
-        "assembly_table.py"
+        "select_assemblies.py"
 
 
-rule combine_assembly_tables:
+rule archive_download:
     input:
-        expand(os.path.join(outdir, "tables", "{entry}-filtered.tsv"), entry=entries),
+        os.path.join(outdir, "accessions.txt"),
     output:
-        temp(os.path.join(outdir, "assemblies", "assembly_summary.tsv")),
-    run:
-        pd.concat([pd.read_csv(tb, sep="\t") for tb in list(input)]).to_csv(
-            output[0], sep="\t", index=None
-        )
-
-
-rule get_ftp_links_list:
-    input:
-        os.path.join(outdir, "assemblies", "assembly_summary.tsv"),
-    output:
-        temp(os.path.join(outdir, "assemblies", "ftp-links.txt")),
-    run:
-        ftplinks = pd.read_csv(input[0], sep="\t")["ftp_path"]
-        ftplinks = ftplinks.str.replace("ftp://ftp.ncbi.nlm.nih.gov", "")
-        ftplinks = ftplinks + "/" + ftplinks.str.split("/", expand=True)[7]
-        links = [link + "_" + sfx for sfx in sfxs.split(",") for link in ftplinks]
-        with open(output[0], "w") as ftp_links:
-            ftp_links.write("\n".join(str(link) for link in links))
-
-
-checkpoint download_assemblies:
-    input:
-        os.path.join(outdir, "assemblies", "ftp-links.txt"),
-    output:
-        temp(os.path.join(outdir, "assemblies", "checksums.txt")),
-    log:
-        os.path.join(outdir, "logs", "download.log"),
+        os.path.join(outdir, "archive.zip"),
     params:
-        asmdir=asmdir,
-    retries: 2
+        key=key,
+        include=config["include"],
     shell:
         """
-        ascp -T -k 1 -i ${{CONDA_PREFIX}}/etc/aspera/aspera_bypass_dsa.pem --mode=recv --user=anonftp \
-        --host=ftp.ncbi.nlm.nih.gov --file-list={input} --file-checksum=sha256 --file-manifest=text \
-        --file-manifest-path={params.asmdir} {params.asmdir} &> {log} 
-        mv {params.asmdir}/*.manifest.txt {output}
+        datasets \\
+          download \\
+          genome \\
+          accession \\
+          --inputfile {input} \\
+          --include {params.include} \\
+          {params.key} --dehydrated \\
+          --filename {output} 
         """
 
 
-def downloads(wildcards, extensions):
-    extensions = extensions.split(",")
-    checkpoint_directory = os.path.dirname(
-        checkpoints.download_assemblies.get(**wildcards).output[0]
-    )
-    files = [glob.glob(f"{checkpoint_directory}/*_{e}") for e in extensions]
-    return list(chain.from_iterable(files))
-
-
-def get_reports(file):
-    keys = ("# Assembly name", "# Assembly method", "# Sequencing technology")
-    always_print = False
-    seq_lines = ""
-    asm_dic = {
-        "Assembly name": np.nan,
-        "Assembly method": np.nan,
-        "Sequencing technology": np.nan,
-    }
-    for line in open(file):
-        if line.startswith(keys):
-            d = {
-                re.split(r":\s{1,}", line)[0]
-                .replace("# ", ""): re.split(r":\s{1,}", line)[1]
-                .replace("\n", "")
-            }
-            asm_dic.update(d)
-
-        elif always_print or line.startswith("# Sequence-Name"):
-            seq_lines += line.replace("# ", "")
-            always_print = True
-    asm_df = pd.DataFrame.from_dict([asm_dic])
-    seq_df = pd.read_csv(StringIO(seq_lines), sep="\t")
-    seq_df.columns = seq_df.columns.str.lower().str.replace("-", "_")
-    seq_df.insert(
-        loc=0, value=[asm_dic["Assembly name"]] * len(seq_df), column="asm_name"
-    )
-    return (asm_df, seq_df)
-
-
-rule get_assembly_reports:
+rule unzip_archive:
     input:
-        lambda wildcards: downloads(wildcards, "assembly_report.txt"),
+        os.path.join(outdir, "archive.zip"),
     output:
-        temp(os.path.join(outdir, "assemblies", "assembly_reports.tsv")),
-        temp(os.path.join(outdir, "assemblies", "sequence_reports.tsv")),
-    run:
-        all_reports = [get_reports(report) for report in input]
-
-        asm_rep = pd.concat([report[0] for report in all_reports]).reset_index(
-            drop=True
-        )
-        asm_rep.columns = ["asm_name", "asm_method", "seq_tech"]
-        seq_rep = pd.concat([report[1] for report in all_reports])
-        asm_rep.to_csv(output[0], sep="\t", index=None)
-        seq_rep.to_csv(output[1], sep="\t", index=None)
-
-
-rule get_summaries:
-    input:
-        summary=os.path.join(outdir, "assemblies", "assembly_summary.tsv"),
-        asm_report=os.path.join(outdir, "assemblies", "assembly_reports.tsv"),
-        seq_report=os.path.join(outdir, "assemblies", "sequence_reports.tsv"),
-    output:
-        os.path.join(outdir, "assembly_summary.tsv"),
-        os.path.join(outdir, "sequence_summary.tsv"),
-        os.path.join(outdir, "taxonomy_summary.tsv"),
-    params:
-        asmdir=asmdir,
-    run:
-        df = pd.read_csv(input.summary, sep="\t")
-        asm_report = pd.read_csv(input.asm_report, sep="\t")
-        seq_report = pd.read_csv(input.seq_report, sep="\t")
-        # replace ftp paths with absolute paths
-        try:
-            paths = []
-            for ftp in df["ftp_path"]:
-                acc = ftp.split("/")[-1]
-                path = os.path.abspath(glob.glob(f"{params.asmdir}/{acc}*.fna.gz")[0])
-                paths.append(path)
-            df["path"] = paths
-
-        except IndexError:
-            df["path"] = df.ftp_path
-            df.rename(columns={"ftp_path": "path"}, inplace=True)
-        dfs = [df, asm_report, seq_report]
-        merge_df = reduce(lambda left, right: pd.merge(left, right, on="asm_name"), dfs)
-        asm_df = merge_df[
-            [
-                "entry",
-                "database",
-                "db_uid",
-                "asm_name",
-                "organism",
-                "taxid",
-                "asm_release_date",
-                "asm_status",
-                "refseq_category",
-                "contig_count",
-                "contig_n50",
-                "contig_l50",
-                "genome_size",
-                "coverage",
-                "asm_method",
-                "seq_tech",
-                "path",
-            ]
-        ].drop_duplicates()
-        tax_df = merge_df[
-            [
-                "asm_name",
-                "organism",
-                "sub_type",
-                "sub_value",
-                "taxid",
-                "superkingdom",
-                "phylum",
-                "class",
-                "order",
-                "family",
-                "genus",
-                "species",
-            ]
-        ].drop_duplicates()
-        seq_df = merge_df[
-            [
-                "asm_name",
-                "organism",
-                "taxid",
-                "genbank_accn",
-                "refseq_accn",
-                "assigned_molecule_location/type",
-                "sequence_length",
-            ]
-        ]
-        asm_df.to_csv(output[0], sep="\t", index=None)
-        seq_df.to_csv(output[1], sep="\t", index=None)
-        tax_df.to_csv(output[2], sep="\t", index=None)
-
-
-rule clean_reports:
-    input:
-        os.path.join(outdir, "assembly_summary.tsv"),
-        os.path.join(outdir, "sequence_summary.tsv"),
-        os.path.join(outdir, "taxonomy_summary.tsv"),
-        reports=lambda wildcards: downloads(wildcards, "assembly_report.txt"),
-    output:
-        temp(os.path.join(outdir, "clean.txt")),
-    params:
-        asmdir=asmdir,
+        temp(directory(os.path.join(outdir, "archive"))),
     shell:
         """
-        rm {input.reports}
+        unzip {input} -d {output}
+        """
+
+
+rule rehydrate_archive:
+    input:
+        os.path.join(outdir, "archive"),
+    output:
+        temp(os.path.join(outdir, "rehydrate.flag")),
+    params:
+        key=key,
+        gzip=gzip,
+    shell:
+        """
+        datasets \\
+          rehydrate \\
+          --directory {input} \\
+          {params.key} {params.gzip}
         touch {output}
         """
 
 
-rule format_checksum:
+rule copy_files:
     input:
-        os.path.join(outdir, "assemblies", "checksums.txt"),
+        dir=os.path.join(outdir, "archive"),
+        flag=os.path.join(outdir, "rehydrate.flag"),
     output:
-        temp(os.path.join(outdir, "assemblies", "aspera-checks.txt")),
-    run:
-        d = {
-            line.replace('"', "")
-            .replace("\n", "")
-            .split(", ")[1]
-            .split(":")[1]: os.path.relpath(
-                line.replace('"', "").replace("\n", "").split(", ")[0].split(" ")[0]
-            )
-            for line in open(input[0])
-            if line.startswith('"')
-        }
-        pd.DataFrame.from_dict([d]).transpose().reset_index().to_csv(
-            output[0], sep="\t", index=None, header=None
-        )
-
-
-def get_ext(wildcards, asm_dir, exts):
-    asm_dir = os.path.relpath(asm_dir)
-    if len(exts.split(",")) > 1:
-        return os.path.join(asm_dir, "*" + "{" + exts + "}")
-    else:
-        return os.path.join(asm_dir, "*" + exts)
-
-
-rule verify_checksums:
-    input:
-        os.path.join(outdir, "assemblies", "aspera-checks.txt"),
-        lambda wildcards: downloads(wildcards, sfxs),
-    output:
-        temp(os.path.join(outdir, "assemblies", "sha256.txt")),
+        directory(os.path.join(outdir, "download")),
     params:
-        lambda wildcards: get_ext(wildcards, asmdir, sfxs),
+        dir=os.path.join(outdir, "archive", "ncbi_dataset", "data", "*"),
     shell:
         """
-        sha256sum {params} | sed 's/ \+ /\t/g' > {output} 
-        diff <(sort {output}) <(sort {input[0]})
+        rsync -r {params.dir} {output}
         """
+
+
+rule cat_sequence_reports:
+    input:
+        os.path.join(outdir, "download"),
+    output:
+        os.path.join(outdir, "sequence_report.tsv"),
+    params:
+        jsonl=os.path.join(outdir, "download", "*", "sequence_report.jsonl"),
+    shell:
+        """
+        cat {params.jsonl} | dataformat tsv genome-seq > {output}
+        """
+
+
+rule add_genome_paths:
+    input:
+        dir=os.path.join(outdir, "download"),
+        summary=os.path.join(outdir, "assembly_summary.txt"),
+    output:
+        os.path.join(outdir, "assembly_summary.tsv"),
+    run:
+        df = pd.read_csv(input.summary, sep="\t")
+        df["path"] = [
+            os.path.abspath(
+                glob.glob(os.path.join(f"{input.dir}", "*", f"{acc}*.fna*"))[0]
+            )
+            for acc in df["accession"]
+        ]
+        df.to_csv(output[0], sep="\t", index=None)
