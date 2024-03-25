@@ -7,7 +7,8 @@ import os
 
 # read config
 outdir = config["outdir"]
-
+inp = str(config["input"])
+nbs = str(config["nb"])
 # get ncbi-datasets-cli args
 key = ""
 if config["api_key"] != "None":
@@ -55,25 +56,23 @@ def get_limit(wildcards, nbs, dic):
 # get taxa queries and genome numbers
 if config["taxon"]:
     try:
-        df = pd.read_csv(os.path.abspath(config["input"]), sep="\t", header=None)
-        queries = list(df[0])
-        try:
-            nbs = list(df[1])
-        except KeyError:
-            nbs = config["nb"]
-    except FileNotFoundError:
-        queries = config["input"].split(",")
+        df = pd.read_csv(os.path.abspath(inp), sep="\t")
+        queries = list(df["taxon"])
+        if "nb" in df.columns:
+            nbs = list(df["nb"])
+    except (FileNotFoundError,IsADirectoryError):
+        queries = inp.split(",")
 
     queries = [str(query) for query in queries]
     if nbs != "None":
         if type(nbs) is not list:
-            nbs = str(nbs).split(",")
+            nbs = nbs.split(",")
         nbs = [f"--limit {nb}" for nb in nbs]
         if len(nbs) == 1:
             nbs = nbs * len(queries)
         query2nb = dict(zip(queries, nbs))
 else:
-    queries = config["input"]
+    queries = inp
 
 
 if config["taxon"]:
