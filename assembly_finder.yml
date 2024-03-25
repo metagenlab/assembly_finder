@@ -5,7 +5,8 @@ channels:
 
 dependencies:
   - python >=3.9
-  - snakemake-minimal >= 7.32.4
-  - click >=7
+  - snakemake-minimal >=7.32.4,<8
+  - pulp <2.8
+  - rich-click >=1.7.4
   - pandas >=2.0.3
   - ncbi-datasets-cli >= 16.8.1
