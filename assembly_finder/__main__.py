@@ -36,6 +36,8 @@ def get_snakefile():
 Main
 """
 
+click.rich_click.SHOW_METAVARS_COLUMN = False
+click.rich_click.APPEND_METAVARS_HELP = True
 click.rich_click.OPTION_GROUPS = {
     "assembly_finder": [
         {
