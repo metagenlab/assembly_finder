@@ -283,7 +283,9 @@ rule add_genome_paths:
         df = pd.read_csv(input.summary, sep="\t")
         df["path"] = [
             os.path.abspath(
-                glob.glob(os.path.join(f"{input.dir}", "*", f"{acc}*.fna*"))[0]
+                glob.glob(
+                    os.path.join(f"{input.dir}", "*", f"{acc}*.fna*").replace(" ", "")
+                )[0]
             )
             for acc in df["accession"]
         ]
