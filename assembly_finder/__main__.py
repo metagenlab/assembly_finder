@@ -99,7 +99,7 @@ CONTEXT_SETTINGS = {
     "-nb",
     "--limit",
     help="Limit number of genomes per query",
-    type=str,
+    type=int,
     default=None,
 )
 @click.option(
