@@ -103,9 +103,14 @@ if config["taxon"]:
         output:
             temp(os.path.join(outdir, "genome_summaries.json")),
         run:
-            pd.concat([read_json(file) for file in input]).reset_index(
-                drop=True
-            ).to_json(output[0])
+            dfs = []
+            for file in input:
+                query = str(os.path.basename(file).split(".json")[0])
+                df = read_json(file)
+                df.insert(0, "taxon", [query] * len(df))
+                dfs.append(df)
+            pd.concat(dfs).reset_index(drop=True).to_json(output[0])
+
 
 else:
     if os.path.isfile(inp):
