@@ -19,9 +19,13 @@ Functions
 
 
 def get_version():
-    thisdir = os.path.abspath(os.path.dirname(__file__))
-    init = os.path.join(thisdir, "__init__.py")
-    return open(init).readline().split(" = ")[1].replace('"', "")
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "assembly_finder.VERSION",
+        )
+    ) as f:
+        return f.readline().strip()
 
 
 def get_snakefile():

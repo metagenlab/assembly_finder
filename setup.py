@@ -1,9 +1,21 @@
 from setuptools import setup, find_packages
-from assembly_finder import __version__
+import os
+
+
+def get_version():
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "assembly_finder",
+            "assembly_finder.VERSION",
+        )
+    ) as f:
+        return f.readline().strip()
+
 
 setup(
     name="assembly_finder",
-    version=__version__,
+    version=get_version(),
     description="Snakemake cli for downloading genomes with NCBI datasets",
     url="https://github.com/metagenlab/assembly_finder",
     python_requires=">=3.9",
