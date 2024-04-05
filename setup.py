@@ -22,7 +22,7 @@ setup(
     author="Farid Chaabane, Trestan Pillonel",
     author_email="farid.chaabane@chuv.ch, trestan.pillonel@gmail.com",
     packages=find_packages(),
-    package_data={"assembly_finder": ["Snakefile", "bin/*"]},
+    package_data={"assembly_finder": ["Snakefile", "bin/*", "assembly_finder.VERSION"]},
     py_modules=["assembly_finder"],
     install_requires=[
         "rich-click>=1.7.4",
