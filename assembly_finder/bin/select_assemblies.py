@@ -42,7 +42,8 @@ ranks_id = [
 lineage_df["lineage_id"] = lineage_df[ranks_id].apply(
     lambda x: ",".join(x.dropna().astype(str)), axis=1
 )
-
+lineage_df["lineage_id"] = lineage_df["lineage_id"].str.replace(".0", "")
+lineage_df["rank"] = lineage_df["rank"].str.lower()
 # Merge lineage and genome summary
 df = summary_df.merge(lineage_df, on="tax_id")
 df = df.replace(np.nan, "na")
