@@ -1,6 +1,11 @@
 assembly_finder.egg-info/
 assembly_finder/__pycache__
 build/
+
+.coverage
+tests/__pycache__
+.pytest_cache
+
 .snakemake
 assembly_finder/workflow/conda
 assembly_finder/workflow/taxonkit
