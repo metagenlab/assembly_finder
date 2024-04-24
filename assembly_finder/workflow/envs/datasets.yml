@@ -1,0 +1,6 @@
+name: datasets
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - ncbi-datasets-cli >=16.12.1

@@ -75,7 +75,7 @@ df.sort_values(
     inplace=True,
 )
 
-if rank != "None" and nrank != "None":
+if rank and nrank:
     df = df.groupby(rank).head(nrank)
 
 tax_cols = [

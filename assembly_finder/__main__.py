@@ -1,44 +1,95 @@
-#  Parts of this wrapper are inspired by atlas, an easy-to-use metagenomic pipeline based on snakemake.
-#  Go check it out on https://github.com/metagenome-atlas/atlas
-import logging
+"""
+Entrypoint for Assembly finder
+
+Check out the wiki for a detailed look at customising this file:
+https://github.com/beardymcjohnface/Snaketool/wiki/Customising-your-Snaketool
+"""
+
 import os
-import sys
 import rich_click as click
-import subprocess
+
+from snaketool_utils.cli_utils import run_snakemake, echo_click
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M",
-    format="[%(asctime)s %(levelname)s] %(message)s",
-)
-
-"""
-Functions
-"""
+def snake_base(rel_path):
+    """Get the filepath to a Snaketool system file (relative to __main__.py)"""
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), rel_path)
 
 
 def get_version():
-    with open(
-        os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "assembly_finder.VERSION",
-        )
-    ) as f:
-        return f.readline().strip()
+    """Read and print the version from the version file"""
+    with open(snake_base("assembly_finder.VERSION"), "r") as f:
+        version = f.readline()
+    return version
 
 
-def get_snakefile():
-    thisdir = os.path.abspath(os.path.dirname(__file__))
-    sf = os.path.join(thisdir, "Snakefile")
-    if not os.path.exists(sf):
-        sys.exit(f"Unable to locate the Snakemake workflow file at {sf}")
-    return sf
+def print_citation():
+    """Read and print the Citation information from the citation file"""
+    with open(snake_base("assembly_finder.CITATION"), "r") as f:
+        for line in f:
+            echo_click(line)
 
 
-"""
-Main
-"""
+def common_options(func):
+    """Common command line args
+    Define common command line args here, and include them with the @common_options decorator below.
+    """
+    options = [
+        click.option(
+            "--configfile",
+            default="config.yaml",
+            show_default=False,
+            help="Custom config file [default: (outputDir)/config.yaml]",
+        ),
+        click.option(
+            "--threads", help="Number of threads to use", default=1, show_default=True
+        ),
+        click.option(
+            "--profile",
+            default=None,
+            help="Snakemake profile to use",
+            show_default=False,
+        ),
+        click.option(
+            "--use-conda/--no-use-conda",
+            default=True,
+            help="Use conda for Snakemake rules",
+            show_default=True,
+        ),
+        click.option(
+            "--conda-prefix",
+            default=snake_base(os.path.join("workflow", "conda")),
+            help="Custom conda env directory",
+            type=click.Path(),
+            show_default=False,
+        ),
+        click.option(
+            "--snake-default",
+            multiple=True,
+            default=[
+                "--printshellcmds",
+                "--nolock",
+                "--show-failed-logs",
+            ],
+            help="Customise Snakemake runtime args",
+            show_default=True,
+        ),
+        click.option(
+            "--log",
+            default="assembly_finder.log",
+            hidden=True,
+        ),
+        click.option(
+            "--system-config",
+            default=snake_base(os.path.join("config", "config.yaml")),
+            hidden=True,
+        ),
+        click.argument("snake_args", nargs=-1),
+    ]
+    for option in reversed(options):
+        func = option(func)
+    return func
+
 
 click.rich_click.SHOW_METAVARS_COLUMN = False
 click.rich_click.APPEND_METAVARS_HELP = True
@@ -48,7 +99,8 @@ click.rich_click.OPTION_GROUPS = {
             "name": "Options",
             "options": [
                 "--input",
-                "--outdir",
+                "--output",
+                "--taxonkit",
                 "--threads",
                 "--requests",
                 "--taxon",
@@ -72,6 +124,16 @@ click.rich_click.OPTION_GROUPS = {
             ],
         },
         {
+            "name": "Snakemake options",
+            "options": [
+                "--configfile",
+                "--profile",
+                "--use-conda",
+                "--conda-prefix",
+                "--snake-default",
+            ],
+        },
+        {
             "name": "Help",
             "options": [
                 "--help",
@@ -90,7 +152,8 @@ CONTEXT_SETTINGS = {
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.version_option(version, "-v", "--version")
+@common_options
+@click.version_option(get_version(), "-v", "--version", is_flag=True)
 @click.option(
     "-i",
     "--input",
@@ -98,28 +161,27 @@ CONTEXT_SETTINGS = {
     help="Comma seperated queries or input file",
     required=True,
 )
-@click.option("-o", "--outdir", help="output directory", type=click.Path())
+@click.option("-o", "--output", help="Output directory", type=click.Path())
+@click.option(
+    "--taxonkit",
+    default=snake_base(os.path.join("workflow", "taxonkit")),
+    help="Define path to taxonkit data-dir",
+    type=click.Path(),
+    show_default=True,
+)
 @click.option(
     "-nb",
     "--limit",
     help="Limit number of genomes per query",
-    type=int,
+    type=str,
     default=None,
-)
-@click.option(
-    "-t",
-    "--threads",
-    type=int,
-    help="Number of threads to use",
-    default=2,
-    show_default=True,
 )
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
     "--requests",
     type=int,
     help="Number of NCBI datasets commands to run in parallel",
-    default=3,
+    default=1,
     show_default=True,
 )
 @click.option(
@@ -209,27 +271,7 @@ CONTEXT_SETTINGS = {
     default=None,
     show_default=True,
 )
-@click.argument("snakemake_args", nargs=-1, type=click.UNPROCESSED)
-def cli(
-    input,
-    outdir,
-    include,
-    threads,
-    requests,
-    api_key,
-    compressed,
-    source,
-    taxon,
-    assembly_level,
-    annotated,
-    atypical,
-    mag,
-    reference,
-    rank,
-    nrank,
-    limit,
-    snakemake_args,
-):
+def main(**kwargs):
     """
     \b
      ░█▀█░█▀▀░█▀▀░█▀▀░█▄█░█▀▄░█░░░█░█░░░█▀▀░▀█▀░█▀█░█▀▄░█▀▀░█▀▄
@@ -238,49 +280,17 @@ def cli(
     \b
     Snakemake-powered cli to download genomes with NCBI datasets
     """
-    if outdir:
-        outdir = os.path.abspath(outdir)
-    else:
-        if os.path.isfile(input):
-            outdir = os.path.abspath(os.path.splitext(input)[0])
-        else:
-            outdir = os.path.abspath(input)
+    if not kwargs["output"]:
+        kwargs["output"] = os.path.splitext(kwargs["input"])[0]
+    merge_config = {"args": kwargs}
 
-    if snakemake_args:
-        args = " ".join([arg for arg in snakemake_args])
-    else:
-        args = ""
-
-    cmd = (
-        f"snakemake --snakefile {get_snakefile()} "
-        f"--cores {threads} "
-        f"all_download "
-        f"--config api_key={api_key} "
-        f"compressed={compressed} "
-        f"input={input} "
-        f"nb={limit} "
-        f"include={include} "
-        f"source={source} "
-        f"taxon={taxon} "
-        f"assembly_level={assembly_level} "
-        f"atypical={atypical} "
-        f"mag={mag} "
-        f"reference={reference} "
-        f"annotated={annotated} "
-        f"rank={rank} "
-        f"nrank={nrank} "
-        f"outdir={outdir} "
-        f"--resources ncbi_requests={requests} "
-        f"{args}"
+    run_snakemake(
+        # Full path to Snakefile
+        snakefile_path=snake_base(os.path.join("workflow", "Snakefile")),
+        merge_config=merge_config,
+        **kwargs,
     )
-    logging.info(f"Executing: {cmd}")
-    try:
-        subprocess.check_call(cmd, shell=True)
-    except subprocess.CalledProcessError as e:
-        # removes the traceback
-        logging.critical(e)
-        exit(1)
 
 
 if __name__ == "__main__":
-    cli()
+    main()

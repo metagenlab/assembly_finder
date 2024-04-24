@@ -1,0 +1,7 @@
+name: ncbi-datasets-cli
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - taxonkit >=0.16.0

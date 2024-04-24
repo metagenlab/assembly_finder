@@ -1,0 +1,9 @@
+name: utils
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - rsync >=3.3.0
+  - curl >=8.7.1
+  - unzip >=6.0
+  - tar >=1.34

@@ -15,5 +15,4 @@ mamba create -n assembly_finder assembly_finder
 
 ## Usage
 
-![`assembly_finder -h`](images/af-help.svg)
-
+![`assembly_finder -h`](docs/images/af-help.svg)
