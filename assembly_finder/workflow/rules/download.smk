@@ -133,33 +133,33 @@ rule get_taxids:
 
 rule get_lineage:
     input:
-        os.path.join(dir.out.base, "taxids.txt"),
+        taxids=os.path.join(dir.out.base, "taxids.txt"),
+        names=os.path.join(TAXONKIT, "names.dmp"),
     output:
-        temp(os.path.join(dir.out.base, "lineage.json")),
+        temp(os.path.join(dir.out.base, "lineage.tsv")),
     log:
         os.path.join(dir.out.logs, "lineage.log"),
     params:
-        key=KEY,
+        headers=config.headers.lineage,
+        dir=TAXONKIT,
     resources:
         ncbi_requests=1,
     conda:
-        os.path.join(dir.env, "datasets.yml")
+        os.path.join(dir.env, "taxonkit.yml")
     shell:
         """
-        datasets \\
-        summary \\
-        taxonomy \\
-        taxon \\
-        --inputfile {input} \\
-        {params.key} \\
-        > {output}
+        taxonkit --data-dir {params.dir} lineage -r -n {input.taxids} | \\
+        taxonkit --data-dir {params.dir} reformat | \\
+        csvtk -H -t cut -f 1,4,3,5 | \\
+        csvtk -H -t sep -f 4 -s ';' -R | \\
+        csvtk add-header -t -n {params.headers} > {output} 2> {log}
         """
 
 
 rule filter_genome_summaries:
     input:
         summary=os.path.join(dir.out.base, "genome_summaries.json"),
-        lineage=os.path.join(dir.out.base, "lineage.json"),
+        lineage=os.path.join(dir.out.base, "lineage.tsv"),
     output:
         gen=temp(os.path.join(dir.out.base, "assembly_summary.txt")),
         tax=os.path.join(dir.out.base, "taxonomy.tsv"),
@@ -207,7 +207,7 @@ rule unzip_archive:
         os.path.join(dir.env, "utils.yml")
     shell:
         """
-        unzip {input} -d {output} 2> {log}
+        unzip {input} -d {output} &> {log}
         """
 
 
@@ -281,3 +281,21 @@ rule add_genome_paths:
             for acc in df["accession"]
         ]
         df.to_csv(output[0], sep="\t", index=None)
+
+
+rule cleanup_reports:
+    input:
+        os.path.join(dir.out.base, "assembly_summary.tsv"),
+        os.path.join(dir.out.base, "sequence_report.tsv"),
+        os.path.join(dir.out.base, "taxonomy.tsv"),
+    output:
+        temp(os.path.join(dir.out.base, "cleanup.flag")),
+    params:
+        dir.out.base,
+    conda:
+        os.path.join(dir.env, "utils.yml")
+    shell:
+        """
+        find {params[0]} -name "*.json*" -print0 | xargs -0 rm
+        touch {output}
+        """
