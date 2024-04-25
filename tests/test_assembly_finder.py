@@ -12,6 +12,7 @@ def tmp_dir(tmpdir_factory):
 
 test_data_path = Path("assembly_finder/test_data")
 outdir = Path("test_out")
+threads = 2
 
 
 def remove_directory(dir_path):
@@ -43,13 +44,15 @@ def test_cli():
 
 def test_taxons():
     """download genomes from taxons"""
-    exec_command(f"assembly_finder -i {test_data_path}/taxons.tsv --output {outdir}")
+    exec_command(
+        f"assembly_finder --threads {threads} -i {test_data_path}/taxons.tsv --output {outdir}"
+    )
     remove_directory(outdir)
 
 
 def test_accessions():
     """download genomes from accessions"""
     exec_command(
-        f"assembly_finder -i {test_data_path}/accessions.txt --accession --output {outdir}"
+        f"assembly_finder --threads {threads} -i {test_data_path}/accessions.txt --accession --output {outdir}"
     )
     remove_directory(outdir)
