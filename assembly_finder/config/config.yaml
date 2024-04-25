@@ -1,0 +1,22 @@
+args:
+  input:
+  output:
+  taxonkit:
+  limit:
+  requests:
+  compressed:
+  include:
+  source:
+  taxon:
+  reference:
+  assembly_level:
+  annotated:
+  atypical:
+  mag:
+  rank:
+  nrank:
+
+links:
+  taxdump: https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+headers:
+  lineage: "tax_id,rank,name,kingdom,phylum,class,order,family,genus,species"

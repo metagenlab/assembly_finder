@@ -12,38 +12,19 @@ def read_json(file):
 
 # Read tables
 summary_df = read_json(snakemake.input.summary)
-lineage_df = read_json(snakemake.input.lineage)
+lineage_df = pd.read_csv(snakemake.input.lineage, sep="\t")
 # Params
 rank = snakemake.params.rank
 nrank = snakemake.params.nrank
 
-# format column names
-lineage_df.columns = (
-    lineage_df.columns.str.replace("taxonomy.", "")
-    .str.replace("classification.", "")
-    .str.replace(".name", "")
-)
+# format summary column names
 summary_df.columns = (
     summary_df.columns.str.replace("assembly_info.", "")
     .str.replace("assembly_stats.", "")
     .str.replace("organism.", "")
 )
-# get ordered lineage taxids
-ranks_id = [
-    "superkingdom.id",
-    "phylum.id",
-    "class.id",
-    "order.id",
-    "family.id",
-    "genus.id",
-    "species.id",
-]
 
-lineage_df["lineage_id"] = lineage_df[ranks_id].apply(
-    lambda x: ",".join(x.dropna().astype(str)), axis=1
-)
-lineage_df["lineage_id"] = lineage_df["lineage_id"].str.replace(".0", "")
-lineage_df["rank"] = lineage_df["rank"].str.lower()
+
 # Merge lineage and genome summary
 df = summary_df.merge(lineage_df, on="tax_id")
 df = df.replace(np.nan, "na")
@@ -75,15 +56,15 @@ df.sort_values(
     inplace=True,
 )
 
-if rank != "None" and nrank != "None":
+if rank and nrank:
     df = df.groupby(rank).head(nrank)
 
 tax_cols = [
     "accession",
-    "current_scientific_name",
     "tax_id",
-    "lineage_id",
-    "superkingdom",
+    "name",
+    "rank",
+    "kingdom",
     "phylum",
     "class",
     "order",
@@ -91,8 +72,7 @@ tax_cols = [
     "genus",
     "species",
 ]
-if "rank" in df.columns:
-    tax_cols.append("rank")
+
 df[tax_cols].to_csv(snakemake.output.tax, sep="\t", index=None)
 df[summary_df.columns].to_csv(snakemake.output.gen, sep="\t", index=None)
 df[["accession"]].drop_duplicates().to_csv(

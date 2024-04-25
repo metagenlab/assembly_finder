@@ -1,0 +1,70 @@
+"""
+Snakefile for downloading genomes
+"""
+import attrmap as ap
+import os
+
+
+# Concatenate Snakemake's own log file with the master log file
+def copy_log_file():
+    files = glob.glob(os.path.join(".snakemake", "log", "*.snakemake.log"))
+    if not files:
+        return None
+    current_log = max(files, key=os.path.getmtime)
+    shell("cat " + current_log + " >> " + LOG)
+
+
+onsuccess:
+    copy_log_file()
+
+
+onerror:
+    copy_log_file()
+
+
+# config file
+configfile: os.path.join(workflow.basedir, "../", "config", "config.yaml")
+
+
+config = ap.AttrMap(config)
+
+
+# directories
+include: os.path.join("rules", "directories.smk")
+
+
+# options
+INPUT = config.args.input
+OUTPUT = config.args.output
+LOG = os.path.join(OUTPUT, "assembly_finder.log")
+THREADS = config.args.threads
+
+# download options
+TAXONKIT = config.args.taxonkit
+API_KEY = config.args.api_key
+LIMIT = config.args.limit
+COMPRESSED = config.args.compressed
+SOURCE = config.args.source
+INCLUDE = config.args.include
+TAXON = config.args.taxon
+REFERENCE = config.args.reference
+ASM_LVL = config.args.assembly_level
+ANNOTATED = config.args.annotated
+ATYPICAL = config.args.atypical
+MAG = config.args.mag
+RANK = config.args.rank
+NRANK = config.args.nrank
+
+
+# functions
+include: os.path.join("rules", "functions.smk")
+# download rules
+include: os.path.join("rules", "download.smk")
+
+
+rule all:
+    input:
+        os.path.join(dir.out.base, "assembly_summary.tsv"),
+        os.path.join(dir.out.base, "sequence_report.tsv"),
+        os.path.join(dir.out.base, "taxonomy.tsv"),
+        os.path.join(dir.out.base, "cleanup.flag"),

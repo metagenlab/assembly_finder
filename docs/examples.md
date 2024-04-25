@@ -1,10 +1,13 @@
-## Download the top 1 genome per bacterial species
+!!! warning
+    These examples are for big datasets downloads, so using an NCBI api-key is highly recommended
+
+## Best ranking genome for each bacteria species
 
 ```sh
 assembly_finder -i bacteria --api-key <api-key> --rank species --nrank 1
 ```
 
-## Donwload all refseq bacteria viruses and archaea complete genomes (exclude metagenome assembled and atypical genomes)
+## Complete RefSeq bacteria viruses and archaea (excluding metagenomes and atypical genomes)
 
 ```sh
 assembly_finder -i bacteria,viruses,archaea -o outdir --api-key <api-key> --source refseq --assembly-level complete --mag exclude --atypical

@@ -1,0 +1,4 @@
+include assembly_finder/assembly_finder.LICENSE
+include assembly_finder/assembly_finder.CITATION
+include assembly_finder/assembly_finder.VERSION
+recursive-include assembly_finder *

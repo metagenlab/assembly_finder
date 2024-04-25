@@ -1,24 +1,30 @@
 ## Directory
-This is how the download directory looks like when using the [example](./inputs.md/#taxa-table)
+This is how the download directory looks like when using the [taxons table](./inputs.md/#tables)
 ``` sh
-taxons
- ┣ download
- ┃ ┣ GCF_000157115.2
- ┃ ┃ ┣ GCF_000157115.2_Escherichia_sp_3_2_53FAA_V2_genomic.fna.gz
- ┃ ┃ ┗ sequence_report.jsonl
- ┃ ┣ GCF_000418345.1
- ┃ ┃ ┣ GCF_000418345.1_ASM41834v1_genomic.fna.gz
- ┃ ┃ ┗ sequence_report.jsonl
- ┃ ┣ GCF_003812505.1
- ┃ ┃ ┣ GCF_003812505.1_ASM381250v1_genomic.fna.gz
- ┃ ┃ ┗ sequence_report.jsonl
- ┃ ┣ .snakemake_timestamp
- ┃ ┣ assembly_data_report.jsonl
- ┃ ┗ dataset_catalog.json
- ┣ archive.zip
- ┣ assembly_summary.tsv
- ┣ sequence_report.tsv
- ┗ taxonomy.tsv
+📂taxons
+ ┣ 📂download
+ ┃ ┣ 📂GCF_000157115.2
+ ┃ ┃ ┗ 📜GCF_000157115.2_Escherichia_sp_3_2_53FAA_V2_genomic.fna.gz
+ ┃ ┣ 📂GCF_000418345.1
+ ┃ ┃ ┗ 📜GCF_000418345.1_ASM41834v1_genomic.fna.gz
+ ┃ ┣ 📂GCF_003812505.1
+ ┃ ┃ ┗ 📜GCF_003812505.1_ASM381250v1_genomic.fna.gz
+ ┃ ┗ 📜.snakemake_timestamp
+ ┣ 📂logs
+ ┃ ┣ 📂taxons
+ ┃ ┃ ┣ 📜1290.log
+ ┃ ┃ ┣ 📜562.log
+ ┃ ┃ ┗ 📜staphylococcus_aureus.log
+ ┃ ┣ 📜archive.log
+ ┃ ┣ 📜lineage.log
+ ┃ ┣ 📜rsync.log
+ ┃ ┗ 📜unzip.log
+ ┣ 📜archive.zip
+ ┣ 📜assembly_finder.log
+ ┣ 📜assembly_summary.tsv
+ ┣ 📜config.yaml
+ ┣ 📜sequence_report.tsv
+ ┗ 📜taxonomy.tsv
 ```
 
 ## Assembly summary
@@ -35,13 +41,14 @@ Table with assembly informations such as assembly level, reference category, che
 
 ## Taxonomy
 
-Table containing the full lineage from superkingdom to species of each tax_id
+Table containing the full lineage from kingdom to species of each tax_id
 
-| accession       | current_scientific_name | tax_id | rank    | lineage_id                        | superkingdom | phylum         | class               | order            | family             | genus          | species                |
-| :-------------- | :---------------------- | :----- | :------ | :-------------------------------- | :----------- | :------------- | :------------------ | :--------------- | :----------------- | :------------- | :--------------------- |
-| GCF_003812505.1 | Staphylococcus hominis  | 1290   | SPECIES | 2,1239,91061,1385,90964,1279,1290 | Bacteria     | Bacillota      | Bacilli             | Bacillales       | Staphylococcaceae  | Staphylococcus | Staphylococcus hominis |
-| GCF_000418345.1 | Staphylococcus aureus   | 1280   | SPECIES | 2,1239,91061,1385,90964,1279,1280 | Bacteria     | Bacillota      | Bacilli             | Bacillales       | Staphylococcaceae  | Staphylococcus | Staphylococcus aureus  |
-| GCF_000157115.2 | Escherichia coli        | 562    | SPECIES | 2,1224,1236,91347,543,561,562     | Bacteria     | Pseudomonadota | Gammaproteobacteria | Enterobacterales | Enterobacteriaceae | Escherichia    | Escherichia coli       |
+| accession       | tax_id | name                   | rank    | kingdom  | phylum         | class               | order            | family             | genus          | species                |
+| :-------------- | :----- | :--------------------- | :------ | :------- | :------------- | :------------------ | :--------------- | :----------------- | :------------- | :--------------------- |
+| GCF_003812505.1 | 1290   | Staphylococcus hominis | species | Bacteria | Bacillota      | Bacilli             | Bacillales       | Staphylococcaceae  | Staphylococcus | Staphylococcus hominis |
+| GCF_000418345.1 | 1280   | Staphylococcus aureus  | species | Bacteria | Bacillota      | Bacilli             | Bacillales       | Staphylococcaceae  | Staphylococcus | Staphylococcus aureus  |
+| GCF_000157115.2 | 562    | Escherichia coli       | species | Bacteria | Pseudomonadota | Gammaproteobacteria | Enterobacterales | Enterobacteriaceae | Escherichia    | Escherichia coli       |
+
 
 ## Sequence summary
 
@@ -65,4 +72,4 @@ Table with sequence summary information like GenBank or RefSeq accession, molecu
 | GCF_000418345.1    |                         | Primary Assembly        | pBmb9393        | 855      |            | CP005289.1            | Plasmid       |          | NC_021657.1          | assembled-molecule | 2908       |                 |                   |
 | GCF_003812505.1    |                         | Primary Assembly        | chromosome      | 702792   |            | CP033732.1            | Chromosome    |          | NZ_CP033732.1        | assembled-molecule | 2220494    |                 |                   |
 | GCF_003812505.1    |                         | Primary Assembly        | unnamed1        | 9555     |            | CP033731.1            | Plasmid       |          | NZ_CP033731.1        | assembled-molecule | 32498      |                 |                   |
-| GCF_003812505.1    |                         | Primary Assembly        | unnamed2        | 1335     |            | CP033733.1            | Plasmid       |          | NZ_CP033733.1        | assembled-molecule | 4439       |                 |                   |		
+| GCF_003812505.1    |                         | Primary Assembly        | unnamed2        | 1335     |            | CP033733.1            | Plasmid       |          | NZ_CP033733.1        | assembled-molecule | 4439       |                 |                   |	
