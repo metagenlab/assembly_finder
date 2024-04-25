@@ -13,14 +13,8 @@ dir.env = os.path.join(workflow.basedir, "envs")
 dir.rules = os.path.join(workflow.basedir, "rules")
 dir.scripts = os.path.join(workflow.basedir, "scripts")
 
-# Base output location
-try:
-    assert (ap.utils.to_dict(config.args)["output"]) is not None
-    dir.out.base = config.args.output
-except (KeyError, AssertionError):
-    dir.out.base = "results"
-
-# Outdirs
+# Output locations
+dir.out.base = config.args.output
 dir.out.json = os.path.join(dir.out.base, "json")
 dir.out.download = os.path.join(dir.out.base, "download")
 
