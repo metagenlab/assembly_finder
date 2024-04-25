@@ -7,3 +7,4 @@ dependencies:
   - curl >=8.7.1
   - unzip >=6.0
   - tar >=1.34
+  - findutils >=4.6.0
