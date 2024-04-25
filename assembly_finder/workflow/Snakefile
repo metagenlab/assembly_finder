@@ -67,3 +67,4 @@ rule all:
         os.path.join(dir.out.base, "assembly_summary.tsv"),
         os.path.join(dir.out.base, "sequence_report.tsv"),
         os.path.join(dir.out.base, "taxonomy.tsv"),
+        os.path.join(dir.out.base, "cleanup.flag"),
