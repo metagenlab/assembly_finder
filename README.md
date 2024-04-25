@@ -13,6 +13,37 @@ Assembly finder is a Snakemake-powered cli to download genomes with [NCBI datase
 mamba create -n assembly_finder assembly_finder
 ```
 
+## Example
+
+### Command
+
+```sh
+assembly_finder -i staphylococcus_aureus -nb 1
+```
+
+### Output
+
+```sh
+📂staphylococcus_aureus
+ ┣ 📂download
+ ┃ ┣ 📂GCF_000418345.1
+ ┃ ┃ ┗ 📜GCF_000418345.1_ASM41834v1_genomic.fna.gz
+ ┃ ┗ 📜.snakemake_timestamp
+ ┣ 📂logs
+ ┃ ┣ 📂taxons
+ ┃ ┃ ┗ 📜staphylococcus_aureus.log
+ ┃ ┣ 📜archive.log
+ ┃ ┣ 📜lineage.log
+ ┃ ┣ 📜rsync.log
+ ┃ ┗ 📜unzip.log
+ ┣ 📜archive.zip
+ ┣ 📜assembly_finder.log
+ ┣ 📜assembly_summary.tsv
+ ┣ 📜config.yaml
+ ┣ 📜sequence_report.tsv
+ ┗ 📜taxonomy.tsv
+```
+
 ## Usage
 
 ![`assembly_finder -h`](docs/images/af-help.svg)
