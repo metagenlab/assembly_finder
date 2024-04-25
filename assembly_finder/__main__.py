@@ -30,15 +30,38 @@ def print_citation():
             echo_click(line)
 
 
+def default_outdir(ctx, param, value):
+    """Callback for click options; gets default output dir as input basename"""
+    if not value:
+        return os.path.splitext(ctx.params["input"])[0]
+    return value
+
+
+def default_to_output(ctx, param, value):
+    """Callback for click options; places value in output directory unless specified"""
+    if param.default == value:
+        return os.path.join(ctx.params["output"], value)
+    return value
+
+
 def common_options(func):
     """Common command line args
     Define common command line args here, and include them with the @common_options decorator below.
     """
     options = [
         click.option(
+            "-o",
+            "--output",
+            type=click.Path(),
+            default=None,
+            callback=default_outdir,
+            help="Output directory",
+        ),
+        click.option(
             "--configfile",
             default="config.yaml",
             show_default=False,
+            callback=default_to_output,
             help="Custom config file [default: (outputDir)/config.yaml]",
         ),
         click.option(
@@ -77,6 +100,7 @@ def common_options(func):
         click.option(
             "--log",
             default="assembly_finder.log",
+            callback=default_to_output,
             hidden=True,
         ),
         click.option(
@@ -161,7 +185,6 @@ CONTEXT_SETTINGS = {
     help="Comma seperated queries or input file",
     required=True,
 )
-@click.option("-o", "--output", help="Output directory", type=click.Path())
 @click.option(
     "--taxonkit",
     default=snake_base(os.path.join("workflow", "taxonkit")),
@@ -280,12 +303,10 @@ def main(**kwargs):
     \b
     Snakemake-powered cli to download genomes with NCBI datasets
     """
-    if not kwargs["output"]:
-        kwargs["output"] = os.path.splitext(kwargs["input"])[0]
+
     merge_config = {"args": kwargs}
 
     run_snakemake(
-        # Full path to Snakefile
         snakefile_path=snake_base(os.path.join("workflow", "Snakefile")),
         merge_config=merge_config,
         **kwargs,
