@@ -1,6 +1,6 @@
 rule download_taxdump:
     output:
-        temp(os.path.join(TAXONKIT, "taxdump.tar.gz")),
+        os.path.join(TAXONKIT, "taxdump.tar.gz"),
     log:
         os.path.join(dir.out.logs, "curl.log"),
     conda:
