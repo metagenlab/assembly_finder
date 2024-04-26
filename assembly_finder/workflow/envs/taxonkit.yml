@@ -1,4 +1,4 @@
-name: ncbi-datasets-cli
+name: taxonkit
 channels:
   - conda-forge
   - bioconda
