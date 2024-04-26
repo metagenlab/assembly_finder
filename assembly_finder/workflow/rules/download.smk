@@ -200,7 +200,7 @@ rule unzip_archive:
     input:
         os.path.join(dir.out.base, "archive.zip"),
     output:
-        temp(directory(os.path.join(dir.out.base, "archive"))),
+        directory(os.path.join(dir.out.base, "archive")),
     log:
         os.path.join(dir.out.logs, "unzip.log"),
     conda:
@@ -283,8 +283,9 @@ rule add_genome_paths:
         df.to_csv(output[0], sep="\t", index=None)
 
 
-rule cleanup_reports:
+rule cleanup_files:
     input:
+        os.path.join(dir.out.base, "archive"),
         os.path.join(dir.out.base, "assembly_summary.tsv"),
         os.path.join(dir.out.base, "sequence_report.tsv"),
         os.path.join(dir.out.base, "taxonomy.tsv"),
@@ -296,6 +297,7 @@ rule cleanup_reports:
         os.path.join(dir.env, "utils.yml")
     shell:
         """
+        rm -rf {input[0]}
         find {params[0]} -name "*.json*" -print0 | xargs -0 rm
         touch {output}
         """
