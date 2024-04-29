@@ -190,7 +190,6 @@ CONTEXT_SETTINGS = {
     default=snake_base(os.path.join("workflow", "taxonkit")),
     help="Define path to taxonkit data-dir",
     type=click.Path(),
-    show_default=True,
 )
 @click.option(
     "-nb",
@@ -239,7 +238,7 @@ CONTEXT_SETTINGS = {
     "--reference",
     type=bool,
     help="Limit to reference and representative genomes",
-    default=False,
+    default=True,
     show_default=True,
 )
 @click.option(
