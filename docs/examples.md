@@ -1,15 +1,35 @@
 ## Small datasets
 
-### Staphylococcus aureus reference genome
+### *Staphylococcus aureus* reference genome
+
+!!! note
+    By default, assembly_finder limits genomes to reference or representative
 
 ```sh
-assembly_finder -i staphylococcus_aureus --source refseq -nb 1
+assembly_finder -i staphylococcus_aureus -nb 1
 ```
-
-### Download from a list of taxons
+### Any *Staphylococcus aureus* genome
+```sh
+assembly_finder -i staphylococcus_aureus -nb 1 --reference False
+```
+### Download from a list of taxa
 
 ```sh
-assembly_finder -i 1290,1813735,114185 -o test -nb 1
+assembly_finder -i 1290,1813735,114185 -o taxa -nb 1
+```
+### Download from a table of taxa
+
+??? info "**taxa.tsv**"
+        
+
+    | taxon | nb |
+    | :-------------------- | :-- |
+    | 1290 | 1 |
+    | 1813735 | 1 |
+    | 114185 | 1 |
+
+```sh
+assembly_finder -i taxa.tsv
 ```
 
 ## Big datasets
