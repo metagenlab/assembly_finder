@@ -30,8 +30,8 @@ assembly_finder -i staphylococcus_aureus -nb 1
 ```sh
 📂staphylococcus_aureus
  ┣ 📂download
- ┃ ┣ 📂GCF_000418345.1
- ┃ ┃ ┗ 📜GCF_000418345.1_ASM41834v1_genomic.fna.gz
+ ┃ ┣ 📂GCF_000013425.1
+ ┃ ┃ ┗ 📜GCF_000013425.1_ASM1342v1_genomic.fna.gz
  ┃ ┗ 📜.snakemake_timestamp
  ┣ 📂logs
  ┃ ┣ 📂taxons

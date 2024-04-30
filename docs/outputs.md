@@ -1,5 +1,4 @@
-## Directory
-This is how the download directory looks like when using the [taxons table](./inputs.md/#tables)
+Below are all the outputs when using the [taxons table example](./inputs.md/#tables)
 ``` sh
 📂taxons
  ┣ 📂download
@@ -26,7 +25,17 @@ This is how the download directory looks like when using the [taxons table](./in
  ┣ 📜sequence_report.tsv
  ┗ 📜taxonomy.tsv
 ```
-
+## Download directory
+Downloaded files (compressed fasta files by default) are located in the download directory as shown below
+```
+ ┣ 📂download
+ ┃ ┣ 📂GCF_000008865.2
+ ┃ ┃ ┗ 📜GCF_000008865.2_ASM886v2_genomic.fna.gz
+ ┃ ┣ 📂GCF_000013425.1
+ ┃ ┃ ┗ 📜GCF_000013425.1_ASM1342v1_genomic.fna.gz
+ ┃ ┣ 📂GCF_003812505.1
+ ┃ ┃ ┗ 📜GCF_003812505.1_ASM381250v1_genomic.fna.gz
+```
 ## Assembly summary
 Table with assembly informations such as assembly level, reference category, checkM and BUSCO completeness, sequencing technology, number of contigs ...
 !!! note
