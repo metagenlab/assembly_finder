@@ -1,5 +1,6 @@
-site_name: Assembly finder
+site_name: assembly finder
 repo_url: https://github.com/metagenlab/assembly_finder
+repo_name: metagenlab/assembly_finder
 site_author: Farid Chaabane
 theme:
   name: material
