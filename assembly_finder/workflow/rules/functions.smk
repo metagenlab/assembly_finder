@@ -29,7 +29,7 @@ def get_limit(wildcards, nbs, dic):
 # ARGS
 KEY = ""
 if API_KEY:
-    KEY += f"--api-KEY {API_KEY} "
+    KEY += f"--api-key {API_KEY} "
 ARGS = ""
 if ANNOTATED:
     ARGS += "--annotated "
