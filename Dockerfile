@@ -4,8 +4,8 @@ LABEL org.opencontainers.image.description="Snakemake-powered cli to download ge
 LABEL org.opencontainers.image.licenses=MIT
 ADD . /tmp/repo
 WORKDIR /tmp/repo
-ENV LANG C.UTF-8
-ENV SHELL /bin/bash
+ENV LANG=C.UTF-8
+ENV SHELL=/bin/bash
 USER root 
 
 RUN micromamba config set extract_threads 1 && \
@@ -14,5 +14,5 @@ RUN micromamba config set extract_threads 1 && \
     micromamba install -q -y -c conda-forge -n base mamba && \
     micromamba clean -afy
 
-ENV PATH /opt/conda/bin:${PATH}
+ENV PATH=/opt/conda/bin:${PATH}
 RUN pip install .
