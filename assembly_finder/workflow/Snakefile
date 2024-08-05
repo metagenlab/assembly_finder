@@ -1,6 +1,7 @@
 """
 Snakefile for downloading genomes
 """
+
 import attrmap as ap
 import os
 
