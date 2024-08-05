@@ -271,16 +271,11 @@ rule add_genome_paths:
     output:
         os.path.join(dir.out.base, "assembly_summary.tsv"),
     run:
-        df = pd.read_csv(input.summary, sep="\t")
-        df["path"] = [
-            os.path.abspath(
-                glob.glob(
-                    os.path.join(f"{input.dir}", "*", f"{acc}*.fna*").replace(" ", "")
-                )[0]
-            )
-            for acc in df["accession"]
-        ]
-        df.to_csv(output[0], sep="\t", index=None)
+        chunks = []
+        for chunk in pd.read_csv(input.summary, sep="\t", chunksize=10000):
+            chunk["path"] = get_abs_path(input.dir, chunk.accession.values)
+            chunks.append(chunk)
+        pd.concat(chunks).to_csv(output[0], sep="\t", index=None)
 
 
 rule cleanup_files:

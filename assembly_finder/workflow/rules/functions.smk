@@ -2,6 +2,7 @@ import pandas as pd
 import json
 import os
 import glob
+import numpy as np
 
 
 # Functions
@@ -24,6 +25,15 @@ def get_limit(wildcards, nbs, dic):
         return dic[wildcards.query]
     else:
         return ""
+
+
+def get_abs_path(indir, accessions):
+    return np.array(
+        [
+            os.path.abspath(glob.glob(os.path.join(indir, acc, f"{acc}*.fna*"))[0])
+            for acc in accessions
+        ]
+    )
 
 
 # ARGS
