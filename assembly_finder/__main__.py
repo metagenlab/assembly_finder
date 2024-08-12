@@ -58,6 +58,12 @@ def common_options(func):
             help="Output directory",
         ),
         click.option(
+            "--print-versions/--no-print-versions",
+            default=False,
+            help="Print all tool versions at workflow end",
+            show_default=True,
+        ),
+        click.option(
             "--configfile",
             default="config.yaml",
             show_default=False,
@@ -130,6 +136,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--taxon",
                 "--rank",
                 "--nrank",
+                "--print-versions",
             ],
         },
         {
@@ -216,7 +223,7 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--include",
     type=str,
-    help="Comma seperated files to download : genome,rna,protein,cds,gff3,gtf,gbff,seq-report,none",
+    help="Comma seperated files to download : genome,rna,protein,cds,gff3,gtf,gbff,seq-report",
     default="genome,seq-report",
     show_default=True,
 )
