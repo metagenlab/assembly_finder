@@ -16,7 +16,7 @@ def read_json(file):
 def convert_query(wildcards):
     query = wildcards.query
     if ("_" in query) and (("GCF" not in query) and ("GCA" not in query)):
-        query = "{taxon}".format(taxon=query.replace("_", " "))
+        query = f'"{query.replace("_", " ")}"'
     return query
 
 
