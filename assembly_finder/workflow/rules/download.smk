@@ -3,10 +3,10 @@ rule download_taxdump:
         os.path.join(TAXONKIT, "taxdump.tar.gz"),
     log:
         os.path.join(dir.logs, "curl.log"),
-    conda:
-        os.path.join(dir.env, "utils.yml")
     params:
         link=config.links.taxdump,
+    conda:
+        os.path.join(dir.env, "curl.yml")
     shell:
         """
         curl {params.link} -o {output} 2> {log}
@@ -25,8 +25,6 @@ rule decompress_taxdump:
         dir=TAXONKIT,
     log:
         os.path.join(dir.logs, "tar.log"),
-    conda:
-        os.path.join(dir.env, "utils.yml")
     shell:
         """
         tar -xzvf {input} -C {params.dir} &> {log}
@@ -204,7 +202,7 @@ rule unzip_archive:
     log:
         os.path.join(dir.logs, "unzip.log"),
     conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.env, "unzip.yml")
     shell:
         """
         unzip {input} -d {output} &> {log}
@@ -242,7 +240,7 @@ rule copy_files:
     params:
         dir=os.path.join(dir.out.base, "archive", "ncbi_dataset", "data", "*"),
     conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.env, "rsync.yml")
     shell:
         """
         rsync -r {params.dir} {output} 2> {log}
@@ -288,8 +286,6 @@ rule cleanup_files:
         temp(os.path.join(dir.out.base, "cleanup.flag")),
     params:
         dir.out.base,
-    conda:
-        os.path.join(dir.env, "utils.yml")
     shell:
         """
         rm -rf {input[0]}
