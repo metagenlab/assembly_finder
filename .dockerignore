@@ -2,6 +2,7 @@ docs/
 
 assembly_finder.egg-info/
 assembly_finder/__pycache__
+assembly_finder/build
 build/
 
 htmlcov/
@@ -16,5 +17,3 @@ tests/__pycache__
 .pytest_cache
 
 .snakemake
-assembly_finder/workflow/conda
-assembly_finder/workflow/taxonkit
