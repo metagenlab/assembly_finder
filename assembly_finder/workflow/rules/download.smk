@@ -2,11 +2,11 @@ rule download_taxdump:
     output:
         os.path.join(TAXONKIT, "taxdump.tar.gz"),
     log:
-        os.path.join(dir.out.logs, "curl.log"),
-    conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.logs, "curl.log"),
     params:
         link=config.links.taxdump,
+    conda:
+        os.path.join(dir.env, "curl.yml")
     shell:
         """
         curl {params.link} -o {output} 2> {log}
@@ -24,9 +24,7 @@ rule decompress_taxdump:
     params:
         dir=TAXONKIT,
     log:
-        os.path.join(dir.out.logs, "tar.log"),
-    conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.logs, "tar.log"),
     shell:
         """
         tar -xzvf {input} -C {params.dir} &> {log}
@@ -39,7 +37,7 @@ if TAXON:
         output:
             temp(os.path.join(dir.out.json, "{query}.json")),
         log:
-            os.path.join(dir.out.logs, "taxons", "{query}.log"),
+            os.path.join(dir.logs, "taxons", "{query}.log"),
         params:
             query=lambda wildcards: convert_query(wildcards),
             limit=lambda wildcards: get_limit(wildcards, LIMIT, QUERY2NB),
@@ -99,7 +97,7 @@ else:
         output:
             temp(os.path.join(dir.out.base, "genome_summaries.json")),
         log:
-            os.path.join(dir.out.logs, "accessions_summary.log"),
+            os.path.join(dir.logs, "accessions_summary.log"),
         params:
             args=ARGS,
             key=KEY,
@@ -138,7 +136,7 @@ rule get_lineage:
     output:
         temp(os.path.join(dir.out.base, "lineage.tsv")),
     log:
-        os.path.join(dir.out.logs, "lineage.log"),
+        os.path.join(dir.logs, "lineage.log"),
     params:
         headers=config.headers.lineage,
         dir=TAXONKIT,
@@ -177,7 +175,7 @@ rule archive_download:
     output:
         os.path.join(dir.out.base, "archive.zip"),
     log:
-        os.path.join(dir.out.logs, "archive.log"),
+        os.path.join(dir.logs, "archive.log"),
     params:
         key=KEY,
         include=INCLUDE,
@@ -202,9 +200,9 @@ rule unzip_archive:
     output:
         directory(os.path.join(dir.out.base, "archive")),
     log:
-        os.path.join(dir.out.logs, "unzip.log"),
+        os.path.join(dir.logs, "unzip.log"),
     conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.env, "unzip.yml")
     shell:
         """
         unzip {input} -d {output} &> {log}
@@ -238,11 +236,11 @@ rule copy_files:
     output:
         directory(os.path.join(dir.out.download)),
     log:
-        os.path.join(dir.out.logs, "rsync.log"),
+        os.path.join(dir.logs, "rsync.log"),
     params:
         dir=os.path.join(dir.out.base, "archive", "ncbi_dataset", "data", "*"),
     conda:
-        os.path.join(dir.env, "utils.yml")
+        os.path.join(dir.env, "rsync.yml")
     shell:
         """
         rsync -r {params.dir} {output} 2> {log}
@@ -272,7 +270,7 @@ rule add_genome_paths:
         os.path.join(dir.out.base, "assembly_summary.tsv"),
     run:
         chunks = []
-        for chunk in pd.read_csv(input.summary, sep="\t", chunksize=10000):
+        for chunk in pd.read_csv(input.summary, sep="\t", chunksize=5000):
             chunk["path"] = get_abs_path(input.dir, chunk.accession.values)
             chunks.append(chunk)
         pd.concat(chunks).to_csv(output[0], sep="\t", index=None)
@@ -288,8 +286,6 @@ rule cleanup_files:
         temp(os.path.join(dir.out.base, "cleanup.flag")),
     params:
         dir.out.base,
-    conda:
-        os.path.join(dir.env, "utils.yml")
     shell:
         """
         rm -rf {input[0]}

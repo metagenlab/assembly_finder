@@ -19,4 +19,6 @@ dir.out.json = os.path.join(dir.out.base, "json")
 dir.out.download = os.path.join(dir.out.base, "download")
 
 # Logs
-dir.out.logs = os.path.join(dir.out.base, "logs")
+dir.logs = os.path.join(dir.out.base, "logs")
+# versions
+dir.versions = os.path.join(dir.out.base, "versions")
