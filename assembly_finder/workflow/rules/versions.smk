@@ -1,19 +1,22 @@
-rule utils_versions:
+rule tar_find_versions:
     output:
-        rsync=os.path.join(dir.versions, "rsync.version"),
-        curl=os.path.join(dir.versions, "curl.version"),
-        unzip=os.path.join(dir.versions, "unzip.version"),
         tar=os.path.join(dir.versions, "tar.version"),
         find=os.path.join(dir.versions, "find.version"),
-    conda:
-        os.path.join(dir.env, "utils.yml")
     shell:
         """
-        rsync --version > {output.rsync}
-        curl --version > {output.curl}
-        unzip -v > {output.unzip}
         tar --version > {output.tar}
         find --version > {output.find}
+        """
+
+
+rule curl_version:
+    output:
+        os.path.join(dir.versions, "curl.version"),
+    conda:
+        os.path.join(dir.env, "curl.yml")
+    shell:
+        """
+        curl --version > {output}
         """
 
 
@@ -28,6 +31,17 @@ rule datasets_version:
         """
 
 
+rule rsync_version:
+    output:
+        os.path.join(dir.versions, "rsync.version"),
+    conda:
+        os.path.join(dir.env, "rsync.yml")
+    shell:
+        """
+        rsync --version > {output}
+        """
+
+
 rule taxonkit_csvtk_versions:
     output:
         taxonkit=os.path.join(dir.versions, "taxonkit.version"),
@@ -38,6 +52,17 @@ rule taxonkit_csvtk_versions:
         """
         taxonkit version > {output.taxonkit}
         csvtk version > {output.csvtk}
+        """
+
+
+rule unzip_version:
+    output:
+        os.path.join(dir.versions, "unzip.version"),
+    conda:
+        os.path.join(dir.env, "unzip.yml")
+    shell:
+        """
+        unzip -v > {output}
         """
 
 
