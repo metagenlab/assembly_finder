@@ -15,3 +15,4 @@ COPY . /pkg
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 RUN python -m pip install /pkg --no-deps --no-build-isolation --no-cache-dir -vvv
 RUN assembly_finder -i bacteria -nb 1 --conda-create-envs-only --conda-cleanup-pkgs
+ENV PATH=/opt/conda/bin:$PATH
