@@ -87,8 +87,8 @@ def common_options(func):
         ),
         click.option(
             "--conda-prefix",
-            default=snake_base(os.path.join("workflow", "conda")),
-            help="Custom conda env directory",
+            default=lambda: os.path.join(os.getcwd(), ".snakemake", "conda"),
+            help="Default conda env prefix directory",
             type=click.Path(),
             show_default=False,
         ),
@@ -194,7 +194,7 @@ CONTEXT_SETTINGS = {
 )
 @click.option(
     "--taxonkit",
-    default=snake_base(os.path.join("workflow", "taxonkit")),
+    default=lambda: os.path.join(os.getcwd(), ".taxonkit"),
     help="Define path to taxonkit data-dir",
     type=click.Path(),
 )
