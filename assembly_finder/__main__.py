@@ -87,7 +87,7 @@ def common_options(func):
         ),
         click.option(
             "--conda-prefix",
-            default=lambda: os.path.join(os.getcwd(), ".snakemake", "conda"),
+            default=snake_base(os.path.join("workflow", "conda")),
             help="Default conda env prefix directory",
             type=click.Path(),
             show_default=False,
