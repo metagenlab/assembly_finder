@@ -17,3 +17,14 @@ tests/__pycache__
 .pytest_cache
 
 .snakemake
+assembly_finder.egg-info/
+assembly_finder/__pycache__
+build/
+*.sif
+.coverage
+tests/__pycache__
+.pytest_cache
+taxons/
+.snakemake
+.taxonkit/
+
