@@ -3,6 +3,7 @@ import json
 import os
 import glob
 import numpy as np
+import shlex
 
 
 # Functions
@@ -14,10 +15,13 @@ def read_json(file):
 
 
 def convert_query(wildcards):
-    query = wildcards.query
-    if ("_" in query) and (("GCF" not in query) and ("GCA" not in query)):
-        query = f'"{query.replace("_", " ")}"'
-    return query
+    query = str(wildcards.query)
+    try:
+        return shlex.quote(str(int(query)))
+    except ValueError:
+        if ("_" in query) and (("GCF" not in query) and ("GCA" not in query)):
+            query = f'{query.replace("_", " ")}'
+        return shlex.quote(query)
 
 
 def get_limit(wildcards, nbs, dic):
