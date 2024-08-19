@@ -52,9 +52,8 @@ setup(
     data_files=get_data_files(),
     py_modules=["assembly_finder"],
     install_requires=[
-        "snakemake>=7.32.4",
-        "pulp<2.8",
-        "snaketool-utils>=0.0.4",
+        "snakemake>=8.0.0",
+        "snaketool-utils>=0.0.5",
         "attrmap>=0.0.7",
         "pyyaml>=6.0",
         "pandas>=2.2.1",
