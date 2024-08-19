@@ -2,17 +2,12 @@ FROM mambaorg/micromamba
 LABEL org.opencontainers.image.source=https://github.com/metagenlab/assembly_finder
 LABEL org.opencontainers.image.description="Snakemake-powered cli to download genomes with NCBI datasets"
 LABEL org.opencontainers.image.licenses=MIT
-USER root 
 
-RUN micromamba config prepend channels conda-forge && \
-    micromamba config append channels bioconda && \
-    micromamba config set channel_priority strict \
-    micromamba config set extract_threads 1 && \
-    micromamba install assembly_finder --only-deps -n base && \
-    micromamba clean -afy
+COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp
+RUN micromamba config set extract_threads 1 && \
+    micromamba install -n base -y -f /tmp/env.yaml && \
+    micromamba clean -afy 
 
-COPY . /pkg
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-RUN python -m pip install /pkg --no-deps --no-build-isolation --no-cache-dir -vvv
-RUN assembly_finder -i bacteria -nb 1 --conda-create-envs-only --conda-cleanup-pkgs
-ENV PATH=/opt/conda/bin:$PATH XDG_CACHE_HOME=/tmp
+RUN python -m pip install /tmp --no-deps --no-build-isolation --no-cache-dir -vvv
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH" XDG_CACHE_HOME=/tmp
