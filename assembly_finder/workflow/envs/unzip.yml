@@ -4,3 +4,4 @@ channels:
   - defaults
 dependencies:
   - unzip =6.0
+  - p7zip =16.02
