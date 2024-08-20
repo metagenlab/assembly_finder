@@ -1,4 +1,4 @@
-name: Tests
+name: Macos tests
 
 on:
   push:
@@ -31,12 +31,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-14]
         python-version: ["3.12"]
-        architecture: ["x64"]
 
     steps:
-      - uses: "actions/checkout@v3"
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
 
@@ -44,7 +43,7 @@ jobs:
         with:
           auto-update-conda: true
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
+          miniforge-variant: Miniforge3
           use-mamba: true
           mamba-version: "*"
           channels: conda-forge,bioconda,defaults
