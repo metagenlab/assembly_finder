@@ -39,7 +39,7 @@ if TAXON:
         log:
             os.path.join(dir.logs, "taxons", "{query}.log"),
         params:
-            query=lambda wildcards: convert_query(wildcards),
+            taxon=lambda wildcards: convert_query(wildcards),
             limit=lambda wildcards: get_limit(wildcards, LIMIT, QUERY2NB),
             args=ARGS,
             key=KEY,
@@ -54,7 +54,7 @@ if TAXON:
             summary \\
             genome \\
             taxon \\
-            {params.query} \\
+            "{params.taxon}" \\
             {params.limit} \\
             {params.args} \\
             {params.key} \\
@@ -129,12 +129,12 @@ rule get_taxids:
         )
 
 
-rule get_lineage:
+rule taxonkit_lineage:
     input:
         taxids=os.path.join(dir.out.base, "taxids.txt"),
         names=os.path.join(TAXONKIT, "names.dmp"),
     output:
-        temp(os.path.join(dir.out.base, "lineage.tsv")),
+        temp(os.path.join(dir.out.base, "taxonkit_lineage.tsv")),
     log:
         os.path.join(dir.logs, "lineage.log"),
     params:
@@ -147,10 +147,30 @@ rule get_lineage:
     shell:
         """
         taxonkit --data-dir {params.dir} lineage -r -n {input.taxids} | \\
-        taxonkit --data-dir {params.dir} reformat | \\
+        taxonkit --data-dir {params.dir} reformat > {output} 2> {log}
+        """
+
+
+rule format_taxonkit_lineage:
+    input:
+        os.path.join(dir.out.base, "taxonkit_lineage.tsv"),
+    output:
+        temp(os.path.join(dir.out.base, "lineage.tsv")),
+    log:
+        os.path.join(dir.logs, "lineage.log"),
+    params:
+        headers=config.headers.lineage,
+        dir=TAXONKIT,
+    resources:
+        ncbi_requests=1,
+    conda:
+        os.path.join(dir.env, "csvtk.yml")
+    shell:
+        """
+        cat {input} | \\
         csvtk -H -t cut -f 1,4,3,5 | \\
         csvtk -H -t sep -f 4 -s ';' -R | \\
-        csvtk add-header -t -n {params.headers} > {output} 2> {log}
+        csvtk add-header -t -n {params.headers} > {output} 2>> {log}
         """
 
 
