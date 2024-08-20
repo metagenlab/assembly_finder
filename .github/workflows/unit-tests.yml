@@ -33,6 +33,7 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
         python-version: ["3.12"]
+        architecture: ["x64"]
 
     steps:
       - uses: "actions/checkout@v3"
