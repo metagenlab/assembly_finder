@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 
 def get_version():
@@ -40,7 +40,7 @@ CLASSIFIERS = [
 
 setup(
     name="assembly_finder",
-    packages=find_packages(),
+    packages=find_namespace_packages(),
     url="https://github.com/metagenlab/assembly_finder",
     python_requires=">=3.10",
     description="Snakemake-powered cli to download genomes using NCBI datasets",
