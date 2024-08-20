@@ -42,16 +42,25 @@ rule rsync_version:
         """
 
 
-rule taxonkit_csvtk_versions:
+rule csvtk_version:
     output:
-        taxonkit=os.path.join(dir.versions, "taxonkit.version"),
-        csvtk=os.path.join(dir.versions, "csvtk.version"),
+        os.path.join(dir.versions, "csvtk.version"),
+    conda:
+        os.path.join(dir.env, "csvtk.yml")
+    shell:
+        """
+        csvtk version > {output}
+        """
+
+
+rule taxonkit_version:
+    output:
+        os.path.join(dir.versions, "taxonkit.version"),
     conda:
         os.path.join(dir.env, "taxonkit.yml")
     shell:
         """
-        taxonkit version > {output.taxonkit}
-        csvtk version > {output.csvtk}
+        taxonkit version > {output}
         """
 
 
