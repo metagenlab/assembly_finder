@@ -1,7 +1,7 @@
-name: taxonkit
+name: csvtk
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  - taxonkit =0.17.0
+  - csvtk =0.30.0
