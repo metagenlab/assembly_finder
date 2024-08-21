@@ -45,8 +45,9 @@ jobs:
             auto-activate-base: false
       - name: "Test and generate coverage report for Linux python ${{ matrix.python-version }}"
         run: |
-            pip install pytest coverage
-            pip install . --no-build-isolation
+            python3.12 -m pip install --upgrade pip
+            python3.12 -m pip install pytest coverage
+            python3.12 -m pip install .
             coverage run -m pytest
 
   osx:
