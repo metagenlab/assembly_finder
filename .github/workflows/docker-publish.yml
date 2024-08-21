@@ -3,6 +3,12 @@ name: Publish Docker image
 on:
   push:
     branches: [main]
+    paths:
+    - "Dockerfile"
+    - ".github/workflows/docker-publish.yml"
+    - "tests/**"
+    - "assembly_finder/**"
+    - "setup.py"
   release:
     types: [published]
 
@@ -35,9 +41,6 @@ jobs:
         uses: docker/build-push-action@v3
         if: github.event_name == 'push'
         with:
-          # All available with python:3.X-slim are:
-          # platforms: linux/386,linux/amd64,linux/arm/v5,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
-          # But 32-bit binaries likely require compilation from source so stick with linux/amd64 and linux/arm64 for now
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
@@ -47,9 +50,6 @@ jobs:
         uses: docker/build-push-action@v3
         if: github.event_name == 'release'
         with:
-          # All available with python:3.X-slim are:
-          # platforms: linux/386,linux/amd64,linux/arm/v5,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
-          # But 32-bit binaries likely require compilation from source so stick with linux/amd64 and linux/arm64 for now
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
