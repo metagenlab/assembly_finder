@@ -225,7 +225,7 @@ rule unzip_archive:
         os.path.join(dir.env, "unzip.yml")
     shell:
         """
-        unzip {input} -d {output} &> {log}
+        7z x -o{output} {input} &> {log}
         """
 
 
