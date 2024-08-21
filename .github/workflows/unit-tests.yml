@@ -22,6 +22,9 @@ permissions:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
     strategy:
       matrix:
         python-version: ["3.12"]
@@ -33,25 +36,28 @@ jobs:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
         with:
-            auto-update-conda: true
-            miniforge-version: "latest"
-            miniforge-variant: Mambaforge
-            use-mamba: true
-            mamba-version: "*"
-            channels: conda-forge,bioconda,defaults
-            channel-priority: strict
-            activate-environment: assembly_finder
-            python-version: ${{ matrix.python-version }}
-            auto-activate-base: false
+          auto-update-conda: true
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
+          mamba-version: "*"
+          channels: conda-forge,bioconda,defaults
+          channel-priority: strict
+          activate-environment: assembly_finder
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
       - name: "Test and generate coverage report for Linux python ${{ matrix.python-version }}"
         run: |
-            python3.12 -m pip install --upgrade pip
-            python3.12 -m pip install pytest coverage
-            python3.12 -m pip install .
-            coverage run -m pytest
+          python -m pip install --upgrade pip
+          python -m pip install pytest coverage
+          python -m pip install .
+          coverage run -m pytest
 
   osx:
     runs-on: "macos-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
     strategy:
       matrix:
         python-version: ["3.12"]
@@ -64,19 +70,19 @@ jobs:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
         with:
-            auto-update-conda: true
-            miniforge-version: "latest"
-            miniforge-variant: Mambaforge
-            use-mamba: true
-            mamba-version: "*"
-            channels: conda-forge,bioconda,defaults
-            channel-priority: strict
-            activate-environment: assembly_finder
-            python-version: ${{ matrix.python-version }}
-            auto-activate-base: false
+          auto-update-conda: true
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
+          mamba-version: "*"
+          channels: conda-forge,bioconda,defaults
+          channel-priority: strict
+          activate-environment: assembly_finder
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
       - name: "Test and generate coverage report for Linux python ${{ matrix.python-version }}"
         run: |
-            python -m pip install --upgrade pip
-            python -m pip install pytest coverage
-            python -m pip install .
-            coverage run -m pytest
+          python -m pip install --upgrade pip
+          python -m pip install pytest coverage
+          python -m pip install .
+          coverage run -m pytest
