@@ -42,15 +42,31 @@ def test_cli():
     exec_command("assembly_finder -v")
 
 
-def test_taxons():
-    """download genomes from taxons"""
+def test_taxon_string():
+    """download genomes from string input"""
+    exec_command(
+        f"assembly_finder --threads {threads} -i bacteria -nb 1 --output {outdir}"
+    )
+    remove_directory(outdir)
+
+
+def test_accession_string():
+    """download genomes from string input"""
+    exec_command(
+        f"assembly_finder --threads {threads} -i GCF_000418345.1 --accession --output {outdir}"
+    )
+    remove_directory(outdir)
+
+
+def test_taxons_file():
+    """download genomes from taxons file"""
     input = os.path.join(test_data_path, "taxons.tsv")
     exec_command(f"assembly_finder --threads {threads} -i {input} --output {outdir}")
     remove_directory(outdir)
 
 
-def test_accessions():
-    """download genomes from accessions"""
+def test_accessions_file():
+    """download genomes from accessions file"""
     input = os.path.join(test_data_path, "accessions.txt")
     exec_command(
         f"assembly_finder --threads {threads} -i {input} --accession --output {outdir}"
