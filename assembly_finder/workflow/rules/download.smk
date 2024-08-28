@@ -185,6 +185,7 @@ rule filter_genome_summaries:
     params:
         rank=RANK,
         nrank=NRANK,
+        taxon=TAXON,
     script:
         os.path.join(dir.scripts, "select_assemblies.py")
 
