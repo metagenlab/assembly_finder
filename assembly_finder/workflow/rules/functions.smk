@@ -45,7 +45,7 @@ def get_abs_path(indir, accessions):
 KEY = ""
 if API_KEY:
     KEY += f"--api-key {API_KEY} "
-
+ARGS = ""
 if not TAXON:
     ARGS = ""
 else:
