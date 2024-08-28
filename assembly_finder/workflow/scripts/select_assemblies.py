@@ -16,6 +16,7 @@ lineage_df = pd.read_csv(snakemake.input.lineage, sep="\t")
 # Params
 rank = snakemake.params.rank
 nrank = snakemake.params.nrank
+taxon = snakemake.params.taxon
 
 # format summary column names
 summary_df.columns = (
@@ -72,6 +73,9 @@ tax_cols = [
     "genus",
     "species",
 ]
+
+if taxon:
+    tax_cols.insert(0, "taxon")
 
 df[tax_cols].to_csv(snakemake.output.tax, sep="\t", index=None)
 df[summary_df.columns].to_csv(snakemake.output.gen, sep="\t", index=None)

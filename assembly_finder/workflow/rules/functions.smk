@@ -21,6 +21,8 @@ def convert_query(wildcards):
             ("GCF" not in wildcards.query) and ("GCA" not in wildcards.query)
         ):
             return wildcards.query.replace("_", " ")
+        else:
+            return wildcards.query
 
 
 def get_limit(wildcards, nbs, dic):
@@ -44,18 +46,21 @@ KEY = ""
 if API_KEY:
     KEY += f"--api-key {API_KEY} "
 ARGS = ""
-if ANNOTATED:
-    ARGS += "--annotated "
-if ASM_LVL:
-    ARGS += f"--assembly-level {ASM_LVL} "
-if SOURCE:
-    ARGS += f"--assembly-source {SOURCE} "
-if ATYPICAL:
-    ARGS += "--exclude-atypical "
-if MAG:
-    ARGS += f"--mag {MAG} "
-if REFERENCE:
-    ARGS += "--reference "
+if not TAXON:
+    ARGS = ""
+else:
+    if ANNOTATED:
+        ARGS += "--annotated "
+    if ASM_LVL:
+        ARGS += f"--assembly-level {ASM_LVL} "
+    if SOURCE:
+        ARGS += f"--assembly-source {SOURCE} "
+    if ATYPICAL:
+        ARGS += "--exclude-atypical "
+    if MAG:
+        ARGS += f"--mag {MAG} "
+    if REFERENCE:
+        ARGS += "--reference "
 GZIP = ""
 if COMPRESSED:
     GZIP = "--gzip"
