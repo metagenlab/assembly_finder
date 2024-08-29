@@ -4,26 +4,42 @@
 [![license](https://img.shields.io/github/license/metagenlab/assembly_finder.svg)](https://github.com/metagenlab/assembly_finder/blob/main/LICENSE)
 [![version](https://img.shields.io/conda/v/bioconda/assembly_finder?label=version)](http://bioconda.github.io/recipes/assembly_finder/README.html)
 [![downloads](https://img.shields.io/conda/dn/bioconda/assembly_finder)](https://anaconda.org/bioconda/assembly_finder)
+
 [![tests](https://github.com/metagenlab/assembly_finder/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/unit-tests.yml)
 [![docs](https://github.com/metagenlab/assembly_finder/actions/workflows/build-docs.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/build-docs.yml)
+[![docs](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13353495.svg)](https://doi.org/10.5281/zenodo.13353495)
+
 
 Assembly finder is a Snakemake-powered cli to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).
 
-## Installation
+## :zap: Quick start 
+### Installation
+#### Mamba
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/assembly_finder/README.html)
 
 ```sh
 mamba create -n assembly_finder assembly_finder
 ```
+#### Docker 
+```sh
+docker pull ghcr.io/metagenlab/assembly_finder:latest
+```
 
-## Example
-
-### Command
-
+### Usage
+#### Mamba
 ```sh
 assembly_finder -i staphylococcus_aureus -nb 1
 ```
+#### Docker 
+```sh
+docker run ghcr.io/metagenlab/assembly_finder:latest \\
+assembly_finder -i staphylococcus_aureus -nb 1 --no-use-conda
+```
+> [!NOTE]  
+> set --no-use-conda when running via docker
 
 ### Output
 
@@ -48,6 +64,10 @@ assembly_finder -i staphylococcus_aureus -nb 1
  ┗ 📜taxonomy.tsv
 ```
 
-## Usage
+## :books: Documentation
+
+You can find more information on assembly_finder's inputs, outputs and example commands in the [documentation](https://metagenlab.github.io/assembly_finder/)
+
+## :scroll: Help
 
 ![`assembly_finder -h`](docs/images/af-help.svg)
