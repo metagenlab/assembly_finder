@@ -8,22 +8,31 @@ authors:
   - given-names: Farid
     family-names: Chaabane
     email: farid.chaabane@chuv.ch
-    orcid: 'https://orcid.org/0009-0007-9322-1281'
-    affiliation: University Hospital of Lausanne
+    orcid: "https://orcid.org/0009-0007-9322-1281"
+  - affiliation: >-
+      Institute of Microbiology, Lausanne University
+      Hospital and University of Lausanne, Lausanne,
+      Switzerland
   - given-names: Trestan
     family-names: Pillonel
     email: trestan.pillonel@chuv.ch
-    orcid: 'https://orcid.org/0000-0002-5725-7929'
-    affiliation: University Hospital of Lausanne
-  - orcid: 'https://orcid.org/0000-0003-0550-8981'
+    orcid: "https://orcid.org/0000-0002-5725-7929"
+  - affiliation: >-
+      Institute of Microbiology, Lausanne University
+      Hospital and University of Lausanne, Lausanne,
+      Switzerland
+  - orcid: "https://orcid.org/0000-0003-0550-8981"
     given-names: Claire
     family-names: Bertelli
     email: claire.bertelli@chuv.ch
-    affiliation: University Hospital of Lausanne
-repository-code: 'https://github.com/metagenlab/assembly_finder'
-url: 'https://metagenlab.github.io/assembly_finder/'
+  - affiliation: >-
+      Institute of Microbiology, Lausanne University
+      Hospital and University of Lausanne, Lausanne,
+      Switzerland
+repository-code: "https://github.com/metagenlab/assembly_finder"
+url: "https://metagenlab.github.io/assembly_finder/"
 abstract: >-
   Snakemake-powered cli to download genomes using NCBI
-  datasets 
+  datasets
 license: MIT
-version: 0.7.6
+version: 0.7.7
