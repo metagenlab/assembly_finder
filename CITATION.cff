@@ -8,31 +8,35 @@ authors:
   - given-names: Farid
     family-names: Chaabane
     email: farid.chaabane@chuv.ch
-    orcid: "https://orcid.org/0009-0007-9322-1281"
-  - affiliation: >-
+    affiliation: >-
       Institute of Microbiology, Lausanne University
       Hospital and University of Lausanne, Lausanne,
       Switzerland
+    orcid: 'https://orcid.org/0009-0007-9322-1281'
   - given-names: Trestan
     family-names: Pillonel
     email: trestan.pillonel@chuv.ch
-    orcid: "https://orcid.org/0000-0002-5725-7929"
-  - affiliation: >-
+    affiliation: >-
       Institute of Microbiology, Lausanne University
       Hospital and University of Lausanne, Lausanne,
       Switzerland
-  - orcid: "https://orcid.org/0000-0003-0550-8981"
-    given-names: Claire
+    orcid: 'https://orcid.org/0000-0003-0550-8981'
+  - given-names: Claire
     family-names: Bertelli
     email: claire.bertelli@chuv.ch
-  - affiliation: >-
+    affiliation: >-
       Institute of Microbiology, Lausanne University
       Hospital and University of Lausanne, Lausanne,
       Switzerland
-repository-code: "https://github.com/metagenlab/assembly_finder"
-url: "https://metagenlab.github.io/assembly_finder/"
+    orcid: 'https://orcid.org/0000-0003-0550-8981'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.13353494
+    description: zenodo software
+repository-code: 'https://github.com/metagenlab/assembly_finder'
+url: 'https://metagenlab.github.io/assembly_finder/'
 abstract: >-
   Snakemake-powered cli to download genomes using NCBI
-  datasets
+  datasets 
 license: MIT
 version: 0.7.7
