@@ -4,3 +4,4 @@ channels:
   - defaults
 dependencies:
   - ncbi-datasets-cli =16.26.2
+  - ca-certificates
