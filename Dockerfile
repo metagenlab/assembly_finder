@@ -6,7 +6,7 @@ ENV LANG=C.UTF-8
 ENV SHELL=/bin/bash
 
 USER root
-ENV APT_PKGS="curl rsync p7zip-full procps"
+ENV APT_PKGS="curl rsync p7zip-full procps ca-certificates"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ${APT_PKGS} \
     && apt-get clean \
