@@ -132,7 +132,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--output",
                 "--taxonkit",
                 "--threads",
-                "--requests",
                 "--taxon",
                 "--rank",
                 "--nrank",
@@ -207,13 +206,6 @@ CONTEXT_SETTINGS = {
 )
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
-    "--requests",
-    type=int,
-    help="Number of NCBI datasets commands to run in parallel",
-    default=1,
-    show_default=True,
-)
-@click.option(
     "--compressed",
     type=bool,
     help="Download compressed files",
@@ -257,7 +249,7 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--annotated",
     type=bool,
-    help="Select annotated genomes only",
+    help="Limit to annotated genomes only",
     default=False,
     show_default=True,
 )
