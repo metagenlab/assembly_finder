@@ -4,11 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-    - "Dockerfile"
-    - ".github/workflows/docker-publish.yml"
-    - "tests/**"
-    - "assembly_finder/**"
-    - "setup.py"
+      - "Dockerfile"
+      - ".github/workflows/docker-publish.yml"
+      - "tests/**"
+      - "assembly_finder/**"
+      - "setup.py"
+      - "!docs/**"
+      - "!README.md"
+      - "!mkdocs.yml"
   release:
     types: [published]
 
