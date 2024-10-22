@@ -166,12 +166,18 @@ rule format_taxonkit_lineage:
         """
 
 
+if SUMMARY:
+    asm_table = os.path.join(dir.out.base, "assembly_summary.tsv")
+else:
+    asm_table = temp(os.path.join(dir.out.base, "assembly_summary.txt"))
+
+
 rule filter_genome_summaries:
     input:
         summary=os.path.join(dir.out.base, "genome_summaries.json"),
         lineage=os.path.join(dir.out.base, "lineage.tsv"),
     output:
-        gen=temp(os.path.join(dir.out.base, "assembly_summary.txt")),
+        gen=asm_table,
         tax=os.path.join(dir.out.base, "taxonomy.tsv"),
         acc=temp(os.path.join(dir.out.base, "accessions.txt")),
     params:

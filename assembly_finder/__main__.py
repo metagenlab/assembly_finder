@@ -129,6 +129,7 @@ click.rich_click.OPTION_GROUPS = {
             "name": "Options",
             "options": [
                 "--input",
+                "--summary",
                 "--output",
                 "--taxonkit",
                 "--threads",
@@ -203,6 +204,13 @@ CONTEXT_SETTINGS = {
     help="Limit number of genomes per query",
     type=str,
     default=None,
+)
+@click.option(
+    "--summary/--all",
+    type=bool,
+    help="Download all files or only summary tables",
+    default=False,
+    show_default=True,
 )
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
