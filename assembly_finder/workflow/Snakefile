@@ -49,10 +49,6 @@ SOURCE = config.args.source
 SUMMARY = config.args.summary
 INCLUDE = config.args.include
 INCLUDE_LIST = INCLUDE.split(",")
-if "genome" not in INCLUDE_LIST or "seq-report" not in INCLUDE_LIST:
-    INCLUDE_LIST = ["genome", "seq-report"] + INCLUDE_LIST
-    INCLUDE = ",".join(INCLUDE_LIST)
-
 TAXON = config.args.taxon
 REFERENCE = config.args.reference
 ASM_LVL = config.args.assembly_level
@@ -72,7 +68,6 @@ include: os.path.join("rules", "download.smk")
 
 targets = [
     os.path.join(dir.out.base, "assembly_summary.tsv"),
-    os.path.join(dir.out.base, "sequence_report.tsv"),
     os.path.join(dir.out.base, "taxonomy.tsv"),
     os.path.join(dir.out.base, "cleanup.flag"),
 ]

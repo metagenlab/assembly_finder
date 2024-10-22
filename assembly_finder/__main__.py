@@ -224,7 +224,7 @@ CONTEXT_SETTINGS = {
     "--include",
     type=str,
     help="Comma seperated files to download : genome,rna,protein,cds,gff3,gtf,gbff,seq-report",
-    default="genome,seq-report",
+    default="genome",
     show_default=True,
 )
 @click.option(
