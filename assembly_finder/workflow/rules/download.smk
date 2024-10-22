@@ -43,8 +43,6 @@ if TAXON:
             limit=lambda wildcards: get_limit(wildcards, LIMIT, QUERY2NB),
             args=ARGS,
             key=KEY,
-        resources:
-            ncbi_requests=1,
         retries: 2
         conda:
             os.path.join(dir.env, "datasets.yml")
@@ -101,8 +99,6 @@ else:
         params:
             args=ARGS,
             key=KEY,
-        resources:
-            ncbi_requests=1,
         conda:
             os.path.join(dir.env, "datasets.yml")
         shell:
@@ -140,8 +136,6 @@ rule taxonkit_lineage:
     params:
         headers=config.headers.lineage,
         dir=TAXONKIT,
-    resources:
-        ncbi_requests=1,
     conda:
         os.path.join(dir.env, "taxonkit.yml")
     shell:
@@ -161,8 +155,6 @@ rule format_taxonkit_lineage:
     params:
         headers=config.headers.lineage,
         dir=TAXONKIT,
-    resources:
-        ncbi_requests=1,
     conda:
         os.path.join(dir.env, "csvtk.yml")
     shell:

@@ -6,6 +6,14 @@ on:
     paths:
       - ".github/workflows/build-docs.yml"
       - "docs/**"
+      - "mkdocs.yml"
+      - "!Dockerfile"
+      - "!.github/workflows/docker-publish.yml"
+      - "!.github/workflows/unit-tests.yml"
+      - "!tests/**"
+      - "!assembly_finder/**"
+      - "!setup.py"
+      - "!README.md"
 
 # Cancel if a newer run is started
 concurrency:

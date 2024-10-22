@@ -8,3 +8,4 @@ tests/__pycache__
 taxons/
 .snakemake
 .taxonkit/
+test_out/

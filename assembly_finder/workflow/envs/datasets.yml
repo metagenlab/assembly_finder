@@ -3,5 +3,4 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - ncbi-datasets-cli =16.26.2
-  - ca-certificates
+  - ncbi-datasets-cli =16.31.0

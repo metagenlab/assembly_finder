@@ -56,7 +56,7 @@ setup(
         "attrmap>=0.0.7",
         "pyyaml>=6.0",
         "pandas>=2.2.1",
-        "rich-click>=1.7.4",
+        "rich-click>=1.8.3",
     ],
     entry_points={"console_scripts": ["assembly_finder=assembly_finder.__main__:main"]},
     include_package_data=True,

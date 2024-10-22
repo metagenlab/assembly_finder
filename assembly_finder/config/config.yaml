@@ -17,7 +17,6 @@ args:
   profile:
   rank:
   reference:
-  requests:
   snake_args:
   snake_default:
   source:
