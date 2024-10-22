@@ -6,6 +6,7 @@ on:
     paths:
       - "Dockerfile"
       - ".github/workflows/docker-publish.yml"
+      - "env.yaml"
       - "tests/**"
       - "assembly_finder/**"
       - "setup.py"
