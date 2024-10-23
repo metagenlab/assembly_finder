@@ -31,7 +31,7 @@ assembly_finder -i staphylococcus_aureus -nb 1
 ```
 #### Docker 
 ```sh
-docker run ghcr.io/metagenlab/assembly_finder:latest \\
+docker run ghcr.io/metagenlab/assembly_finder:latest \
 assembly_finder -i staphylococcus_aureus -nb 1 --no-use-conda
 ```
 > [!NOTE]  
