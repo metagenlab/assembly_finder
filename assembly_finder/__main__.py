@@ -58,7 +58,8 @@ def common_options(func):
             help="Output directory",
         ),
         click.option(
-            "--print-versions/--no-print-versions",
+            "--print-versions",
+            is_flag=True,
             default=False,
             help="Print all tool versions at workflow end",
             show_default=True,
@@ -66,9 +67,9 @@ def common_options(func):
         click.option(
             "--configfile",
             default="config.yaml",
-            show_default=False,
             callback=default_to_output,
             help="Custom config file [default: (outputDir)/config.yaml]",
+            hidden=True,
         ),
         click.option(
             "--threads",
@@ -81,20 +82,20 @@ def common_options(func):
             "--profile",
             default=None,
             help="Snakemake profile to use",
-            show_default=False,
+            hidden=True,
         ),
         click.option(
             "--use-conda/--no-use-conda",
             default=True,
             help="Use conda for Snakemake rules",
-            show_default=True,
+            hidden=True,
         ),
         click.option(
             "--conda-prefix",
             default=lambda: os.path.join(os.getcwd(), ".snakemake", "conda"),
             help="Default conda env prefix directory",
             type=click.Path(),
-            show_default=False,
+            hidden=True,
         ),
         click.option(
             "--snake-default",
@@ -105,7 +106,7 @@ def common_options(func):
                 "--show-failed-logs",
             ],
             help="Customise Snakemake runtime args",
-            show_default=True,
+            hidden=True,
         ),
         click.option(
             "--log",
@@ -159,16 +160,6 @@ click.rich_click.OPTION_GROUPS = {
             ],
         },
         {
-            "name": "Snakemake options",
-            "options": [
-                "--configfile",
-                "--profile",
-                "--use-conda",
-                "--conda-prefix",
-                "--snake-default",
-            ],
-        },
-        {
             "name": "Help",
             "options": [
                 "--help",
@@ -210,10 +201,9 @@ CONTEXT_SETTINGS = {
     default=None,
 )
 @click.option(
-    "--summary/--all",
-    type=bool,
+    "--summary",
+    is_flag=True,
     help="Download only summary tables or all files",
-    default=False,
     show_default=True,
 )
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
