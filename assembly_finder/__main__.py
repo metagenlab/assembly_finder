@@ -71,7 +71,11 @@ def common_options(func):
             help="Custom config file [default: (outputDir)/config.yaml]",
         ),
         click.option(
-            "--threads", help="Number of threads to use", default=1, show_default=True
+            "--threads",
+            "-t",
+            help="Number of threads to use",
+            default=1,
+            show_default=True,
         ),
         click.option(
             "--profile",
@@ -130,9 +134,10 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--input",
                 "--output",
-                "--taxonkit",
                 "--threads",
+                "--taxonkit",
                 "--taxon",
+                "--summary",
                 "--rank",
                 "--nrank",
                 "--print-versions",
@@ -204,6 +209,13 @@ CONTEXT_SETTINGS = {
     type=str,
     default=None,
 )
+@click.option(
+    "--summary/--all",
+    type=bool,
+    help="Download only summary tables or all files",
+    default=False,
+    show_default=True,
+)
 @click.option("--api-key", type=str, help="NCBI api-key", default=None)
 @click.option(
     "--compressed",
@@ -216,7 +228,7 @@ CONTEXT_SETTINGS = {
     "--include",
     type=str,
     help="Comma seperated files to download : genome,rna,protein,cds,gff3,gtf,gbff,seq-report",
-    default="genome,seq-report",
+    default="genome",
     show_default=True,
 )
 @click.option(
@@ -228,7 +240,7 @@ CONTEXT_SETTINGS = {
 )
 @click.option(
     "--taxon/--accession",
-    help="Are queries taxa names or accession",
+    help="Type of queries",
     type=bool,
     default=True,
     show_default=True,

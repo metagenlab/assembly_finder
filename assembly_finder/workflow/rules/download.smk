@@ -166,12 +166,18 @@ rule format_taxonkit_lineage:
         """
 
 
+if SUMMARY:
+    asm_table = os.path.join(dir.out.base, "assembly_summary.tsv")
+else:
+    asm_table = temp(os.path.join(dir.out.base, "assembly_summary.txt"))
+
+
 rule filter_genome_summaries:
     input:
         summary=os.path.join(dir.out.base, "genome_summaries.json"),
         lineage=os.path.join(dir.out.base, "lineage.tsv"),
     output:
-        gen=temp(os.path.join(dir.out.base, "assembly_summary.txt")),
+        gen=asm_table,
         tax=os.path.join(dir.out.base, "taxonomy.tsv"),
         acc=temp(os.path.join(dir.out.base, "accessions.txt")),
     params:
@@ -260,21 +266,6 @@ rule copy_files:
         """
 
 
-rule cat_sequence_reports:
-    input:
-        os.path.join(dir.out.download),
-    output:
-        os.path.join(dir.out.base, "sequence_report.tsv"),
-    params:
-        jsonl=os.path.join(dir.out.base, "download", "*", "sequence_report.jsonl"),
-    conda:
-        os.path.join(dir.env, "datasets.yml")
-    shell:
-        """
-        cat {params.jsonl} | dataformat tsv genome-seq > {output}
-        """
-
-
 rule add_genome_paths:
     input:
         dir=os.path.join(dir.out.download),
@@ -293,7 +284,6 @@ rule cleanup_files:
     input:
         os.path.join(dir.out.base, "archive"),
         os.path.join(dir.out.base, "assembly_summary.tsv"),
-        os.path.join(dir.out.base, "sequence_report.tsv"),
         os.path.join(dir.out.base, "taxonomy.tsv"),
     output:
         temp(os.path.join(dir.out.base, "cleanup.flag")),
