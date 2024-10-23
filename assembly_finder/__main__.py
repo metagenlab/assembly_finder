@@ -71,7 +71,11 @@ def common_options(func):
             help="Custom config file [default: (outputDir)/config.yaml]",
         ),
         click.option(
-            "--threads", help="Number of threads to use", default=1, show_default=True
+            "--threads",
+            "-t",
+            help="Number of threads to use",
+            default=1,
+            show_default=True,
         ),
         click.option(
             "--profile",
@@ -129,11 +133,11 @@ click.rich_click.OPTION_GROUPS = {
             "name": "Options",
             "options": [
                 "--input",
-                "--summary",
                 "--output",
-                "--taxonkit",
                 "--threads",
+                "--taxonkit",
                 "--taxon",
+                "--summary",
                 "--rank",
                 "--nrank",
                 "--print-versions",
@@ -208,7 +212,7 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--summary/--all",
     type=bool,
-    help="Download all files or only summary tables",
+    help="Download only summary tables or all files",
     default=False,
     show_default=True,
 )
@@ -236,7 +240,7 @@ CONTEXT_SETTINGS = {
 )
 @click.option(
     "--taxon/--accession",
-    help="Are queries taxa names or accession",
+    help="Type of queries",
     type=bool,
     default=True,
     show_default=True,
