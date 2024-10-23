@@ -6,26 +6,27 @@ Input can be either a string or a table, and queries can be either taxa or acces
 
 === "Taxons"
 
+    ```sh
+    assembly_finder -i 1290,staphylococcus_aureus,562 -nb 1 -o taxons
+    ```
+    
     !!! note
 
         Taxons can be either taxids or taxon names
 
-    ```sh
-    assembly_finder -i 1290,staphylococcus_aureus,562 -nb 1 -o taxons
-    ```
-
 === "Accessions"
 
     ```sh
-    assembly_finder --accession -i GCF_003812505.1,GCF_000418345.1,GCF_000157115.2 -o accessions
+    assembly_finder --accession -i GCF_003812505.1,\
+    GCF_000418345.1,GCF_000157115.2 -o accessions
     ```
+    !!! note
+
+        Accessions can be bioproject or genome accessions see [ncbi-datasets docs](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/how-tos/genomes/get-genome-metadata/)
 
 ## Tables
 
 === "Taxons"
-
-    !!! note
-        You can set the number of genomes per taxon in the table
 
     | taxon | nb |
     | :-------------------- | :-- |
@@ -33,13 +34,19 @@ Input can be either a string or a table, and queries can be either taxa or acces
     | staphylococcus_aureus | 1 |
     | 562 | 1 |
 
-=== "Accessions"
-
     !!! note
 
-        The accession table does not have a header
+        You can set the number of genomes per taxon in the table
+
+=== "Accessions"
+
+
 
     | GCF_003812505.1 |
     | :-------------- |
     | GCF_000418345.1 |
     | GCF_000157115.2 |
+
+    !!! note
+
+        The accession table does not have a header

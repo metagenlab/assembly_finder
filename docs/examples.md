@@ -1,19 +1,41 @@
+## Download tables 
+
+Starting from version `0.8.0`, you can restrict outputs to `assembly_summary.tsv` and `taxonomy.tsv`
+
+* Command
+
+```sh
+assembly_finder -i staphylococcus_aureus -nb 1 --summary
+```
+
+* Output
+
+```sh
+📂staphylococcus_aureus
+ ┣ 📂logs
+ ┃ ┣ 📂taxons
+ ┃ ┃ ┗ 📜staphylococcus_aureus.log
+ ┃ ┗📜lineage.log
+ ┣ 📜assembly_finder.log
+ ┣ 📜assembly_summary.tsv
+ ┣ 📜config.yaml
+ ┗ 📜taxonomy.tsv
+```
+
 ## Download genomes
 ### Small datasets
 * *Staphylococcus aureus* reference genome
 
-
-!!! note
-    By default, assembly_finder limits genomes to reference or representative
-
 ```sh
 assembly_finder -i staphylococcus_aureus -nb 1
 ```
+!!! note
+    By default, assembly_finder limits genomes to reference or representative
 
 * Any *Staphylococcus aureus* genome
 
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1 --reference False
+assembly_finder -i staphylococcus_aureus -nb 1 --reference false
 ```
 
 * Download from a list of taxa
@@ -58,7 +80,9 @@ assembly_finder -i bacteria --api-key <api-key> --rank species --nrank 1
 * Complete RefSeq bacteria viruses and archaea <small>(excluding MAGs and atypical)</small>
 
 ```sh
-assembly_finder -i bacteria,viruses,archaea -o outdir --api-key <api-key> --source refseq --assembly-level complete --mag exclude --atypical
+assembly_finder -i bacteria,viruses,archaea --api-key <api-key> \
+--source refseq --assembly-level complete --mag exclude --atypical \
+-o outdir
 ```
 
 * Specific bioproject
@@ -68,7 +92,8 @@ assembly_finder -i PRJNA289059 --api-key <api-key> --accession
 ```
 ## Download other files <small>(cds, proteins, gff3 ...)</small>
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1 --include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
+assembly_finder -i staphylococcus_aureus -nb 1 \
+--include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
 ```
 Output:
 ```sh
@@ -81,6 +106,7 @@ Output:
  ┃ ┃ ┣ 📜genomic.gff.gz
  ┃ ┃ ┣ 📜genomic.gtf.gz
  ┃ ┃ ┗ 📜protein.faa.gz
+ ┃ ┃ ┗ 📜sequence_report.jsonl 
  ┃ ┗ 📜.snakemake_timestamp
  ┣ 📂logs
  ┃ ┣ 📂taxons
@@ -93,6 +119,5 @@ Output:
  ┣ 📜assembly_finder.log
  ┣ 📜assembly_summary.tsv
  ┣ 📜config.yaml
- ┣ 📜sequence_report.tsv
  ┗ 📜taxonomy.tsv
 ```
