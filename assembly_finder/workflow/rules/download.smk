@@ -288,10 +288,11 @@ rule cleanup_files:
     output:
         temp(os.path.join(dir.out.base, "cleanup.flag")),
     params:
-        dir.out.base,
+        os.path.join(dir.out.download, "assembly_data_report.jsonl"),
+        os.path.join(dir.out.download, "dataset_catalog.json"),
     shell:
         """
         rm -rf {input[0]}
-        find {params[0]} -name "*.json*" -print0 | xargs -0 rm
+        rm {params}
         touch {output}
         """
