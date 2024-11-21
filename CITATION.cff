@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: assembly_finder
+title: "assembly_finder: download genomes using NCBI datasets"
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -39,4 +39,4 @@ abstract: >-
   Snakemake-powered cli to download genomes using NCBI
   datasets 
 license: MIT
-version: 0.7.7
+version: 0.8.0
