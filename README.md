@@ -17,7 +17,7 @@ assembly_finder is a [Snakemake](https://github.com/snakemake/snakemake)-powered
 #### Mamba
 
 ```sh
-mamba create -n assembly_finder assembly_finder
+conda create -n assembly_finder assembly_finder -c conda-forge -c bioconda
 ```
 #### Docker 
 ```sh
