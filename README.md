@@ -1,41 +1,46 @@
 # assembly_finder
 [![tests](https://github.com/metagenlab/assembly_finder/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/unit-tests.yml)
 [![docs](https://github.com/metagenlab/assembly_finder/actions/workflows/build-docs.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/build-docs.yml)
-[![docs](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml)
+[![docker](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/metagenlab/assembly_finder/actions/workflows/docker-publish.yml)
 
-[![](https://img.shields.io/static/v1?label=CLI&message=Snaketool&color=blueviolet)](https://github.com/beardymcjohnface/Snaketool)
+[![snaketool](https://img.shields.io/static/v1?label=CLI&message=Snaketool&color=blueviolet)](https://github.com/beardymcjohnface/Snaketool)
 [![license](https://img.shields.io/github/license/metagenlab/assembly_finder.svg)](https://github.com/metagenlab/assembly_finder/blob/main/LICENSE)
 [![version](https://img.shields.io/conda/vn/bioconda/assembly_finder)](http://bioconda.github.io/recipes/assembly_finder/README.html)
 [![downloads](https://img.shields.io/conda/dn/bioconda/assembly_finder)](https://anaconda.org/bioconda/assembly_finder)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13353494.svg)](https://zenodo.org/doi/10.5281/zenodo.13353494)
 
-assembly_finder is a [Snakemake](https://github.com/snakemake/snakemake)-powered cli to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).  
+`assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake)-powered cli, written in [Snaketool](https://github.com/beardymcjohnface/Snaketool), to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).  
 
 ## :zap: Quick start 
 ### Installation
-#### Mamba
+#### [Conda](https://github.com/conda-forge/miniforge)
 
 ```sh
-mamba create -n assembly_finder assembly_finder
+conda create -n assembly_finder assembly_finder
 ```
-#### Docker 
+
+> [!NOTE]  
+> Miniforge is the recommended conda-based distribution
+
+
+#### [Apptainer](https://github.com/apptainer/apptainer)
 ```sh
-docker pull ghcr.io/metagenlab/assembly_finder:latest
+apptainer pull docker://ghcr.io/metagenlab/assembly_finder:latest
 ```
 
 ### Usage
-#### Mamba
+#### Conda
 ```sh
 assembly_finder -i staphylococcus_aureus -nb 1
 ```
-#### Docker 
+#### Apptainer
 ```sh
-docker run ghcr.io/metagenlab/assembly_finder:latest \
+apptainer run docker://ghcr.io/metagenlab/assembly_finder:latest \
 assembly_finder -i staphylococcus_aureus -nb 1 --no-use-conda
 ```
 > [!NOTE]  
-> set --no-use-conda when running via docker
+> set --no-use-conda when running in a container
 
 ### Output
 
