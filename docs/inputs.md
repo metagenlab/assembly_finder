@@ -1,6 +1,6 @@
 # Inputs
 
-Input can be either a string or a table, and queries can be either taxa or accession as shown in [NCBI datasets docs](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/download-and-install).
+Input can be either a string or a table, and queries can be either taxa or accessions as shown in [NCBI datasets docs](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/download-and-install).
 
 ## Strings
 
@@ -17,8 +17,8 @@ Input can be either a string or a table, and queries can be either taxa or acces
 === "Accessions"
 
     ```sh
-    assembly_finder --accession -i GCF_003812505.1,\
-    GCF_000418345.1,GCF_000157115.2 -o accessions
+    assembly_finder --accession -i GCF_003812505.1,GCF_000418345.1,GCF_000157115.2 \
+    -o accessions
     ```
     !!! note
 

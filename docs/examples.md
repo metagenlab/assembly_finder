@@ -1,6 +1,6 @@
 ## Download tables 
 
-Starting from version `0.8.0`, you can restrict outputs to `assembly_summary.tsv` and `taxonomy.tsv`
+Starting from [v0.8.0](https://github.com/metagenlab/assembly_finder/releases/tag/v0.8.0), you can restrict outputs to `assembly_summary.tsv` and `taxonomy.tsv`
 
 * Command
 
