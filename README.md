@@ -9,6 +9,7 @@
 [![downloads](https://img.shields.io/conda/dn/bioconda/assembly_finder)](https://anaconda.org/bioconda/assembly_finder)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13353494.svg)](https://zenodo.org/doi/10.5281/zenodo.13353494)
+[![paper](https://img.shields.io/badge/paper-Bioinformatics-%23167da4)](https://doi.org/10.1093/bioinformatics/btae760)
 
 `assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake)-powered cli, written in [Snaketool](https://github.com/beardymcjohnface/Snaketool), to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).  
 
@@ -72,3 +73,9 @@ You can find more information on assembly_finder's inputs, outputs and example c
 ## :scroll: Help
 
 ![`assembly_finder -h`](docs/images/af-help.svg)
+
+## Citation
+
+Please consider citing `assembly_finder` if you use it in your work.
+
+> Farid Chaabane, Trestan Pillonel, Claire Bertelli, MeSS and assembly_finder: A toolkit for in silico metagenomic sample generation, Bioinformatics, 2024;, btae760, https://doi.org/10.1093/bioinformatics/btae760

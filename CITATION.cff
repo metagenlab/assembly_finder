@@ -31,12 +31,25 @@ authors:
     orcid: 'https://orcid.org/0000-0003-0550-8981'
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.13353494
-    description: zenodo software
+    value: 10.5281/zenodo.13985668
+    description: zenodo
 repository-code: 'https://github.com/metagenlab/assembly_finder'
 url: 'https://metagenlab.github.io/assembly_finder/'
 abstract: >-
   Snakemake-powered cli to download genomes using NCBI
   datasets 
 license: MIT
-version: 0.8.0
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Farid
+      family-names: Chaabane
+    - given-names: Trestan
+      family-names: Pillonel
+    - given-names: Claire
+      family-names: Bertelli
+  doi: "10.1093/bioinformatics/btae760"
+  journal: "Bioinformatics"
+  title: "MeSS and assembly_finder: A toolkit for in silico metagenomic sample generation"
+  year: 2024
+  url: "https://doi.org/10.1093/bioinformatics/btae760"
