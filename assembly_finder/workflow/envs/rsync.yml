@@ -1,6 +1,5 @@
 name: rsync
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - rsync =3.3.0
