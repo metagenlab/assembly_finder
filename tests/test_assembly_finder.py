@@ -25,10 +25,10 @@ def exec_command(cmnd, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     Parameters
     ----------
     cmnd : str
-      shell command to be executed
+        shell command to be executed
     stdout, stderr : streams
-      Default value (PIPE) intercepts process output, setting to None
-      blocks this."""
+        Default value (PIPE) intercepts process output, setting to None
+        blocks this."""
 
     proc = subprocess.Popen(cmnd, shell=True, stdout=stdout, stderr=stderr)
     out, err = proc.communicate()
@@ -45,7 +45,7 @@ def test_cli():
 def test_taxon_string():
     """download genomes from string input"""
     exec_command(
-        f"assembly_finder --threads {threads} -i bacteria -nb 1 --output {outdir}"
+        f"assembly_finder --threads {threads} -i eubacteria -nb 1 --output {outdir}"
     )
     remove_directory(outdir)
 
