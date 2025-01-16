@@ -35,7 +35,7 @@ if TAXON:
 
     rule taxon_genome_summary:
         output:
-            temp(os.path.join(dir.out.json, "{query}.json")),
+            temp(ensure(os.path.join(dir.out.json, "{query}.json"), non_empty=True)),
         log:
             os.path.join(dir.logs, "taxons", "{query}.log"),
         params:
