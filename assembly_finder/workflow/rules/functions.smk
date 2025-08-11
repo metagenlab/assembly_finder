@@ -73,6 +73,8 @@ QUERY2NB = {}
 if TAXON:
     try:
         df = pd.read_csv(INPUT, sep="\t")
+        if "taxon" not in df.columns:
+            df = pd.read_csv(INPUT, sep="\t", header=None, names=["taxon"])
         QUERIES = list(df["taxon"])
         if "nb" in df.columns:
             LIMIT = list(df["nb"])
