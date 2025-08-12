@@ -42,27 +42,36 @@ def get_abs_path(indir, accessions):
 
 
 # ARGS
-KEY = ""
-if API_KEY:
-    KEY = f"--api-key {API_KEY}"
 ARGS = ""
 if not TAXON:
     ARGS = ""
 else:
     if ANNOTATED:
         ARGS += "--annotated "
-    if ASM_LVL:
-        ARGS += f"--assembly-level {ASM_LVL} "
     if SOURCE:
         ARGS += f"--assembly-source {SOURCE} "
     if ATYPICAL:
         ARGS += "--exclude-atypical "
     if MAG:
         ARGS += f"--mag {MAG} "
-    if REFERENCE:
-        ARGS += "--reference "
+
+KEY = ""
+if API_KEY != "":
+    KEY = f"--api-key {API_KEY}"
+    ARGS += f" {KEY} "
 
 ARGS = ARGS.strip()
+
+FILTERS = LEVEL
+if REFERENCE:
+    FILTERS = "reference," + FILTERS
+
+if BEST:
+    FILTERS = FILTERS.replace(",", " ")
+
+if "genome" not in INCLUDE:
+    INCLUDE = "genome," + INCLUDE
+
 
 GZIP = ""
 if COMPRESSED:
@@ -76,8 +85,10 @@ if TAXON:
         if "taxon" not in df.columns:
             df = pd.read_csv(INPUT, sep="\t", header=None, names=["taxon"])
         QUERIES = list(df["taxon"])
-        if "nb" in df.columns:
-            LIMIT = list(df["nb"])
+        if "nb" not in df.columns:
+            # if no 'nb' column, set default limit to 1
+            df["nb"] = [1] * len(df)
+        LIMIT = list(df["nb"])
     except (FileNotFoundError, IsADirectoryError):
         QUERIES = INPUT.split(",")
 
