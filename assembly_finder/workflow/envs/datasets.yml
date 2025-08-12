@@ -2,4 +2,4 @@ name: datasets
 channels:
   - conda-forge
 dependencies:
-  - ncbi-datasets-cli =16.40.0
+  - ncbi-datasets-cli =18.5.1
