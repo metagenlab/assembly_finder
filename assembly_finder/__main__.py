@@ -136,11 +136,14 @@ click.rich_click.OPTION_GROUPS = {
                 "--input",
                 "--output",
                 "--threads",
-                "--taxonkit",
                 "--taxon",
+                "--reference",
+                "--level",
+                "--best",
                 "--summary",
                 "--rank",
                 "--nrank",
+                "--taxonkit",
                 "--print-versions",
             ],
         },
@@ -152,7 +155,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--compressed",
                 "--source",
                 "--include",
-                "--reference",
                 "--assembly-level",
                 "--annotated",
                 "--atypical",
@@ -206,7 +208,7 @@ CONTEXT_SETTINGS = {
     help="Download only summary tables or all files",
     show_default=True,
 )
-@click.option("--api-key", type=str, help="NCBI api-key", default=None)
+@click.option("--api-key", type=str, help="NCBI api-key", default="")
 @click.option(
     "--compressed",
     type=bool,
@@ -224,33 +226,41 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--source",
     type=click.Choice(["refseq", "genbank", "all"], case_sensitive=False),
-    help="Download from refseq or genbank",
+    help="Download from refseq or genbank, or both",
     default="all",
     show_default=True,
 )
 @click.option(
     "--taxon/--accession",
-    help="Type of queries",
+    "--tax/--acc",
+    help="Whether queries are taxa (taxids or names), or assembly accessions",
     type=bool,
     default=True,
     show_default=True,
 )
 @click.option(
+    "-r",
     "--reference",
-    type=bool,
-    help="Limit to reference and representative genomes",
-    default=True,
+    help="Limit to reference genomes if available",
+    is_flag=True,
     show_default=True,
 )
 @click.option(
-    "--assembly-level",
-    help="Comma seperated list of assembly level: complete,chromosome,scaffold,contig",
-    default=None,
+    "-l",
+    "--level",
+    help="Comma seperated list of assembly levels to search for",
+    default="complete,chromosome,scaffold,contig",
     show_default=True,
+)
+@click.option(
+    "--best/--all",
+    default=True,
+    help="Iterate over assembly levels until genomes are found (at best level), or search all levels at once",
 )
 @click.option(
     "--annotated",
     type=bool,
+    is_flag=True,
     help="Limit to annotated genomes only",
     default=False,
     show_default=True,
@@ -258,8 +268,9 @@ CONTEXT_SETTINGS = {
 @click.option(
     "--atypical",
     type=bool,
-    help="Exclude atypical genomes",
-    default=True,
+    is_flag=True,
+    help="Include atypical genomes",
+    default=False,
     show_default=True,
 )
 @click.option(
