@@ -4,6 +4,12 @@ Snakefile for downloading genomes
 
 import attrmap as ap
 import os
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+)
 
 
 # Concatenate Snakemake's own log file with the master log file
@@ -51,7 +57,8 @@ INCLUDE = config.args.include
 INCLUDE_LIST = INCLUDE.split(",")
 TAXON = config.args.taxon
 REFERENCE = config.args.reference
-ASM_LVL = config.args.assembly_level
+BEST = config.args.best
+LEVEL = config.args.level
 ANNOTATED = config.args.annotated
 ATYPICAL = config.args.atypical
 MAG = config.args.mag
