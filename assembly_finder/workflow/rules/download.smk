@@ -35,29 +35,18 @@ if TAXON:
 
     rule taxon_genome_summary:
         output:
-            temp(ensure(os.path.join(dir.out.json, "{query}.json"), non_empty=True)),
+            temp(os.path.join(dir.out.json, "{query}.json")),
         log:
             os.path.join(dir.logs, "taxons", "{query}.log"),
         params:
             taxon=lambda wildcards: convert_query(wildcards),
             limit=lambda wildcards: get_limit(wildcards, LIMIT, QUERY2NB),
             args=ARGS,
-            key=KEY,
-        retries: 2
+            filters=FILTERS,
         conda:
             os.path.join(dir.env, "datasets.yml")
-        shell:
-            """
-            datasets \\
-            summary \\
-            genome \\
-            taxon \\
-            "{params.taxon}" \\
-            {params.limit} \\
-            {params.args} \\
-            {params.key} \\
-            > {output} 2> {log}
-            """
+        script:
+            os.path.join(dir.scripts, "taxon_summary.sh")
 
     rule collect_taxa_summaries:
         input:
@@ -97,7 +86,6 @@ else:
         log:
             os.path.join(dir.logs, "accessions_summary.log"),
         params:
-            args=ARGS,
             key=KEY,
         conda:
             os.path.join(dir.env, "datasets.yml")
@@ -108,7 +96,6 @@ else:
             genome \\
             accession \\
             --inputfile {input} \\
-            {params.args} \\
             {params.key} \\
             > {output}
             """
