@@ -33,15 +33,13 @@ apptainer pull docker://ghcr.io/metagenlab/assembly_finder:latest
 ### Usage
 #### Conda
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1
+assembly_finder -i staphylococcus_aureus --reference
 ```
 #### Apptainer
 ```sh
 apptainer run docker://ghcr.io/metagenlab/assembly_finder:latest \
-assembly_finder -i staphylococcus_aureus -nb 1 --no-use-conda
+assembly_finder -i staphylococcus_aureus --reference
 ```
-> [!NOTE]  
-> set --no-use-conda when running in a container
 
 ### Output
 
