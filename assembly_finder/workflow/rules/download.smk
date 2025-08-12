@@ -45,8 +45,29 @@ if TAXON:
             filters=FILTERS,
         conda:
             os.path.join(dir.env, "datasets.yml")
-        script:
-            os.path.join(dir.scripts, "taxon_summary.sh")
+        shell:
+            """
+            for filter in {params.filters}; do
+                if [[ "$filter" == "reference" ]]; then
+                    flag="--reference"
+                else
+                    flag="--assembly-level $filter"
+                fi
+                echo "Trying: datasets summary genome taxon "{params.taxon}" {params.args} {params.limit} $flag" >> {log}
+                if datasets summary genome taxon "{params.taxon}" {params.args} {params.limit} $flag > {output} 2>> {log}; then
+                    # Check if genome summary is not empty
+                    if [ -s {output} ] && ! grep -q '"total_count": 0' {output}; then
+                        echo "Success with $flag" >> {log}
+                        exit 0
+                    fi
+                fi
+                echo "Failed with $flag, trying next..." >> {log}
+                sleep 1
+            done
+
+            echo "No genome summary found for {wildcards.query}" >> {log}
+            exit 1
+            """
 
     rule collect_taxa_summaries:
         input:
