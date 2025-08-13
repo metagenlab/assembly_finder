@@ -35,28 +35,38 @@ if TAXON:
 
     rule taxon_genome_summary:
         output:
-            temp(ensure(os.path.join(dir.out.json, "{query}.json"), non_empty=True)),
+            temp(os.path.join(dir.out.json, "{query}.json")),
         log:
             os.path.join(dir.logs, "taxons", "{query}.log"),
         params:
             taxon=lambda wildcards: convert_query(wildcards),
             limit=lambda wildcards: get_limit(wildcards, LIMIT, QUERY2NB),
             args=ARGS,
-            key=KEY,
-        retries: 2
+            filters=FILTERS,
         conda:
             os.path.join(dir.env, "datasets.yml")
         shell:
             """
-            datasets \\
-            summary \\
-            genome \\
-            taxon \\
-            "{params.taxon}" \\
-            {params.limit} \\
-            {params.args} \\
-            {params.key} \\
-            > {output} 2> {log}
+            for filter in {params.filters}; do
+                if [[ "$filter" == "reference" ]]; then
+                    flag="--reference"
+                else
+                    flag="--assembly-level $filter"
+                fi
+                echo "Trying: datasets summary genome taxon "{params.taxon}" {params.args} {params.limit} $flag" >> {log}
+                if datasets summary genome taxon "{params.taxon}" {params.args} {params.limit} $flag > {output} 2>> {log}; then
+                    # Check if genome summary is not empty
+                    if [ -s {output} ] && ! grep -q '"total_count": 0' {output}; then
+                        echo "Success with $flag" >> {log}
+                        exit 0
+                    fi
+                fi
+                echo "Failed with $flag, trying next..." >> {log}
+                sleep 1
+            done
+
+            echo "No genome summary found for {wildcards.query}" >> {log}
+            exit 1
             """
 
     rule collect_taxa_summaries:
@@ -97,7 +107,6 @@ else:
         log:
             os.path.join(dir.logs, "accessions_summary.log"),
         params:
-            args=ARGS,
             key=KEY,
         conda:
             os.path.join(dir.env, "datasets.yml")
@@ -108,7 +117,6 @@ else:
             genome \\
             accession \\
             --inputfile {input} \\
-            {params.args} \\
             {params.key} \\
             > {output}
             """

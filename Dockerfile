@@ -19,4 +19,8 @@ RUN micromamba config set extract_threads 1 && \
     micromamba clean -afy 
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 RUN pip install /pkg --no-deps --no-build-isolation --no-cache-dir -vvv
+RUN mv /opt/conda/bin/assembly_finder /opt/conda/bin/assembly_finder_original \
+    && echo '#!/bin/bash' > /opt/conda/bin/assembly_finder \
+    && echo 'exec assembly_finder_original --no-use-conda "$@"' >> /opt/conda/bin/assembly_finder \
+    && chmod +x /opt/conda/bin/assembly_finder
 ENV PATH="/opt/conda/bin:$PATH" XDG_CACHE_HOME=/tmp

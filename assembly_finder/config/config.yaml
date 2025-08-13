@@ -8,6 +8,7 @@ args:
   configfile:
   include:
   input:
+  level:
   limit:
   log:
   mag:
@@ -16,17 +17,19 @@ args:
   print_versions:
   profile:
   rank:
-  reference:
-  snake_args:
+  snake_args: []
   snake_default:
+    - --printshellcmds
+    - --nolock
+    - --show-failed-logs
   source:
+  summary:
   system_config:
   taxon:
   taxonkit:
   threads:
   use_conda:
-
+headers:
+  lineage: tax_id,rank,name,kingdom,phylum,class,order,family,genus,species
 links:
   taxdump: https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
-headers:
-  lineage: "tax_id,rank,name,kingdom,phylum,class,order,family,genus,species"

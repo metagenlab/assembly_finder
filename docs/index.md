@@ -10,14 +10,23 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13353494.svg)](https://zenodo.org/doi/10.5281/zenodo.13353494)
 
-`assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake)-powered cli, written in [Snaketool](https://github.com/beardymcjohnface/Snaketool), to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).  
+`assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake) CLI wrapper for [NCBI datasets](https://github.com/ncbi/datasets), written with [Snaketool](https://github.com/beardymcjohnface/Snaketool), for easy genome assembly downloads.
 
 ## Installation
 
 === "Conda <small>(recommended)</small>" 
 
     ```sh
-    conda create -n assembly_finder assembly_finder
+    conda create -n assembly_finder -c bioconda assembly_finder
+    ```
+    !!! note
+        Requires a [Miniforge](https://github.com/conda-forge/miniforge) installation
+    
+=== "git" 
+
+    ```sh
+    git clone https://github.com/metagenlab/assembly_finder.git
+    pip install -e assembly_finder
     ```
     !!! note
         Requires a [Miniforge](https://github.com/conda-forge/miniforge) installation
@@ -28,54 +37,70 @@
     apptainer pull docker://ghcr.io/metagenlab/assembly_finder:latest
     ```
 
-    !!! note
-        Add `--no-use-conda` when using the container
-
-=== "git" 
-
-    ```sh
-    git clone https://github.com/metagenlab/assembly_finder.git
-    pip install -e assembly_finder
-    ```
-    !!! note
-        Requires a [Miniforge](https://github.com/conda-forge/miniforge) installation
-
 ## Usage 
-### Command
+### Taxon
 
-=== "standard"
+* Download staphylococcus aureus **reference genome**
 
-    ```sh
-    assembly_finder -i staphylococcus_aureus -nb 1 
-    ```
-
-=== "container"
-
-    ```sh
-    apptainer run docker://ghcr.io/metagenlab/assembly_finder:latest \
-    assembly_finder -i staphylococcus_aureus -nb 1 --no-use-conda
-    ```
-
-### Output
 ```sh
-📂staphylococcus_aureus
- ┣ 📂download
- ┃ ┣ 📂GCF_000013425.1
- ┃ ┃ ┗ 📜GCF_000013425.1_ASM1342v1_genomic.fna.gz
- ┃ ┗ 📜.snakemake_timestamp
- ┣ 📂logs
- ┃ ┣ 📂taxons
- ┃ ┃ ┗ 📜staphylococcus_aureus.log
- ┃ ┣ 📜archive.log
- ┃ ┣ 📜lineage.log
- ┃ ┣ 📜rsync.log
- ┃ ┗ 📜unzip.log
- ┣ 📜archive.zip
- ┣ 📜assembly_finder.log
- ┣ 📜assembly_summary.tsv
- ┣ 📜config.yaml
- ┗ 📜taxonomy.tsv
+assembly_finder -i staphylococcus_aureus --reference
 ```
+
+or 
+
+```sh
+assembly_finder -i 1280 -r
+```
+
+### Taxa
+
+* Find reference genomes for multiple taxa
+
+```sh
+assembly_finder -i 1290,1813735,114185 --reference
+```
+
+or 
+
+```sh
+assembly_finder -i taxa.txt --reference
+```
+
+with `taxa.txt`:
+
+```
+1280
+1813735
+114185
+```
+
+### Accessions
+
+
+* Download staphylococcus aureus **reference genome** using its assembly accession
+
+```sh
+assembly_finder --acc -i GCF_000013425.1
+```
+
+* Download multiple accessions
+
+```sh
+assembly_finder --acc -i GCF_003812505.1,GCF_001618865.1,GCF_000287275.1  
+```
+or
+
+```sh
+assembly_finder -i accessions.txt 
+```
+with `accessions.txt`:
+
+```
+GCF_003812505.1
+GCF_001618865.1
+GCF_000287275.1
+```
+
 
 ## Command-line options
 

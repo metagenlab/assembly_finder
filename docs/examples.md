@@ -1,11 +1,11 @@
-## Download tables 
+## Download summary tables
 
 Starting from [v0.8.0](https://github.com/metagenlab/assembly_finder/releases/tag/v0.8.0), you can restrict outputs to `assembly_summary.tsv` and `taxonomy.tsv`
 
 * Command
 
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1 --summary
+assembly_finder -i staphylococcus_aureus --reference --summary
 ```
 
 * Output
@@ -24,40 +24,34 @@ assembly_finder -i staphylococcus_aureus -nb 1 --summary
 
 ## Download genomes
 ### Small datasets
-* *Staphylococcus aureus* reference genome
+* *Staphylococcus aureus* complete genomes
 
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1
+assembly_finder -i staphylococcus_aureus 
 ```
 !!! note
-    By default, assembly_finder limits genomes to reference or representative
+    By default, assembly_finder searches assembly levels in the following order: **complete**, **chromosome**, **scaffold**, and **contig**.
+    
+    The search stops at the first assembly level where genomes are found.
+    
+    This behavior was introduced in [v0.9.0](https://github.com/metagenlab/assembly_finder/releases/tag/v0.9.0) to allow finding the best genomes available for each taxon  
 
-* Any *Staphylococcus aureus* genome
-
-```sh
-assembly_finder -i staphylococcus_aureus -nb 1 --reference false
-```
-
-* Download from a list of taxa
+* All *Staphylococcus aureus* genomes 
 
 ```sh
-assembly_finder -i 1290,1813735,114185 -o taxa -nb 1
+assembly_finder -i staphylococcus_aureus --all 
 ```
 
-* Download using a taxa table
+!!! note
+    The --all option disables the default iteration over assembly levels.
+    When used, all genomes for the specified taxon are downloaded, regardless of their assembly level.
 
-??? info "**taxa.tsv**"
-        
-
-    | taxon | nb |
-    | :-------------------- | :-- |
-    | 1290 | 1 |
-    | 1813735 | 1 |
-    | 114185 | 1 |
+* Any *Staphylococcus aureus* complete genome
 
 ```sh
-assembly_finder -i taxa.tsv
+assembly_finder -i staphylococcus_aureus -nb 1 
 ```
+
 
 ### Big datasets
 
@@ -68,20 +62,22 @@ assembly_finder -i taxa.tsv
 * Download all chlamydia genomes
 
 ```sh
-assembly_finder -i chlamydia --api-key <api-key>
+assembly_finder -i chlamydia --all --api-key <api-key>
 ```
 
-* Best ranking genome for each bacteria species
+* Best ranking complete genome per bacteria species
 
 ```sh
-assembly_finder -i bacteria --api-key <api-key> --rank species --nrank 1
+assembly_finder -i eubacteria --api-key <api-key> --rank species --nrank 1
 ```
 
-* Complete RefSeq bacteria viruses and archaea <small>(excluding MAGs and atypical)</small>
+* Complete bacteria viruses and archaea genomes from RefSeq <small>(excluding MAGs and atypical)</small>
 
 ```sh
-assembly_finder -i bacteria,viruses,archaea --api-key <api-key> \
---source refseq --assembly-level complete --mag exclude --atypical \
+assembly_finder -i eubacteria,viruses,archaea \
+--api-key <api-key> \
+--source refseq \
+--mag exclude \
 -o outdir
 ```
 
@@ -92,8 +88,8 @@ assembly_finder -i PRJNA289059 --api-key <api-key> --accession
 ```
 ## Download other files <small>(cds, proteins, gff3 ...)</small>
 ```sh
-assembly_finder -i staphylococcus_aureus -nb 1 \
---include genome,rna,protein,cds,gff3,gtf,gbff,seq-report
+assembly_finder -i staphylococcus_aureus --reference \
+--include rna,protein,cds,gff3,gtf,gbff,seq-report
 ```
 Output:
 ```sh
