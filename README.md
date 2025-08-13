@@ -11,19 +11,15 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13353494.svg)](https://zenodo.org/doi/10.5281/zenodo.13353494)
 [![paper](https://img.shields.io/badge/paper-Bioinformatics-%23167da4)](https://doi.org/10.1093/bioinformatics/btae760)
 
-`assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake)-powered cli, written in [Snaketool](https://github.com/beardymcjohnface/Snaketool), to download genomes with [NCBI datasets](https://github.com/ncbi/datasets).  
+`assembly_finder` is a [Snakemake](https://github.com/snakemake/snakemake) CLI wrapper for [NCBI datasets](https://github.com/ncbi/datasets), written with [Snaketool](https://github.com/beardymcjohnface/Snaketool), for easy genome assembly downloads.
 
 ## :zap: Quick start 
 ### Installation
 #### [Conda](https://github.com/conda-forge/miniforge)
 
 ```sh
-conda create -n assembly_finder assembly_finder
+conda create -n assembly_finder -c bioconda assembly_finder
 ```
-
-> [!NOTE]  
-> Miniforge is the recommended conda-based distribution
-
 
 #### [Apptainer](https://github.com/apptainer/apptainer)
 ```sh
@@ -31,18 +27,11 @@ apptainer pull docker://ghcr.io/metagenlab/assembly_finder:latest
 ```
 
 ### Usage
-#### Conda
 ```sh
-assembly_finder -i staphylococcus_aureus --reference
-```
-#### Apptainer
-```sh
-apptainer run docker://ghcr.io/metagenlab/assembly_finder:latest \
 assembly_finder -i staphylococcus_aureus --reference
 ```
 
 ### Output
-
 ```sh
 📂staphylococcus_aureus
  ┣ 📂download
